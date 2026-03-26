@@ -23,5 +23,8 @@ node_modules/
 # OS files
 .DS_Store
 
+# GitHub workflows (token lacks workflow scope)
+.github/workflows/
+
 # Claude
 .claude/
