@@ -1,0 +1,217 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../api'
+import type { FSM } from '../types/fsm'
+
+export default function HomePage() {
+  const [selectedFSM, setSelectedFSM] = useState<FSM | null>(null)
+
+  const { data: fsms, isLoading, error } = useQuery({
+    queryKey: ['fsms'],
+    queryFn: async () => {
+      const response = await api.get<FSM[]>('/fsms?limit=10')
+      return response.data
+    },
+  })
+
+  const { data: healthData } = useQuery({
+    queryKey: ['health'],
+    queryFn: async () => {
+      const response = await api.get<{ status: string; message: string }>('/health')
+      return response.data
+    },
+  })
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">GrayFSM</h1>
+              <p className="text-sm text-gray-600">Finite State Machine Optimizer</p>
+            </div>
+            {healthData && (
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${healthData.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-sm text-gray-600">
+                  {healthData.status === 'healthy' ? 'API Connected' : 'API Disconnected'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* FSM List */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Your FSMs</h2>
+
+              {isLoading && (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse bg-gray-200 h-16 rounded" />
+                  ))}
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded p-4">
+                  <p className="text-sm text-red-800">Failed to load FSMs</p>
+                  <p className="text-xs text-red-600 mt-1">
+                    {error instanceof Error ? error.message : 'Unknown error'}
+                  </p>
+                </div>
+              )}
+
+              {fsms && fsms.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">No FSMs found</p>
+                  <p className="text-xs mt-2">Create your first FSM to get started</p>
+                </div>
+              )}
+
+              {fsms && fsms.length > 0 && (
+                <div className="space-y-2">
+                  {fsms.map((fsm) => (
+                    <button
+                      key={fsm.id}
+                      onClick={() => setSelectedFSM(fsm)}
+                      className={`w-full text-left p-3 rounded border-2 transition-colors ${
+                        selectedFSM?.id === fsm.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <div className="font-medium text-gray-900">{fsm.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {fsm.state_count} states • {fsm.transition_count} transitions
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          {fsm.fsm_type}
+                        </span>
+                        {fsm.is_optimized && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            Optimized
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* FSM Details */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow p-6">
+              {!selectedFSM ? (
+                <div className="text-center py-12 text-gray-500">
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="mt-4 text-sm">Select an FSM to view details</p>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">{selectedFSM.name}</h2>
+                      {selectedFSM.description && (
+                        <p className="text-sm text-gray-600 mt-1">{selectedFSM.description}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-gray-50 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.state_count}</div>
+                      <div className="text-sm text-gray-600">States</div>
+                    </div>
+                    <div className="bg-gray-50 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.transition_count}</div>
+                      <div className="text-sm text-gray-600">Transitions</div>
+                    </div>
+                    <div className="bg-gray-50 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.bit_width}</div>
+                      <div className="text-sm text-gray-600">Bit Width</div>
+                    </div>
+                    <div className="bg-gray-50 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900">
+                        {selectedFSM.is_optimized ? selectedFSM.dummy_state_count : 'N/A'}
+                      </div>
+                      <div className="text-sm text-gray-600">Dummy States</div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">FSM Details</h3>
+                    <dl className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <dt className="text-gray-600">Type:</dt>
+                        <dd className="text-gray-900 font-medium">{selectedFSM.fsm_type}</dd>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <dt className="text-gray-600">Initial State:</dt>
+                        <dd className="text-gray-900 font-medium">{selectedFSM.initial_state}</dd>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <dt className="text-gray-600">Encoding:</dt>
+                        <dd className="text-gray-900 font-medium">{selectedFSM.encoding_type}</dd>
+                      </div>
+                      {selectedFSM.is_optimized && selectedFSM.optimization_algorithm && (
+                        <div className="flex justify-between text-sm">
+                          <dt className="text-gray-600">Algorithm:</dt>
+                          <dd className="text-gray-900 font-medium">{selectedFSM.optimization_algorithm}</dd>
+                        </div>
+                      )}
+                      {selectedFSM.avg_hamming_distance && (
+                        <div className="flex justify-between text-sm">
+                          <dt className="text-gray-600">Avg Hamming Distance:</dt>
+                          <dd className="text-gray-900 font-medium">{selectedFSM.avg_hamming_distance}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
+
+                  {selectedFSM.tags && selectedFSM.tags.length > 0 && (
+                    <div className="border-t border-gray-200 pt-4 mt-4">
+                      <h3 className="text-sm font-medium text-gray-900 mb-2">Tags</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedFSM.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}

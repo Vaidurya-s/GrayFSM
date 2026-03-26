@@ -1,0 +1,358 @@
+---
+# Blue-Green Deployment Strategy for Backend
+# This manifests implements blue-green deployments for zero-downtime updates
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grayfsm-backend-blue
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+    slot: blue
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: backend
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: grayfsm
+        component: backend
+        slot: blue
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: grayfsm-backend
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: backend
+        image: ghcr.io/YOUR_REPO/grayfsm-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: grayfsm-config-prod
+        - secretRef:
+            name: grayfsm-secrets-prod
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+      - name: jaeger-agent
+        image: jaegertracing/jaeger-agent:latest
+        ports:
+        - containerPort: 6831
+          protocol: UDP
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - grayfsm
+                - key: component
+                  operator: In
+                  values:
+                  - backend
+              topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grayfsm-backend-green
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+    slot: green
+spec:
+  replicas: 0
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: backend
+      slot: green
+  template:
+    metadata:
+      labels:
+        app: grayfsm
+        component: backend
+        slot: green
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: grayfsm-backend
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: backend
+        image: ghcr.io/YOUR_REPO/grayfsm-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: grayfsm-config-prod
+        - secretRef:
+            name: grayfsm-secrets-prod
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+      - name: jaeger-agent
+        image: jaegertracing/jaeger-agent:latest
+        ports:
+        - containerPort: 6831
+          protocol: UDP
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - grayfsm
+                - key: component
+                  operator: In
+                  values:
+                  - backend
+              topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30
+
+---
+# Service that routes traffic to active slot
+apiVersion: v1
+kind: Service
+metadata:
+  name: grayfsm-backend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: grayfsm
+    component: backend
+    slot: blue
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+  sessionAffinity: None
+
+---
+# Service for monitoring blue slot
+apiVersion: v1
+kind: Service
+metadata:
+  name: grayfsm-backend-blue
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+    slot: blue
+spec:
+  type: ClusterIP
+  selector:
+    app: grayfsm
+    component: backend
+    slot: blue
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+
+---
+# Service for monitoring green slot
+apiVersion: v1
+kind: Service
+metadata:
+  name: grayfsm-backend-green
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+    slot: green
+spec:
+  type: ClusterIP
+  selector:
+    app: grayfsm
+    component: backend
+    slot: green
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+
+---
+# PodDisruptionBudget to maintain availability during node maintenance
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: grayfsm-backend-pdb
+  namespace: grayfsm
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: backend
+
+---
+# ServiceAccount for backend pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grayfsm-backend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+
+---
+# Role for backend pods
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grayfsm-backend
+  namespace: grayfsm
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+
+---
+# RoleBinding for backend
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grayfsm-backend
+  namespace: grayfsm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: grayfsm-backend
+subjects:
+- kind: ServiceAccount
+  name: grayfsm-backend
+  namespace: grayfsm

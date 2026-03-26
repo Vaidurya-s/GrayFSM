@@ -1,0 +1,19 @@
+{
+  "name": "Traffic Light Controller",
+  "description": "Simple 4-state traffic light with standard cycle",
+  "type": "moore",
+  "states": ["Red", "RedYellow", "Green", "Yellow"],
+  "initial_state": "Red",
+  "transitions": [
+    {"from_state": "Red", "to_state": "RedYellow"},
+    {"from_state": "RedYellow", "to_state": "Green"},
+    {"from_state": "Green", "to_state": "Yellow"},
+    {"from_state": "Yellow", "to_state": "Red"}
+  ],
+  "outputs": {
+    "Red": "100",
+    "RedYellow": "110",
+    "Green": "001",
+    "Yellow": "010"
+  }
+}

@@ -1,0 +1,302 @@
+---
+# SLI/SLO Definitions for GrayFSM
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grayfsm-slo-definitions
+  namespace: grayfsm-monitoring
+  labels:
+    app: grayfsm
+data:
+  slo.md: |
+    # GrayFSM Service Level Objectives
+
+    ## 1. API Availability SLO
+
+    **Objective**: 99.9% availability (43 minutes downtime per month)
+
+    **SLI**: Successful HTTP responses / Total HTTP responses
+    ```promql
+    (1 - (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]))) * 100
+    ```
+
+    **Alert Threshold**: < 99.5% availability over 5 minutes
+
+    ## 2. API Latency SLO
+
+    **P95 Latency**: < 500ms (good user experience)
+    **P99 Latency**: < 1s (acceptable performance)
+
+    **SLI - P95**:
+    ```promql
+    histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+    ```
+
+    **SLI - P99**:
+    ```promql
+    histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+    ```
+
+    **Alert Thresholds**:
+    - Warning: P95 > 400ms for 10 minutes
+    - Critical: P95 > 1s for 5 minutes
+
+    ## 3. Error Rate SLO
+
+    **4xx Error Rate**: < 1% (client errors)
+    **5xx Error Rate**: < 0.05% (server errors)
+
+    **SLI - 4xx**:
+    ```promql
+    rate(http_requests_total{status=~"4.."}[5m]) / rate(http_requests_total[5m])
+    ```
+
+    **SLI - 5xx**:
+    ```promql
+    rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+    ```
+
+    **Alert Thresholds**:
+    - Warning: 4xx > 0.5% for 10 minutes
+    - Critical: 5xx > 0.1% for 5 minutes
+
+    ## 4. Database Query SLO
+
+    **P95 Query Duration**: < 100ms
+    **P99 Query Duration**: < 500ms
+
+    **SLI - P95**:
+    ```promql
+    histogram_quantile(0.95, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+    ```
+
+    **SLI - P99**:
+    ```promql
+    histogram_quantile(0.99, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+    ```
+
+    ## 5. Optimization Success SLO
+
+    **Success Rate**: > 95%
+
+    **SLI**:
+    ```promql
+    (rate(grayfsm_optimization_completed_total[5m]) /
+     (rate(grayfsm_optimization_started_total[5m]) + 0.001))
+    ```
+
+    **Alert Threshold**: Success rate < 90% for 10 minutes
+
+    ## 6. Resource Utilization SLO
+
+    **Memory Utilization**: < 85% of allocated
+    **CPU Utilization**: < 80% of allocated
+    **Disk Utilization**: < 80%
+
+    **Alert Thresholds**:
+    - Memory > 85% for 10 minutes
+    - CPU > 80% for 10 minutes
+    - Disk > 80% (immediate)
+
+    ## 7. Cache Hit Ratio SLO
+
+    **Target Cache Hit Ratio**: > 70%
+
+    **SLI**:
+    ```promql
+    rate(grayfsm_cache_hit_total[5m]) /
+    (rate(grayfsm_cache_hit_total[5m]) + rate(grayfsm_cache_miss_total[5m]))
+    ```
+
+    **Alert Threshold**: Hit ratio < 50% for 15 minutes
+
+    ## 8. Mean Time to Recovery (MTTR)
+
+    **Target MTTR**: < 5 minutes for routine issues
+
+    **Success Criteria**:
+    - Automated detection and alerting
+    - Runbooks for common issues
+    - Automatic remediation where possible
+
+---
+# Prometheus Rules for SLO Monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grayfsm-slo-rules
+  namespace: grayfsm-monitoring
+data:
+  slo-rules.yml: |
+    groups:
+    - name: grayfsm-slo-recording
+      interval: 30s
+      rules:
+      # API Availability SLI
+      - record: slo:api:availability
+        expr: |
+          (1 - (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]))) * 100
+
+      # API Latency SLIs
+      - record: slo:api:latency:p95
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+      - record: slo:api:latency:p99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+      # Error Rate SLIs
+      - record: slo:errors:4xx_rate
+        expr: rate(http_requests_total{status=~"4.."}[5m]) / rate(http_requests_total[5m])
+
+      - record: slo:errors:5xx_rate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+
+      # Database Query Latency
+      - record: slo:db:query:p95
+        expr: histogram_quantile(0.95, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+
+      - record: slo:db:query:p99
+        expr: histogram_quantile(0.99, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+
+      # Optimization Success Rate
+      - record: slo:optimization:success_rate
+        expr: |
+          (rate(grayfsm_optimization_completed_total[5m]) /
+           (rate(grayfsm_optimization_started_total[5m]) + 0.001)) * 100
+
+      # Cache Hit Ratio
+      - record: slo:cache:hit_ratio
+        expr: |
+          (rate(grayfsm_cache_hit_total[5m]) /
+           (rate(grayfsm_cache_hit_total[5m]) + rate(grayfsm_cache_miss_total[5m]) + 0.001)) * 100
+
+      # Resource Utilization
+      - record: slo:resource:memory_utilization
+        expr: |
+          (sum(container_memory_working_set_bytes{pod=~"grayfsm-backend.*"}) /
+           sum(container_spec_memory_limit_bytes{pod=~"grayfsm-backend.*"})) * 100
+
+      - record: slo:resource:cpu_utilization
+        expr: |
+          (rate(container_cpu_usage_seconds_total{pod=~"grayfsm-backend.*"}[5m]) * 100)
+
+    - name: grayfsm-slo-alerts
+      interval: 30s
+      rules:
+      # API Availability Alerts
+      - alert: SLO_APIAvailabilityMiss
+        expr: slo:api:availability < 99.5
+        for: 5m
+        labels:
+          severity: critical
+          slo: api_availability
+        annotations:
+          summary: "API availability SLO miss"
+          description: "API availability is {{ $value | humanize }}% (SLO: 99.9%)"
+
+      # API Latency Alerts
+      - alert: SLO_APILatencyP95Miss
+        expr: slo:api:latency:p95 > 0.4
+        for: 10m
+        labels:
+          severity: warning
+          slo: api_latency_p95
+        annotations:
+          summary: "API P95 latency SLO approaching"
+          description: "P95 latency is {{ $value | humanizeDuration }} (SLO: 500ms)"
+
+      - alert: SLO_APILatencyP95Critical
+        expr: slo:api:latency:p95 > 1
+        for: 5m
+        labels:
+          severity: critical
+          slo: api_latency_p95
+        annotations:
+          summary: "API P95 latency SLO critical"
+          description: "P95 latency is {{ $value | humanizeDuration }} (SLO: 500ms)"
+
+      - alert: SLO_APILatencyP99Miss
+        expr: slo:api:latency:p99 > 1
+        for: 10m
+        labels:
+          severity: warning
+          slo: api_latency_p99
+        annotations:
+          summary: "API P99 latency SLO miss"
+          description: "P99 latency is {{ $value | humanizeDuration }} (SLO: 1s)"
+
+      # Error Rate Alerts
+      - alert: SLO_ErrorRate4xxMiss
+        expr: slo:errors:4xx_rate > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          slo: error_rate_4xx
+        annotations:
+          summary: "4xx error rate SLO miss"
+          description: "4xx error rate is {{ $value | humanizePercentage }} (SLO: 1%)"
+
+      - alert: SLO_ErrorRate5xxMiss
+        expr: slo:errors:5xx_rate > 0.001
+        for: 5m
+        labels:
+          severity: critical
+          slo: error_rate_5xx
+        annotations:
+          summary: "5xx error rate SLO miss"
+          description: "5xx error rate is {{ $value | humanizePercentage }} (SLO: 0.05%)"
+
+      # Database Query Alerts
+      - alert: SLO_DBQueryLatencyP95Miss
+        expr: slo:db:query:p95 > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          slo: db_query_latency_p95
+        annotations:
+          summary: "Database query P95 latency SLO miss"
+          description: "P95 query duration is {{ $value | humanizeDuration }} (SLO: 100ms)"
+
+      # Optimization Success Alerts
+      - alert: SLO_OptimizationSuccessMiss
+        expr: slo:optimization:success_rate < 95
+        for: 10m
+        labels:
+          severity: warning
+          slo: optimization_success
+        annotations:
+          summary: "Optimization success rate SLO miss"
+          description: "Success rate is {{ $value | humanize }}% (SLO: 95%)"
+
+      # Cache Hit Ratio Alerts
+      - alert: SLO_CacheHitRatioMiss
+        expr: slo:cache:hit_ratio < 70
+        for: 15m
+        labels:
+          severity: info
+          slo: cache_hit_ratio
+        annotations:
+          summary: "Cache hit ratio SLO miss"
+          description: "Hit ratio is {{ $value | humanize }}% (SLO: 70%)"
+
+      # Resource Utilization Alerts
+      - alert: SLO_MemoryUtilizationHigh
+        expr: slo:resource:memory_utilization > 85
+        for: 10m
+        labels:
+          severity: warning
+          slo: memory_utilization
+        annotations:
+          summary: "Memory utilization SLO approaching"
+          description: "Memory usage is {{ $value | humanize }}% (SLO: 85%)"
+
+      - alert: SLO_CPUUtilizationHigh
+        expr: slo:resource:cpu_utilization > 80
+        for: 10m
+        labels:
+          severity: warning
+          slo: cpu_utilization
+        annotations:
+          summary: "CPU utilization SLO approaching"
+          description: "CPU usage is {{ $value | humanize }}% (SLO: 80%)"

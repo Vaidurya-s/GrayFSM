@@ -1,0 +1,242 @@
+---
+# Database Migration Job - runs before deployment
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grayfsm-db-migration-{{ .Release.Time | date "20060102150405" }}
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: database
+spec:
+  backoffLimit: 3
+  completionMode: NonIndexed
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: grayfsm
+        component: database
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: grayfsm-db-migration
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: db-migration
+        image: ghcr.io/YOUR_REPO/grayfsm-backend:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "Starting database migration..."
+            cd backend
+
+            # Wait for database to be ready
+            echo "Waiting for database to be ready..."
+            max_attempts=30
+            attempt=0
+            until psql "$DATABASE_URL" -c "SELECT 1" > /dev/null 2>&1 || [ $attempt -ge $max_attempts ]; do
+              echo "Attempt $((attempt+1))/$max_attempts: Waiting for database..."
+              sleep 2
+              attempt=$((attempt+1))
+            done
+
+            if [ $attempt -ge $max_attempts ]; then
+              echo "Database did not become ready in time"
+              exit 1
+            fi
+
+            echo "Database is ready!"
+
+            # Run migrations
+            echo "Running Alembic migrations..."
+            alembic upgrade head
+
+            if [ $? -eq 0 ]; then
+              echo "Database migration completed successfully"
+              exit 0
+            else
+              echo "Database migration failed"
+              exit 1
+            fi
+        envFrom:
+        - secretRef:
+            name: grayfsm-secrets-prod
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Never
+
+---
+# ServiceAccount for database migration
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grayfsm-db-migration
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: database
+
+---
+# Role for database migration
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grayfsm-db-migration
+  namespace: grayfsm
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+
+---
+# RoleBinding for database migration
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grayfsm-db-migration
+  namespace: grayfsm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: grayfsm-db-migration
+subjects:
+- kind: ServiceAccount
+  name: grayfsm-db-migration
+  namespace: grayfsm
+
+---
+# PostgreSQL StatefulSet for persistence
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grayfsm-postgres
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: database
+spec:
+  serviceName: grayfsm-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: database
+  template:
+    metadata:
+      labels:
+        app: grayfsm
+        component: database
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - name: postgresql
+          containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: grayfsm-secrets-prod
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grayfsm-secrets-prod
+              key: DB_PASSWORD
+        - name: POSTGRES_DB
+          value: grayfsm
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+      labels:
+        app: grayfsm
+        component: database
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grayfsm-postgres
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: database
+spec:
+  clusterIP: None
+  selector:
+    app: grayfsm
+    component: database
+  ports:
+  - port: 5432
+    targetPort: postgresql
+    name: postgresql

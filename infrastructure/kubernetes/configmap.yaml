@@ -1,0 +1,164 @@
+---
+# Development environment configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grayfsm-config-dev
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    environment: development
+data:
+  ENVIRONMENT: "development"
+  DEBUG: "true"
+  LOG_LEVEL: "DEBUG"
+  API_TITLE: "GrayFSM API - Development"
+  API_VERSION: "1.0.0"
+  CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://frontend:3000"
+  RATE_LIMIT_ENABLED: "false"
+  DB_POOL_SIZE: "5"
+  DB_MAX_OVERFLOW: "10"
+  REDIS_TTL: "3600"
+
+---
+# Staging environment configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grayfsm-config-staging
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    environment: staging
+data:
+  ENVIRONMENT: "staging"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  API_TITLE: "GrayFSM API - Staging"
+  API_VERSION: "1.0.0"
+  CORS_ORIGINS: "https://staging.grayfsm.example.com,https://staging-api.grayfsm.example.com"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_PERIOD: "60"
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "10"
+  REDIS_TTL: "86400"
+  SENTRY_ENABLED: "true"
+
+---
+# Production environment configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grayfsm-config-prod
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    environment: production
+data:
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "WARNING"
+  API_TITLE: "GrayFSM API"
+  API_VERSION: "1.0.0"
+  CORS_ORIGINS: "https://grayfsm.example.com"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: "1000"
+  RATE_LIMIT_PERIOD: "60"
+  DB_POOL_SIZE: "50"
+  DB_MAX_OVERFLOW: "20"
+  REDIS_TTL: "604800"
+  SENTRY_ENABLED: "true"
+
+---
+# Nginx configuration for frontend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: grayfsm
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+      worker_connections 1024;
+    }
+
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+
+      log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+      access_log /var/log/nginx/access.log main;
+
+      sendfile on;
+      tcp_nopush on;
+      tcp_nodelay on;
+      keepalive_timeout 65;
+      types_hash_max_size 2048;
+      client_max_body_size 10M;
+
+      # Gzip compression
+      gzip on;
+      gzip_vary on;
+      gzip_min_length 256;
+      gzip_types text/plain text/css text/xml text/javascript
+                 application/x-javascript application/xml+rss
+                 application/json application/javascript;
+
+      include /etc/nginx/conf.d/*.conf;
+    }
+
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+      root /usr/share/nginx/html;
+      index index.html;
+
+      # Cache static assets
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+      }
+
+      # API proxy
+      location /api {
+        proxy_pass http://grayfsm-backend:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+      }
+
+      # SPA routing
+      location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+      }
+
+      # Health check endpoint
+      location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+      }
+
+      # Security headers
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+    }

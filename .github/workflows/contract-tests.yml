@@ -1,0 +1,349 @@
+name: Contract and Integration Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  contract-tests:
+    name: Contract Tests (OpenAPI Validation)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: grayfsm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r tests/requirements-test.txt
+
+      - name: Set up Node.js (for Dredd)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dredd
+        run: npm install -g dredd
+
+      - name: Set up environment variables
+        run: |
+          cp backend/.env.example backend/.env
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/grayfsm_test" >> backend/.env
+          echo "REDIS_URL=redis://localhost:6379/0" >> backend/.env
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test" >> .env
+
+      - name: Run database migrations
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Start API server
+        run: |
+          cd backend
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > /tmp/api_server.pid
+          sleep 10
+
+      - name: Wait for API to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/api/v1/health; do sleep 2; done'
+
+      - name: Run Schemathesis contract tests
+        run: |
+          pytest tests/contract/test_openapi_contract.py -v --tb=short
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
+
+      - name: Run Dredd contract tests
+        run: |
+          dredd openapi-spec.yaml http://localhost:8000 \
+            --hookfiles=tests/contract/dredd_hooks.py \
+            --reporter=markdown:dredd-report.md \
+            --reporter=html:dredd-report.html \
+            --loglevel=warning
+        continue-on-error: true
+
+      - name: Upload Dredd report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: dredd-report
+          path: |
+            dredd-report.md
+            dredd-report.html
+
+      - name: Stop API server
+        if: always()
+        run: |
+          if [ -f /tmp/api_server.pid ]; then
+            kill $(cat /tmp/api_server.pid) || true
+          fi
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: grayfsm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r tests/requirements-test.txt
+
+      - name: Set up environment
+        run: |
+          cp backend/.env.example backend/.env
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/grayfsm_test" >> backend/.env
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test" >> .env
+
+      - name: Run database migrations
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ \
+            -v \
+            --tb=short \
+            --cov=backend/app \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term \
+            --maxfail=5
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
+          REDIS_URL: redis://localhost:6379/1
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: integration
+          name: integration-tests
+
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[load-test]')
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: grayfsm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r tests/requirements-test.txt
+
+      - name: Set up environment
+        run: |
+          cp backend/.env.example backend/.env
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/grayfsm_test" >> backend/.env
+
+      - name: Run migrations
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Start API server
+        run: |
+          cd backend
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > /tmp/api_server.pid
+          sleep 10
+
+      - name: Run Locust load tests
+        run: |
+          locust \
+            -f tests/load/locustfile.py \
+            --headless \
+            --users 100 \
+            --spawn-rate 10 \
+            --run-time 3m \
+            --host http://localhost:8000 \
+            --html locust-report.html \
+            --csv locust-stats
+
+      - name: Upload Locust report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: locust-report
+          path: |
+            locust-report.html
+            locust-stats*.csv
+
+      - name: Check performance thresholds
+        run: |
+          python -c "
+          import csv
+          with open('locust-stats_stats.csv', 'r') as f:
+              reader = csv.DictReader(f)
+              for row in reader:
+                  if row['Name'] != 'Aggregated':
+                      avg_time = float(row['Average Response Time'])
+                      failure_rate = float(row['Failure Count']) / float(row['Request Count']) if float(row['Request Count']) > 0 else 0
+                      print(f\"{row['Name']}: {avg_time}ms avg, {failure_rate*100:.2f}% failure rate\")
+                      assert avg_time < 2000, f\"Response time too high: {avg_time}ms\"
+                      assert failure_rate < 0.05, f\"Failure rate too high: {failure_rate*100}%\"
+          "
+
+      - name: Stop API server
+        if: always()
+        run: |
+          if [ -f /tmp/api_server.pid ]; then
+            kill $(cat /tmp/api_server.pid) || true
+          fi
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [contract-tests, integration-tests]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate test summary
+        run: |
+          echo "# Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Contract Tests" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ needs.contract-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Integration Tests" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## Test Results\n\n';
+            comment += `### Contract Tests: ${{ needs.contract-tests.result }}\n`;
+            comment += `### Integration Tests: ${{ needs.integration-tests.result }}\n\n`;
+
+            try {
+              const dreddReport = fs.readFileSync('dredd-report/dredd-report.md', 'utf8');
+              comment += '### Dredd Report\n' + dreddReport;
+            } catch (e) {
+              comment += '### Dredd Report\nNo report available\n';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

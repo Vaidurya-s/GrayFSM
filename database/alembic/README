@@ -1,0 +1,187 @@
+# GrayFSM Database Migrations
+
+This directory contains Alembic migration scripts for managing database schema changes.
+
+## Migration Workflow
+
+### Creating a New Migration
+
+```bash
+# Auto-generate migration from model changes (if using SQLAlchemy models)
+alembic revision --autogenerate -m "description of changes"
+
+# Create empty migration for custom SQL
+alembic revision -m "description of changes"
+```
+
+### Applying Migrations
+
+```bash
+# Upgrade to latest version
+alembic upgrade head
+
+# Upgrade to specific version
+alembic upgrade <revision_id>
+
+# Upgrade one version
+alembic upgrade +1
+```
+
+### Rolling Back Migrations
+
+```bash
+# Downgrade one version
+alembic downgrade -1
+
+# Downgrade to specific version
+alembic downgrade <revision_id>
+
+# Downgrade all (back to empty database)
+alembic downgrade base
+```
+
+### Viewing Migration Status
+
+```bash
+# Show current version
+alembic current
+
+# Show migration history
+alembic history
+
+# Show branches (if any)
+alembic branches
+
+# Show pending migrations
+alembic current; alembic heads
+```
+
+## Migration Best Practices
+
+1. **Always Review Auto-Generated Migrations**
+   - Alembic may not capture all changes correctly
+   - Verify column types, constraints, and indexes
+
+2. **Implement Rollback Logic**
+   - Every `upgrade()` must have corresponding `downgrade()`
+   - Test rollback before deploying to production
+
+3. **Use Transactions**
+   - Migrations run in transactions by default
+   - Use `op.execute()` for complex SQL
+
+4. **Test Migrations**
+   - Test on copy of production data
+   - Verify data integrity after migration
+   - Test both upgrade and downgrade paths
+
+5. **Document Breaking Changes**
+   - Add comments for complex migrations
+   - Document data transformations
+   - Note any required application code changes
+
+6. **Never Modify Deployed Migrations**
+   - Once deployed, migrations are immutable
+   - Create new migration to fix issues
+
+7. **Backup Before Production Migration**
+   - Always backup before running migrations in production
+   - Have rollback plan ready
+
+## Example Migration
+
+```python
+"""Add optimization_version column to fsms table
+
+Revision ID: abc123
+Revises: def456
+Create Date: 2025-11-29 10:00:00.000000
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = 'abc123'
+down_revision = 'def456'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # Add new column
+    op.add_column('fsms',
+        sa.Column('optimization_version', sa.Integer(), nullable=True)
+    )
+
+    # Set default value for existing rows
+    op.execute("UPDATE fsms SET optimization_version = 1 WHERE is_optimized = TRUE")
+
+    # Add index
+    op.create_index(
+        'idx_fsms_optimization_version',
+        'fsms',
+        ['optimization_version']
+    )
+
+
+def downgrade():
+    # Remove index
+    op.drop_index('idx_fsms_optimization_version', table_name='fsms')
+
+    # Remove column
+    op.drop_column('fsms', 'optimization_version')
+```
+
+## Migration Files
+
+- `env.py` - Alembic environment configuration
+- `script.py.mako` - Template for new migrations
+- `versions/` - Migration version files
+- `migration.log` - Migration execution log
+
+## Environment Variables
+
+```bash
+# Override database URL
+export DATABASE_URL="postgresql://user:pass@host:port/dbname"
+
+# Run migrations
+alembic upgrade head
+```
+
+## Troubleshooting
+
+### Migration Conflict
+
+```bash
+# Show branches
+alembic branches
+
+# Merge branches
+alembic merge <rev1> <rev2> -m "merge description"
+```
+
+### Stamp Version (Manual Sync)
+
+```bash
+# Mark database as being at specific version without running migration
+alembic stamp <revision_id>
+
+# Useful when manually applying SQL or syncing existing database
+alembic stamp head
+```
+
+### Generate SQL Without Executing
+
+```bash
+# Output SQL to file for review
+alembic upgrade head --sql > migration.sql
+
+# Useful for production deployments requiring manual review
+```
+
+## Further Reading
+
+- Alembic Documentation: https://alembic.sqlalchemy.org/
+- SQLAlchemy Documentation: https://docs.sqlalchemy.org/
+- GrayFSM Database Design: /home/arunupscee/Music/grayFSM/database-design.md

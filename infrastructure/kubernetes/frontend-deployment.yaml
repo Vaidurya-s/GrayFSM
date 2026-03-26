@@ -1,0 +1,194 @@
+---
+# Frontend Deployment with rolling updates
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grayfsm-frontend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: frontend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: grayfsm
+        component: frontend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: grayfsm-frontend
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        fsGroup: 101
+      containers:
+      - name: frontend
+        image: ghcr.io/YOUR_REPO/grayfsm-frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        env:
+        - name: VITE_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: API_URL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: cache
+          mountPath: /var/cache/nginx
+        - name: run
+          mountPath: /var/run
+      volumes:
+      - name: cache
+        emptyDir: {}
+      - name: run
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - grayfsm
+                - key: component
+                  operator: In
+                  values:
+                  - frontend
+              topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30
+
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grayfsm-frontend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: grayfsm
+    component: frontend
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  sessionAffinity: None
+
+---
+# Frontend ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: grayfsm
+data:
+  API_URL: "http://grayfsm-backend:8000/api"
+
+---
+# PodDisruptionBudget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: grayfsm-frontend-pdb
+  namespace: grayfsm
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: frontend
+
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grayfsm-frontend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: frontend
+
+---
+# Role for frontend
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grayfsm-frontend
+  namespace: grayfsm
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "watch"]
+
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grayfsm-frontend
+  namespace: grayfsm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: grayfsm-frontend
+subjects:
+- kind: ServiceAccount
+  name: grayfsm-frontend
+  namespace: grayfsm

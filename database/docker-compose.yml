@@ -1,0 +1,141 @@
+# GrayFSM Database - Docker Compose Configuration
+# Version: 1.0
+# Description: PostgreSQL 15 with optimized configuration for development and production
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: grayfsm_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-grayfsm}
+      POSTGRES_USER: ${POSTGRES_USER:-grayfsm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grayfsm_password}
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+      # Performance tuning
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Data persistence
+      - postgres_data:/var/lib/postgresql/data
+      # Initialization scripts
+      - ./init:/docker-entrypoint-initdb.d:ro
+      # Custom PostgreSQL configuration
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      # Backup directory
+      - ./backups:/backups
+      # Custom scripts
+      - ./scripts:/scripts:ro
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grayfsm_user} -d ${POSTGRES_DB:-grayfsm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - grayfsm_network
+    labels:
+      com.grayfsm.service: "database"
+      com.grayfsm.environment: "${ENVIRONMENT:-development}"
+
+  # pgAdmin (Database Management UI) - Optional
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: grayfsm_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@grayfsm.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin_servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - grayfsm_network
+    profiles:
+      - tools
+    labels:
+      com.grayfsm.service: "pgadmin"
+      com.grayfsm.environment: "${ENVIRONMENT:-development}"
+
+  # Redis (for caching and session management) - Optional
+  redis:
+    image: redis:7-alpine
+    container_name: grayfsm_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - grayfsm_network
+    profiles:
+      - cache
+    labels:
+      com.grayfsm.service: "cache"
+
+  # PostgreSQL Backup Service (automated backups)
+  backup:
+    image: postgres:15-alpine
+    container_name: grayfsm_backup
+    restart: "no"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-grayfsm}
+      POSTGRES_USER: ${POSTGRES_USER:-grayfsm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grayfsm_password}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - grayfsm_network
+    profiles:
+      - backup
+    entrypoint: ["/bin/sh", "-c", "/backup.sh"]
+    labels:
+      com.grayfsm.service: "backup"
+
+volumes:
+  postgres_data:
+    driver: local
+    name: grayfsm_postgres_data
+  pgadmin_data:
+    driver: local
+    name: grayfsm_pgadmin_data
+  redis_data:
+    driver: local
+    name: grayfsm_redis_data
+
+networks:
+  grayfsm_network:
+    driver: bridge
+    name: grayfsm_network
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

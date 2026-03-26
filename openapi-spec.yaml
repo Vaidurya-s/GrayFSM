@@ -1,0 +1,1074 @@
+openapi: 3.1.0
+info:
+  title: GrayFSM API
+  description: |
+    RESTful API for GrayFSM - Automated Finite State Machine Optimization using Gray Code Encoding.
+
+    ## Features
+    - FSM creation, management, and validation
+    - Multiple optimization algorithms (Greedy, BFS, Global Optimization)
+    - HDL export (Verilog, VHDL, testbenches)
+    - Real-time optimization progress via WebSocket
+    - Community features (sharing, comments, ratings) - Phase 4
+
+    ## Authentication
+    - Phase 1-3: Anonymous access (optional user tracking)
+    - Phase 4: JWT-based authentication with API keys
+
+    ## Rate Limiting
+    - Anonymous: 100 requests/hour
+    - Authenticated: 1000 requests/hour
+    - Premium: 10000 requests/hour
+
+  version: 1.0.0
+  contact:
+    name: GrayFSM Development Team
+    url: https://github.com/grayfsm
+    email: support@grayfsm.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.grayfsm.com/api/v1
+    description: Production server
+  - url: https://staging-api.grayfsm.com/api/v1
+    description: Staging server
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+tags:
+  - name: FSMs
+    description: Finite State Machine management
+  - name: Algorithms
+    description: Optimization algorithms and results
+  - name: Export
+    description: HDL code generation and export
+  - name: Categories
+    description: FSM categorization and taxonomy
+  - name: Examples
+    description: Example FSM library
+  - name: Users
+    description: User management (Phase 4)
+  - name: Auth
+    description: Authentication and authorization (Phase 4)
+  - name: Health
+    description: Health checks and system status
+
+paths:
+  # ============================================================
+  # FSM ENDPOINTS
+  # ============================================================
+  /fsms:
+    get:
+      tags: [FSMs]
+      summary: List FSMs
+      description: Retrieve a paginated list of FSMs with optional filtering
+      operationId: listFSMs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [public, private, example, unlisted]
+        - name: fsm_type
+          in: query
+          schema:
+            type: string
+            enum: [moore, mealy]
+        - name: category_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: is_optimized
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          description: Full-text search in name and description
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Filter by tags (comma-separated)
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, view_count, name]
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Successfully retrieved FSM list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+    post:
+      tags: [FSMs]
+      summary: Create FSM
+      description: Create a new finite state machine
+      operationId: createFSM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FSMCreate'
+      responses:
+        '201':
+          description: FSM successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /fsms/{fsm_id}:
+    get:
+      tags: [FSMs]
+      summary: Get FSM
+      description: Retrieve a specific FSM by ID
+      operationId: getFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      responses:
+        '200':
+          description: FSM successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [FSMs]
+      summary: Update FSM
+      description: Update an existing FSM (full replacement)
+      operationId: updateFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FSMUpdate'
+      responses:
+        '200':
+          description: FSM successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [FSMs]
+      summary: Delete FSM
+      description: Delete an FSM by ID
+      operationId: deleteFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      responses:
+        '204':
+          description: FSM successfully deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /fsms/{fsm_id}/fork:
+    post:
+      tags: [FSMs]
+      summary: Fork FSM
+      description: Create a copy of an existing FSM
+      operationId: forkFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name for the forked FSM
+      responses:
+        '201':
+          description: FSM successfully forked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================
+  # ALGORITHM ENDPOINTS
+  # ============================================================
+  /fsms/{fsm_id}/optimize:
+    post:
+      tags: [Algorithms]
+      summary: Optimize FSM
+      description: |
+        Run optimization algorithm on an FSM. For long-running optimizations,
+        use async=true and connect to WebSocket for progress updates.
+      operationId: optimizeFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OptimizationRequest'
+      responses:
+        '200':
+          description: Synchronous optimization completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResponse'
+        '202':
+          description: Async optimization started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    description: Task ID for tracking progress
+                  status:
+                    type: string
+                    enum: [pending, running]
+                  websocket_url:
+                    type: string
+                    description: WebSocket URL for real-time updates
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /fsms/{fsm_id}/results:
+    get:
+      tags: [Algorithms]
+      summary: Get optimization results
+      description: Retrieve all optimization results for an FSM
+      operationId: getOptimizationResults
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+        - name: algorithm
+          in: query
+          schema:
+            type: string
+            enum: [greedy, bfs_optimal, global_sa, global_ga, hybrid]
+      responses:
+        '200':
+          description: Optimization results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AlgorithmResult'
+
+  /fsms/{fsm_id}/compare:
+    post:
+      tags: [Algorithms]
+      summary: Compare algorithms
+      description: Run multiple algorithms and compare results
+      operationId: compareAlgorithms
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                algorithms:
+                  type: array
+                  items:
+                    type: string
+                    enum: [greedy, bfs_optimal, global_sa, global_ga]
+                  minItems: 2
+                options:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Comparison completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AlgorithmResult'
+
+  /tasks/{task_id}:
+    get:
+      tags: [Algorithms]
+      summary: Get task status
+      description: Check status of async optimization task
+      operationId: getTaskStatus
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================
+  # EXPORT ENDPOINTS
+  # ============================================================
+  /fsms/{fsm_id}/export:
+    post:
+      tags: [Export]
+      summary: Export FSM
+      description: Generate HDL code from FSM
+      operationId: exportFSM
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Export generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+            text/plain:
+              schema:
+                type: string
+                description: Raw HDL code
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /fsms/{fsm_id}/export/{format}:
+    get:
+      tags: [Export]
+      summary: Get cached export
+      description: Retrieve previously generated export from cache
+      operationId: getCachedExport
+      parameters:
+        - $ref: '#/components/parameters/FSMId'
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [verilog, vhdl, json, csv, testbench]
+      responses:
+        '200':
+          description: Cached export retrieved
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================
+  # CATEGORY ENDPOINTS
+  # ============================================================
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      description: Get all FSM categories with hierarchy
+      operationId: listCategories
+      responses:
+        '200':
+          description: Categories retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+  /categories/{category_id}:
+    get:
+      tags: [Categories]
+      summary: Get category
+      description: Get a specific category with FSM count
+      operationId: getCategory
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Category retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Category'
+
+  # ============================================================
+  # EXAMPLE ENDPOINTS
+  # ============================================================
+  /examples:
+    get:
+      tags: [Examples]
+      summary: List example FSMs
+      description: Get curated example FSMs for learning
+      operationId: listExamples
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Examples retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMListResponse'
+
+  /examples/{example_id}:
+    get:
+      tags: [Examples]
+      summary: Get example FSM
+      description: Get a specific example FSM
+      operationId: getExample
+      parameters:
+        - name: example_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Example retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSMResponse'
+
+  # ============================================================
+  # HEALTH CHECK ENDPOINTS
+  # ============================================================
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Check API health status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [up, down]
+                      cache:
+                        type: string
+                        enum: [up, down]
+                      queue:
+                        type: string
+                        enum: [up, down]
+
+  /metrics:
+    get:
+      tags: [Health]
+      summary: System metrics
+      description: Get system performance metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_count:
+                    type: integer
+                  avg_response_time_ms:
+                    type: number
+                  optimization_count:
+                    type: integer
+                  cache_hit_rate:
+                    type: number
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+components:
+  parameters:
+    FSMId:
+      name: fsm_id
+      in: path
+      required: true
+      description: UUID of the FSM
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    # FSM Schemas
+    FSMCreate:
+      type: object
+      required: [name, fsm_type, states, initial_state, transitions]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        fsm_type:
+          type: string
+          enum: [moore, mealy]
+        states:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        initial_state:
+          type: string
+        transitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transition'
+        outputs:
+          type: object
+          additionalProperties:
+            type: string
+          description: State outputs for Moore machines
+        category_id:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        visibility:
+          type: string
+          enum: [private, public, unlisted]
+          default: private
+
+    FSMUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        visibility:
+          type: string
+          enum: [private, public, unlisted]
+        category_id:
+          type: string
+          format: uuid
+
+    FSM:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        fsm_type:
+          type: string
+          enum: [moore, mealy]
+        definition:
+          type: object
+          description: Complete FSM structure as JSONB
+        state_count:
+          type: integer
+        transition_count:
+          type: integer
+        initial_state:
+          type: string
+        bit_width:
+          type: integer
+        encoding_type:
+          type: string
+        category_id:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        visibility:
+          type: string
+          enum: [private, public, unlisted, example]
+        is_optimized:
+          type: boolean
+        optimization_algorithm:
+          type: string
+        dummy_state_count:
+          type: integer
+        avg_hamming_distance:
+          type: number
+        view_count:
+          type: integer
+        fork_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Transition:
+      type: object
+      required: [from_state, to_state]
+      properties:
+        from_state:
+          type: string
+        to_state:
+          type: string
+        input:
+          type: string
+        output:
+          type: string
+        label:
+          type: string
+
+    # Algorithm Schemas
+    OptimizationRequest:
+      type: object
+      required: [algorithm]
+      properties:
+        algorithm:
+          type: string
+          enum: [greedy, bfs_optimal, global_sa, global_ga, hybrid]
+        async:
+          type: boolean
+          default: false
+          description: Run optimization asynchronously
+        options:
+          type: object
+          properties:
+            timeout_ms:
+              type: integer
+              default: 30000
+            max_iterations:
+              type: integer
+            temperature:
+              type: number
+              description: For simulated annealing
+            population_size:
+              type: integer
+              description: For genetic algorithm
+
+    OptimizationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            optimized_fsm_id:
+              type: string
+              format: uuid
+            algorithm:
+              type: string
+            execution_time_ms:
+              type: number
+            dummy_states_added:
+              type: integer
+            total_states:
+              type: integer
+            improvement_percentage:
+              type: number
+            metrics:
+              type: object
+              properties:
+                avg_hamming_before:
+                  type: number
+                avg_hamming_after:
+                  type: number
+                max_hamming_before:
+                  type: integer
+                max_hamming_after:
+                  type: integer
+
+    AlgorithmResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        original_fsm_id:
+          type: string
+          format: uuid
+        optimized_fsm_id:
+          type: string
+          format: uuid
+        algorithm:
+          type: string
+        algorithm_version:
+          type: string
+        dummy_states_added:
+          type: integer
+        total_states_final:
+          type: integer
+        avg_hamming_before:
+          type: number
+        avg_hamming_after:
+          type: number
+        improvement_percentage:
+          type: number
+        execution_time_ms:
+          type: integer
+        success:
+          type: boolean
+        error_message:
+          type: string
+        executed_at:
+          type: string
+          format: date-time
+
+    TaskStatus:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        result:
+          type: object
+        error:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # Export Schemas
+    ExportRequest:
+      type: object
+      required: [format]
+      properties:
+        format:
+          type: string
+          enum: [verilog, vhdl, json, csv, testbench]
+        options:
+          type: object
+          properties:
+            module_name:
+              type: string
+            include_comments:
+              type: boolean
+              default: true
+            style:
+              type: string
+              enum: [standard, compact, verbose]
+
+    ExportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            content:
+              type: string
+            format:
+              type: string
+            file_size_bytes:
+              type: integer
+            generated_at:
+              type: string
+              format: date-time
+            cache_key:
+              type: string
+
+    # Category Schema
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        parent_category_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+        fsm_count:
+          type: integer
+
+    # Response Wrappers
+    FSMResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/FSM'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+
+    FSMListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FSM'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+
+    # Common Schemas
+    ResponseMetadata:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        request_id:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_items:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        request_id:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [false]
+              error:
+                $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [false]
+              error:
+                $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [false]
+              error:
+                $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [false]
+              error:
+                $ref: '#/components/schemas/Error'
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                enum: [false]
+              error:
+                $ref: '#/components/schemas/Error'
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authenticated requests (Phase 4)
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for programmatic access (Phase 4)
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+  - {}  # Allow anonymous access

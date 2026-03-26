@@ -1,0 +1,26 @@
+{
+  "name": "Elevator Controller",
+  "description": "3-floor elevator with explicit moving states",
+  "type": "moore",
+  "states": ["Floor1", "Moving1to2", "Floor2", "Moving2to3", "Floor3", "Moving3to2", "Moving2to1"],
+  "initial_state": "Floor1",
+  "transitions": [
+    {"from_state": "Floor1", "to_state": "Moving1to2", "input": "up"},
+    {"from_state": "Moving1to2", "to_state": "Floor2"},
+    {"from_state": "Floor2", "to_state": "Moving2to3", "input": "up"},
+    {"from_state": "Floor2", "to_state": "Moving2to1", "input": "down"},
+    {"from_state": "Moving2to3", "to_state": "Floor3"},
+    {"from_state": "Floor3", "to_state": "Moving3to2", "input": "down"},
+    {"from_state": "Moving3to2", "to_state": "Floor2"},
+    {"from_state": "Moving2to1", "to_state": "Floor1"}
+  ],
+  "outputs": {
+    "Floor1": "001",
+    "Moving1to2": "010",
+    "Floor2": "011",
+    "Moving2to3": "100",
+    "Floor3": "101",
+    "Moving3to2": "110",
+    "Moving2to1": "111"
+  }
+}

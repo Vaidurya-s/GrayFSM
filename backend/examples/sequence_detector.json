@@ -1,0 +1,17 @@
+{
+  "name": "Sequence Detector 101",
+  "description": "Mealy machine that detects the sequence '101' in binary input",
+  "type": "mealy",
+  "states": ["S0", "S1", "S2", "S3"],
+  "initial_state": "S0",
+  "transitions": [
+    {"from_state": "S0", "to_state": "S0", "input": "0", "output": "0"},
+    {"from_state": "S0", "to_state": "S1", "input": "1", "output": "0"},
+    {"from_state": "S1", "to_state": "S2", "input": "0", "output": "0"},
+    {"from_state": "S1", "to_state": "S1", "input": "1", "output": "0"},
+    {"from_state": "S2", "to_state": "S0", "input": "0", "output": "0"},
+    {"from_state": "S2", "to_state": "S3", "input": "1", "output": "1"},
+    {"from_state": "S3", "to_state": "S2", "input": "0", "output": "0"},
+    {"from_state": "S3", "to_state": "S1", "input": "1", "output": "0"}
+  ]
+}

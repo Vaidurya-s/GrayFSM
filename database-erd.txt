@@ -1,0 +1,568 @@
+================================================================================
+GrayFSM Database Entity Relationship Diagram (Text Format)
+Version: 1.0
+Date: November 2025
+================================================================================
+
+LEGEND:
+-------
+PK  = Primary Key
+FK  = Foreign Key
+UQ  = Unique Constraint
+IDX = Indexed Column
+*   = Required (NOT NULL)
+?   = Optional (NULL)
+
+================================================================================
+PHASE 1: CORE ENTITIES (MVP)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              CATEGORIES                                  │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ name*            │ VARCHAR(100) UQ                                      │
+│ slug*            │ VARCHAR(100) UQ IDX                                  │
+│ description?     │ TEXT                                                 │
+│ icon?            │ VARCHAR(50)                                          │
+│ parent_category_id? │ UUID FK(categories.id)                          │
+│ level*           │ INTEGER (default: 0)                                │
+│ full_path?       │ VARCHAR(500)                                         │
+│ display_order*   │ INTEGER (default: 0)                                │
+│ color?           │ VARCHAR(20)                                          │
+│ fsm_count*       │ INTEGER (default: 0) [denormalized]                 │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE                            │
+│ updated_at*      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: slug, parent_category_id, level, display_order
+
+Sample Data:
+- Controllers
+- Processors
+- Protocols
+- Academic
+- Safety-Critical
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                USERS (Phase 4)                           │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ username*        │ VARCHAR(50) UQ IDX                                   │
+│ email*           │ VARCHAR(255) UQ IDX                                  │
+│ password_hash*   │ VARCHAR(255)                                         │
+│ email_verified*  │ BOOLEAN (default: false)                            │
+│ display_name?    │ VARCHAR(100)                                         │
+│ bio?             │ TEXT                                                 │
+│ avatar_url?      │ VARCHAR(500)                                         │
+│ website?         │ VARCHAR(255)                                         │
+│ location?        │ VARCHAR(100)                                         │
+│ role*            │ ENUM(guest, user, premium, educator, admin)         │
+│ status*          │ ENUM(active, suspended, deleted)                    │
+│ preferences*     │ JSONB (default: {})                                 │
+│ fsms_created*    │ INTEGER (default: 0)                                │
+│ fsms_shared*     │ INTEGER (default: 0)                                │
+│ total_optimizations* │ INTEGER (default: 0)                           │
+│ api_key?         │ VARCHAR(64) UQ                                       │
+│ api_key_created_at? │ TIMESTAMP WITH TIME ZONE                        │
+│ api_rate_limit*  │ INTEGER (default: 100)                              │
+│ github_id?       │ VARCHAR(100) UQ                                      │
+│ google_id?       │ VARCHAR(100) UQ                                      │
+│ last_login_at?   │ TIMESTAMP WITH TIME ZONE                            │
+│ last_login_ip?   │ INET                                                 │
+│ failed_login_attempts* │ INTEGER (default: 0)                         │
+│ locked_until?    │ TIMESTAMP WITH TIME ZONE                            │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE                            │
+│ updated_at*      │ TIMESTAMP WITH TIME ZONE                            │
+│ deleted_at?      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: username, email, role, status, api_key, created_at
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                FSMs (Primary Entity)                     │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ name*            │ VARCHAR(255) IDX                                     │
+│ description?     │ TEXT                                                 │
+│ fsm_type*        │ ENUM(moore, mealy) IDX                              │
+│ definition*      │ JSONB (GIN indexed) - Complete FSM structure        │
+│ state_count*     │ INTEGER (> 0)                                       │
+│ transition_count*│ INTEGER (>= 0)                                      │
+│ initial_state*   │ VARCHAR(100)                                         │
+│ bit_width*       │ INTEGER (> 0)                                       │
+│ encoding_type*   │ VARCHAR(50) (default: 'binary')                     │
+│ category_id?     │ UUID FK(categories.id) IDX                          │
+│ tags?            │ TEXT[] (GIN indexed)                                │
+│ version*         │ INTEGER (default: 1)                                │
+│ parent_fsm_id?   │ UUID FK(fsms.id) - For forked FSMs                 │
+│ created_by?      │ UUID FK(users.id) IDX                               │
+│ visibility*      │ ENUM(private, public, unlisted, example) IDX        │
+│ is_optimized*    │ BOOLEAN (default: false) IDX                        │
+│ optimization_algorithm? │ VARCHAR(100)                                 │
+│ dummy_state_count* │ INTEGER (default: 0)                             │
+│ avg_hamming_distance? │ DECIMAL(5,2)                                  │
+│ max_hamming_distance? │ INTEGER                                        │
+│ optimization_improvement_pct? │ DECIMAL(5,2)                          │
+│ view_count*      │ INTEGER (default: 0) IDX                            │
+│ fork_count*      │ INTEGER (default: 0)                                │
+│ export_count*    │ INTEGER (default: 0)                                │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ updated_at*      │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ last_accessed_at*│ TIMESTAMP WITH TIME ZONE                            │
+│ search_vector    │ tsvector GENERATED (GIN indexed) - For full-text   │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: fsm_type, category_id, created_by, visibility, is_optimized,
+         created_at, updated_at, view_count, tags (GIN), definition (GIN),
+         search_vector (GIN)
+Special Indexes: (visibility, is_optimized, created_at) composite
+
+Relationships:
+- belongs to: categories (many-to-one)
+- belongs to: users (many-to-one) [Phase 4]
+- self-references: parent_fsm_id (many-to-one)
+- has many: states, transitions, algorithm_results, export_cache
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              STATES (Optional - Normalized)              │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ state_id*        │ VARCHAR(100) - Logical ID like "S0", "S1"           │
+│ label?           │ VARCHAR(255)                                         │
+│ binary_encoding? │ VARCHAR(20)                                          │
+│ gray_encoding?   │ VARCHAR(20)                                          │
+│ output_value?    │ VARCHAR(100) - For Moore machines                   │
+│ is_dummy*        │ BOOLEAN (default: false) IDX                        │
+│ inserted_for?    │ VARCHAR(255)                                         │
+│ position_x?      │ DECIMAL(10,2)                                        │
+│ position_y?      │ DECIMAL(10,2)                                        │
+│ color?           │ VARCHAR(20)                                          │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Unique Constraint: (fsm_id, state_id)
+Indexes: fsm_id, is_dummy, state_id
+
+Relationships:
+- belongs to: fsms (many-to-one)
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          TRANSITIONS (Optional - Normalized)             │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ from_state_id*   │ UUID FK(states.id) ON DELETE CASCADE IDX            │
+│ to_state_id*     │ UUID FK(states.id) ON DELETE CASCADE IDX            │
+│ input_value?     │ VARCHAR(100)                                         │
+│ output_value?    │ VARCHAR(100) - For Mealy machines                   │
+│ label?           │ VARCHAR(255)                                         │
+│ hamming_distance?│ INTEGER IDX                                          │
+│ requires_dummy*  │ BOOLEAN (default: false) IDX                        │
+│ weight*          │ DECIMAL(10,2) (default: 1.0)                        │
+│ priority*        │ INTEGER (default: 0)                                │
+│ path_state_ids?  │ UUID[] - Array of intermediate dummy states         │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: fsm_id, from_state_id, to_state_id, requires_dummy, hamming_distance
+
+Relationships:
+- belongs to: fsms (many-to-one)
+- belongs to: states (from_state) (many-to-one)
+- belongs to: states (to_state) (many-to-one)
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          ALGORITHM_RESULTS                               │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ original_fsm_id* │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ optimized_fsm_id?│ UUID FK(fsms.id) ON DELETE SET NULL IDX             │
+│ algorithm*       │ ENUM(greedy, bfs_optimal, global_sa, ...) IDX       │
+│ algorithm_version? │ VARCHAR(50)                                       │
+│ algorithm_parameters? │ JSONB                                          │
+│ dummy_states_added* │ INTEGER (>= 0)                                  │
+│ total_states_final* │ INTEGER (> 0)                                   │
+│ transitions_modified* │ INTEGER (>= 0)                                │
+│ avg_hamming_before? │ DECIMAL(5,2)                                    │
+│ avg_hamming_after? │ DECIMAL(5,2)                                     │
+│ max_hamming_before? │ INTEGER                                         │
+│ max_hamming_after? │ INTEGER                                          │
+│ improvement_percentage? │ DECIMAL(5,2) IDX                           │
+│ execution_time_ms* │ BIGINT (>= 0) IDX                                │
+│ memory_used_mb?  │ DECIMAL(10,2)                                        │
+│ cpu_utilization_pct? │ DECIMAL(5,2)                                   │
+│ encoding_strategy? │ VARCHAR(100)                                      │
+│ encoding_map?    │ JSONB - State to Gray code mapping                  │
+│ success*         │ BOOLEAN (default: true) IDX                         │
+│ error_message?   │ TEXT                                                 │
+│ executed_at*     │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ executed_by?     │ UUID FK(users.id)                                   │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: original_fsm_id, optimized_fsm_id, algorithm, success,
+         improvement_percentage DESC, execution_time_ms, executed_at DESC
+Special Indexes: (original_fsm_id, algorithm, improvement_percentage DESC)
+                 WHERE success = TRUE
+
+Relationships:
+- belongs to: fsms (original) (many-to-one)
+- belongs to: fsms (optimized) (many-to-one)
+- belongs to: users (many-to-one) [Phase 4]
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            EXPORT_CACHE                                  │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ format*          │ ENUM(verilog, vhdl, json, csv, ...) IDX             │
+│ content*         │ TEXT - Generated code                                │
+│ content_hash*    │ VARCHAR(64) IDX - SHA-256 hash                      │
+│ template_version? │ VARCHAR(50)                                        │
+│ generation_options? │ JSONB                                            │
+│ file_size_bytes? │ INTEGER                                              │
+│ generated_at*    │ TIMESTAMP WITH TIME ZONE                            │
+│ last_accessed_at*│ TIMESTAMP WITH TIME ZONE                            │
+│ access_count*    │ INTEGER (default: 0)                                │
+│ expires_at?      │ TIMESTAMP WITH TIME ZONE IDX                        │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Unique Constraint: (fsm_id, format, content_hash)
+Indexes: fsm_id, format, expires_at, content_hash
+
+Relationships:
+- belongs to: fsms (many-to-one)
+
+
+================================================================================
+PHASE 4: COMMUNITY ENTITIES
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                SHARES                                    │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ shared_by*       │ UUID FK(users.id) ON DELETE CASCADE IDX             │
+│ share_token*     │ VARCHAR(64) UQ IDX                                   │
+│ permission*      │ ENUM(view, comment, edit, admin) (default: view)   │
+│ is_public*       │ BOOLEAN (default: false) IDX                        │
+│ password_hash?   │ VARCHAR(255)                                         │
+│ max_views?       │ INTEGER                                              │
+│ view_count*      │ INTEGER (default: 0)                                │
+│ expires_at?      │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ description?     │ TEXT                                                 │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE                            │
+│ last_accessed_at? │ TIMESTAMP WITH TIME ZONE                           │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: fsm_id, shared_by, share_token, is_public, expires_at
+
+Relationships:
+- belongs to: fsms (many-to-one)
+- belongs to: users (many-to-one)
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              COMMENTS                                    │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ user_id*         │ UUID FK(users.id) ON DELETE CASCADE IDX             │
+│ content*         │ TEXT                                                 │
+│ content_html?    │ TEXT - Rendered markdown                            │
+│ parent_comment_id? │ UUID FK(comments.id) ON DELETE CASCADE IDX       │
+│ thread_depth*    │ INTEGER (default: 0)                                │
+│ is_edited*       │ BOOLEAN (default: false)                            │
+│ is_deleted*      │ BOOLEAN (default: false) IDX                        │
+│ deleted_reason?  │ TEXT                                                 │
+│ upvote_count*    │ INTEGER (default: 0)                                │
+│ downvote_count*  │ INTEGER (default: 0)                                │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ updated_at*      │ TIMESTAMP WITH TIME ZONE                            │
+│ deleted_at?      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: fsm_id, user_id, parent_comment_id, created_at DESC, is_deleted
+
+Relationships:
+- belongs to: fsms (many-to-one)
+- belongs to: users (many-to-one)
+- self-references: parent_comment_id (many-to-one) for threading
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                VOTES                                     │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ user_id*         │ UUID FK(users.id) ON DELETE CASCADE IDX             │
+│ vote_type*       │ ENUM(upvote, downvote, favorite, star) IDX          │
+│ value*           │ INTEGER (default: 1) - For star ratings (1-5)       │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ updated_at*      │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Unique Constraint: (fsm_id, user_id, vote_type)
+Indexes: fsm_id, user_id, vote_type, created_at DESC
+
+Relationships:
+- belongs to: fsms (many-to-one)
+- belongs to: users (many-to-one)
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            BENCHMARKS                                    │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ fsm_id*          │ UUID FK(fsms.id) ON DELETE CASCADE IDX              │
+│ algorithm_result_id? │ UUID FK(algorithm_results.id) IDX              │
+│ suite_name?      │ VARCHAR(100) IDX                                     │
+│ benchmark_name?  │ VARCHAR(100)                                         │
+│ logic_elements?  │ INTEGER                                              │
+│ registers?       │ INTEGER                                              │
+│ luts?            │ INTEGER                                              │
+│ max_frequency_mhz? │ DECIMAL(10,2)                                     │
+│ power_consumption_mw? │ DECIMAL(10,3)                                  │
+│ synthesis_tool?  │ VARCHAR(100)                                         │
+│ target_device?   │ VARCHAR(100)                                         │
+│ setup_time_ns?   │ DECIMAL(10,3)                                        │
+│ hold_time_ns?    │ DECIMAL(10,3)                                        │
+│ clock_to_q_ns?   │ DECIMAL(10,3)                                        │
+│ improvement_vs_binary_pct? │ DECIMAL(5,2)                              │
+│ improvement_vs_naive_gray_pct? │ DECIMAL(5,2)                          │
+│ submitted_by?    │ UUID FK(users.id)                                   │
+│ submitted_at*    │ TIMESTAMP WITH TIME ZONE IDX                        │
+│ verified*        │ BOOLEAN (default: false) IDX                        │
+│ verification_notes? │ TEXT                                             │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: fsm_id, algorithm_result_id, suite_name, verified, submitted_at DESC
+
+Relationships:
+- belongs to: fsms (many-to-one)
+- belongs to: algorithm_results (many-to-one)
+- belongs to: users (many-to-one)
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          ACTIVITY_LOG                                    │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID PK                                              │
+│ user_id?         │ UUID FK(users.id) ON DELETE SET NULL IDX            │
+│ ip_address?      │ INET                                                 │
+│ user_agent?      │ TEXT                                                 │
+│ activity_type*   │ ENUM(fsm_created, fsm_updated, ...) IDX             │
+│ entity_type?     │ VARCHAR(50)                                          │
+│ entity_id?       │ UUID                                                 │
+│ description?     │ TEXT                                                 │
+│ metadata?        │ JSONB                                                │
+│ created_at*      │ TIMESTAMP WITH TIME ZONE IDX                        │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Indexes: user_id, activity_type, (entity_type, entity_id),
+         created_at DESC
+Note: Consider partitioning by month for large datasets
+
+Relationships:
+- belongs to: users (many-to-one)
+
+
+================================================================================
+MATERIALIZED VIEWS (Computed Periodically)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          TRENDING_FSMS                                   │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ id               │ UUID                                                 │
+│ name             │ VARCHAR(255)                                         │
+│ description      │ TEXT                                                 │
+│ fsm_type         │ ENUM(moore, mealy)                                  │
+│ state_count      │ INTEGER                                              │
+│ view_count       │ INTEGER                                              │
+│ recent_view_count│ INTEGER - Views in last 7 days                      │
+│ favorite_count   │ INTEGER                                              │
+│ trending_score   │ NUMERIC - Computed score                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Refresh: Hourly via CRON job
+Indexes: id (unique), trending_score DESC
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      CATEGORY_STATISTICS                                 │
+├──────────────────┬──────────────────────────────────────────────────────┤
+│ category_id      │ UUID                                                 │
+│ category_name    │ VARCHAR(100)                                         │
+│ category_slug    │ VARCHAR(100)                                         │
+│ fsm_count        │ BIGINT                                               │
+│ avg_state_count  │ NUMERIC                                              │
+│ avg_dummy_states │ NUMERIC                                              │
+│ avg_view_count   │ NUMERIC                                              │
+│ latest_fsm_at    │ TIMESTAMP WITH TIME ZONE                            │
+└──────────────────┴──────────────────────────────────────────────────────┘
+Refresh: Daily via CRON job
+Indexes: category_id (unique)
+
+
+================================================================================
+RELATIONSHIP SUMMARY (Visual)
+================================================================================
+
+CORE DATA FLOW:
+---------------
+
+    ┌──────────┐
+    │  USERS   │────────┐
+    └────┬─────┘        │
+         │              │ created_by
+         │              │
+         │         ┌────▼────┐
+         │         │  FSMs   │◄──────────┐ category_id
+         │         └────┬────┘           │
+         │              │                │
+    shared_by           │ fsm_id    ┌────┴────────┐
+         │              │           │ CATEGORIES  │
+         │         ┌────┴────┬──────┴──────┬──────┘
+         │         │         │             │
+         │    ┌────▼───┐ ┌───▼────┐   ┌───▼────┐
+         │    │STATES  │ │TRANSITIONS│ │ALGORITHM│
+         │    └────────┘ └────────┘   │RESULTS │
+         │                             └────────┘
+         │
+    ┌────▼────┐
+    │ SHARES  │
+    └─────────┘
+
+
+COMMUNITY FEATURES:
+-------------------
+
+    ┌──────────┐
+    │  USERS   │────────┐
+    └────┬─────┘        │
+         │              │ user_id
+         │              │
+         │         ┌────▼────┐
+         │         │  FSMs   │
+         │         └────┬────┘
+         │              │
+         │              │ fsm_id
+         │         ┌────┴────┬──────────┬──────────┐
+         │         │         │          │          │
+    ┌────▼───┐ ┌──▼──────┐ ┌▼────────┐ ┌▼────────┐ ┌▼────────┐
+    │COMMENTS│ │  VOTES  │ │ SHARES  │ │BENCHMARK│ │ACTIVITY │
+    └────────┘ └─────────┘ └─────────┘ └─────────┘ │  LOG    │
+                                                     └─────────┘
+
+
+OPTIMIZATION WORKFLOW:
+----------------------
+
+    Original FSM
+        │
+        │ reference
+        ▼
+    ┌────────────────┐
+    │ ALGORITHM      │
+    │ RESULTS        │
+    └────────┬───────┘
+             │
+             │ points to
+             ▼
+    Optimized FSM
+        │
+        │ cached as
+        ▼
+    ┌────────────────┐
+    │ EXPORT_CACHE   │
+    │ (Verilog/VHDL) │
+    └────────────────┘
+
+
+================================================================================
+DATA VOLUME ESTIMATES
+================================================================================
+
+Entity                  Records (Year 1)    Storage/Record      Total Storage
+------------------------------------------------------------------------------
+categories              50                  500 B               25 KB
+users                   1,000               2 KB                2 MB
+fsms                    10,000              20 KB               200 MB
+states                  50,000              200 B               10 MB
+transitions             100,000             300 B               30 MB
+algorithm_results       50,000              1 KB                50 MB
+export_cache            30,000              50 KB               1.5 GB
+shares                  5,000               500 B               2.5 MB
+comments                20,000              1 KB                20 MB
+votes                   50,000              200 B               10 MB
+benchmarks              2,000               2 KB                4 MB
+activity_log            500,000             500 B               250 MB
+------------------------------------------------------------------------------
+TOTAL (estimated)                                               ~2.1 GB
+
+
+With indexes and overhead: ~3-4 GB for first year
+Mature system (5 years):   ~15-25 GB
+
+
+================================================================================
+INDEX SUMMARY
+================================================================================
+
+High-Value Indexes (Create First):
+- fsms.search_vector (GIN) - Full-text search
+- fsms.definition (GIN) - JSONB queries
+- fsms(visibility, is_optimized, created_at) - Browse queries
+- algorithm_results(original_fsm_id, algorithm, improvement_percentage)
+
+Medium-Value Indexes:
+- All foreign keys (automatic with references)
+- fsms.tags (GIN) - Tag filtering
+- fsms.created_by - User FSMs
+- comments.fsm_id - Comment fetching
+- votes.fsm_id - Rating aggregation
+
+Partial Indexes (Condition-Based):
+- fsms WHERE visibility = 'public' AND is_optimized = TRUE
+- algorithm_results WHERE success = TRUE
+- states WHERE is_dummy = FALSE
+
+
+================================================================================
+SECURITY CONSIDERATIONS
+================================================================================
+
+Row-Level Security (RLS) Policies:
+- fsms: Users see own FSMs + public FSMs + shared FSMs
+- comments: Anyone can read public, only authors can edit/delete
+- votes: Users can only vote once per FSM per vote_type
+- shares: Only share creator can modify
+
+Field-Level Security:
+- users.password_hash: Never expose in queries
+- users.email: Only visible to self and admins
+- shares.password_hash: Never expose
+- users.api_key: Only visible to owner
+
+Rate Limiting (Application Layer):
+- API: 100 requests/hour per user (configurable)
+- FSM creation: 10/hour per user
+- Comments: 30/hour per user
+
+
+================================================================================
+BACKUP STRATEGY
+================================================================================
+
+Frequency:
+- Full backup: Daily
+- WAL archiving: Continuous (PostgreSQL)
+- Materialized views: Hourly refresh
+
+Retention:
+- Daily backups: 30 days
+- Weekly backups: 1 year
+- Monthly backups: 5 years
+
+Point-in-Time Recovery: Yes (via WAL)
+
+
+================================================================================
+END OF ENTITY RELATIONSHIP DIAGRAM
+================================================================================

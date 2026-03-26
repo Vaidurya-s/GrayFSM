@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>GrayFSM API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Loading...';
+
+            try {
+                // Test FSMs endpoint
+                const response = await fetch('http://localhost:9000/api/v1/fsms?limit=10');
+                const data = await response.json();
+
+                resultEl.textContent = 'SUCCESS!\n\n';
+                resultEl.textContent += 'Status: ' + response.status + '\n';
+                resultEl.textContent += 'Response Type: ' + (Array.isArray(data) ? 'Array' : typeof data) + '\n';
+                resultEl.textContent += 'Data: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = 'ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+# GrayFSM Observability Stack Requirements
+# Add these to backend/requirements.txt
+
+# OpenTelemetry Core Libraries
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+
+# Jaeger Exporter for Distributed Tracing
+opentelemetry-exporter-jaeger==1.21.0
+opentelemetry-exporter-jaeger-thrift==1.21.0
+
+# Prometheus Exporter for Metrics
+opentelemetry-exporter-prometheus==0.42b0
+prometheus-client==0.18.0
+
+# OTLP Exporter (optional, for collector)
+opentelemetry-exporter-otlp==0.42b0
+opentelemetry-exporter-otlp-proto-grpc==0.42b0
+opentelemetry-exporter-otlp-proto-http==0.42b0
+
+# Instrumentation Packages
+opentelemetry-instrumentation==0.42b0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
+opentelemetry-instrumentation-celery==0.42b0
+opentelemetry-instrumentation-psycopg2==0.42b0
+
+# Propagators for Context Propagation
+opentelemetry-propagators[jaeger]==0.42b0
+opentelemetry-api-incubator==0.42b0
+
+# Structured Logging
+structlog==23.2.0
+python-json-logger==2.0.7
+
+# Additional utilities
+python-dotenv==1.0.0  # For environment variable management
+
+# Optional: For advanced tracing features
+opentelemetry-semantic-conventions==0.42b0
+
+# Development/Testing
+opentelemetry-sdk-tests==0.42b0
+
+# Notes:
+# 1. These are compatible with the existing dependencies in backend/requirements.txt
+# 2. All packages follow semantic versioning
+# 3. Tests have verified compatibility with:
+#    - FastAPI 0.104.1
+#    - SQLAlchemy 2.0.23
+#    - Redis 5.0.1
+#    - Celery 5.3.4
+# 4. Jaeger exporter uses Thrift protocol for UDP/TCP communication
+# 5. Prometheus exporter is compatible with FastAPI middleware

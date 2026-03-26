@@ -1,0 +1,306 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-grayfsm-config
+  namespace: grayfsm-monitoring
+data:
+  grayfsm-scrape.yml: |
+    # GrayFSM backend with OpenTelemetry metrics
+    - job_name: 'grayfsm-backend-otel'
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+              - grayfsm
+      relabel_configs:
+        # Only scrape pods with prometheus scrape annotation
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: 'true'
+
+        # Get scrape path from annotation
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+
+        # Get port from annotation
+        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+
+        # Add labels
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: pod
+
+        - source_labels: [__meta_kubernetes_pod_label_component]
+          action: replace
+          target_label: component
+
+        - source_labels: [__meta_kubernetes_pod_label_version]
+          action: replace
+          target_label: version
+
+      metric_relabel_configs:
+        # Add cluster label
+        - source_labels: []
+          target_label: cluster
+          replacement: 'grayfsm-prod'
+
+      scrape_interval: 15s
+      scrape_timeout: 10s
+
+    # Jaeger metrics
+    - job_name: 'jaeger'
+      kubernetes_sd_configs:
+        - role: service
+          namespaces:
+            names:
+              - observability
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_service_name]
+          action: keep
+          regex: 'jaeger'
+
+        - source_labels: [__meta_kubernetes_service_port_name]
+          action: keep
+          regex: 'jaeger-metrics'
+
+      scrape_interval: 30s
+      scrape_timeout: 10s
+
+    # Loki metrics
+    - job_name: 'loki'
+      kubernetes_sd_configs:
+        - role: service
+          namespaces:
+            names:
+              - observability
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_service_name]
+          action: keep
+          regex: 'loki'
+
+      scrape_interval: 30s
+      scrape_timeout: 10s
+
+    # Promtail metrics
+    - job_name: 'promtail'
+      kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+              - observability
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          action: keep
+          regex: 'promtail'
+
+        - source_labels: [__meta_kubernetes_pod_node_name]
+          action: replace
+          target_label: node
+
+      scrape_interval: 30s
+      scrape_timeout: 10s
+
+  grayfsm-recording.yml: |
+    # Recording rules for GrayFSM
+    groups:
+    - name: grayfsm-business
+      interval: 1m
+      rules:
+      # FSM metrics
+      - record: grayfsm:fsm:created:rate5m
+        expr: rate(grayfsm_fsm_created_total[5m])
+
+      - record: grayfsm:fsm:optimized:rate5m
+        expr: rate(grayfsm_fsm_optimized_total[5m])
+
+      # Optimization metrics
+      - record: grayfsm:optimization:success_rate
+        expr: |
+          (rate(grayfsm_optimization_completed_total[5m]) /
+           (rate(grayfsm_optimization_started_total[5m]) + 0.001))
+
+      - record: grayfsm:optimization:duration:p50
+        expr: histogram_quantile(0.50, rate(grayfsm_optimization_duration_seconds_bucket[5m]))
+
+      - record: grayfsm:optimization:duration:p95
+        expr: histogram_quantile(0.95, rate(grayfsm_optimization_duration_seconds_bucket[5m]))
+
+      - record: grayfsm:optimization:duration:p99
+        expr: histogram_quantile(0.99, rate(grayfsm_optimization_duration_seconds_bucket[5m]))
+
+      # Export metrics
+      - record: grayfsm:export:success_rate
+        expr: |
+          (rate(grayfsm_export_completed_total[5m]) /
+           (rate(grayfsm_export_started_total[5m]) + 0.001))
+
+      - record: grayfsm:export:avg_size
+        expr: avg(grayfsm_export_size_bytes)
+
+    - name: grayfsm-slo
+      interval: 1m
+      rules:
+      # API availability
+      - record: grayfsm:api:availability
+        expr: |
+          (1 - (rate(http_requests_total{status=~"5.."}[5m]) /
+                 (rate(http_requests_total[5m]) + 0.001)))
+
+      # Request latency
+      - record: grayfsm:api:latency:p95
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+      - record: grayfsm:api:latency:p99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+      # Error rates
+      - record: grayfsm:api:error_rate:4xx
+        expr: rate(http_requests_total{status=~"4.."}[5m])
+
+      - record: grayfsm:api:error_rate:5xx
+        expr: rate(http_requests_total{status=~"5.."}[5m])
+
+    - name: grayfsm-database
+      interval: 1m
+      rules:
+      # Database query latency
+      - record: grayfsm:db:query:duration:p50
+        expr: histogram_quantile(0.50, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+
+      - record: grayfsm:db:query:duration:p95
+        expr: histogram_quantile(0.95, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+
+      - record: grayfsm:db:query:duration:p99
+        expr: histogram_quantile(0.99, rate(grayfsm_db_query_duration_seconds_bucket[5m]))
+
+      # Connection pool utilization
+      - record: grayfsm:db:connection:utilization
+        expr: grayfsm_db_active_connections / 20
+
+      # Cache hit ratio
+      - record: grayfsm:cache:hit_ratio
+        expr: |
+          (rate(grayfsm_cache_hit_total[5m]) /
+           (rate(grayfsm_cache_hit_total[5m]) + rate(grayfsm_cache_miss_total[5m]) + 0.001))
+
+  grayfsm-alerts.yml: |
+    # Alert rules for GrayFSM
+    groups:
+    - name: grayfsm-alerts
+      interval: 30s
+      rules:
+      # Business logic alerts
+      - alert: HighOptimizationFailureRate
+        expr: |
+          (rate(grayfsm_optimization_failed_total[5m]) /
+           (rate(grayfsm_optimization_started_total[5m]) + 0.001)) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: optimization
+        annotations:
+          summary: "High optimization failure rate"
+          description: "Optimization failure rate is {{ $value | humanizePercentage }} over 5 minutes"
+
+      - alert: OptimizationTimeoutIncreasing
+        expr: |
+          histogram_quantile(0.95, rate(grayfsm_optimization_duration_seconds_bucket[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: optimization
+        annotations:
+          summary: "Optimization time increasing"
+          description: "95th percentile optimization time: {{ $value | humanizeDuration }}"
+
+      # Export alerts
+      - alert: ExportFailureIncreasing
+        expr: |
+          rate(grayfsm_export_failed_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          component: export
+        annotations:
+          summary: "Export failures detected"
+          description: "Export failure rate: {{ $value | humanizePercentage }}"
+
+      # Database alerts
+      - alert: DatabaseQuerySlowdown
+        expr: |
+          histogram_quantile(0.95, rate(grayfsm_db_query_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database queries slowing down"
+          description: "95th percentile query duration: {{ $value | humanizeDuration }}"
+
+      - alert: ConnectionPoolNearCapacity
+        expr: |
+          grayfsm_db_active_connections / 20 > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool near capacity"
+          description: "Connection pool utilization: {{ $value | humanizePercentage }}"
+
+      # Cache alerts
+      - alert: LowCacheHitRatio
+        expr: |
+          (rate(grayfsm_cache_hit_total[5m]) /
+           (rate(grayfsm_cache_hit_total[5m]) + rate(grayfsm_cache_miss_total[5m]) + 0.001)) < 0.5
+        for: 15m
+        labels:
+          severity: info
+          component: cache
+        annotations:
+          summary: "Low cache hit ratio"
+          description: "Cache hit ratio: {{ $value | humanizePercentage }}"
+
+---
+# Update Prometheus ConfigMap to include GrayFSM configs
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-scrape-configs
+  namespace: grayfsm-monitoring
+data:
+  grayfsm-scrape.yml: |
+    # Include the scrape configs from above
+
+---
+# ServiceMonitor for backend with custom attributes
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: grayfsm-backend
+  namespace: grayfsm
+  labels:
+    app: grayfsm
+    component: backend
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: grayfsm
+      component: backend
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_label_version]
+      targetLabel: version
