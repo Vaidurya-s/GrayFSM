@@ -4,6 +4,7 @@ Algorithm optimization endpoints
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.algorithms import list_algorithms
@@ -46,6 +47,20 @@ async def optimize_fsm(
         422: FSM validation error
         400: Algorithm error (unknown algorithm or execution failure)
     """
+    # Handle async mode via Celery if requested
+    if request.async_mode:
+        try:
+            from app.tasks.optimization import optimize_fsm_task
+            if optimize_fsm_task is not None:
+                task = optimize_fsm_task.delay(str(fsm_id), request.algorithm, request.options)
+                return JSONResponse(status_code=202, content={
+                    "task_id": task.id,
+                    "status": "queued",
+                    "message": "Optimization queued for async processing",
+                })
+        except Exception:
+            pass  # Fall through to sync if Celery unavailable
+
     service = OptimizationService(db)
 
     try:

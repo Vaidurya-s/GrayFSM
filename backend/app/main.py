@@ -69,6 +69,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     except Exception:
         pass
 
+    # Close Redis connection
+    try:
+        from app.cache import close_redis
+        await close_redis()
+    except Exception:
+        pass
+
     await engine.dispose()
 
 

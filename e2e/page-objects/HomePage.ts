@@ -1,33 +1,22 @@
 /**
  * Home Page Object Model
+ *
+ * The actual HomePage at '/' is a simple FSM dashboard with no data-testid attributes.
+ * Navigation to other areas happens via the Navbar (data-testid="navbar").
  */
-import { Page, Locator, expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class HomePage extends BasePage {
-  // Locators
-  get heroSection(): Locator {
-    return this.page.locator('[data-testid="hero-section"]');
+  // The home page renders inside the app shell that includes the Navbar.
+  // The page body itself has no data-testid attributes, so we use semantic selectors.
+
+  get pageHeading(): Locator {
+    return this.page.locator('h1', { hasText: 'GrayFSM' });
   }
 
-  get createFSMButton(): Locator {
-    return this.page.locator('[data-testid="create-fsm-btn"]');
-  }
-
-  get importFSMButton(): Locator {
-    return this.page.locator('[data-testid="import-fsm-btn"]');
-  }
-
-  get examplesButton(): Locator {
-    return this.page.locator('[data-testid="examples-btn"]');
-  }
-
-  get featuresSection(): Locator {
-    return this.page.locator('[data-testid="features-section"]');
-  }
-
-  get documentationLink(): Locator {
-    return this.page.locator('[data-testid="documentation-link"]');
+  get yourFSMsHeading(): Locator {
+    return this.page.locator('h2', { hasText: 'Your FSMs' });
   }
 
   // Navigation methods
@@ -36,34 +25,33 @@ export class HomePage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  /**
+   * Navigate to the new FSM editor via the navbar "+ New FSM" button.
+   */
   async clickCreateFSM(): Promise<void> {
-    await this.createFSMButton.click();
-    await this.page.waitForURL('**/editor');
+    await this.navNewFSMButton.click();
+    await this.page.waitForURL('**/editor/new');
   }
 
-  async clickImportFSM(): Promise<void> {
-    await this.importFSMButton.click();
-    await this.page.waitForURL('**/import');
-  }
-
+  /**
+   * Navigate to the Examples page via the navbar link.
+   */
   async clickExamples(): Promise<void> {
-    await this.examplesButton.click();
+    await this.navLink('examples').click();
     await this.page.waitForURL('**/examples');
   }
 
-  async clickDocumentation(): Promise<void> {
-    await this.documentationLink.click();
+  /**
+   * Navigate to the Gallery page via the navbar link.
+   */
+  async clickGallery(): Promise<void> {
+    await this.navLink('gallery').click();
+    await this.page.waitForURL('**/gallery');
   }
 
   // Assertion methods
   async expectHomePageLoaded(): Promise<void> {
-    await expect(this.heroSection).toBeVisible();
-    await expect(this.createFSMButton).toBeVisible();
-    await expect(this.importFSMButton).toBeVisible();
-    await expect(this.examplesButton).toBeVisible();
-  }
-
-  async expectFeaturesSectionVisible(): Promise<void> {
-    await expect(this.featuresSection).toBeVisible();
+    await expect(this.navbar).toBeVisible();
+    await expect(this.navNewFSMButton).toBeVisible();
   }
 }

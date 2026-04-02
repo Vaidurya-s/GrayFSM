@@ -12,32 +12,34 @@ export class BasePage {
   }
 
   // Common locators
-  get header(): Locator {
-    return this.page.locator('header');
+  get navbar(): Locator {
+    return this.page.locator('[data-testid="navbar"]');
   }
 
-  get navigation(): Locator {
-    return this.page.locator('nav');
+  get navbarLogo(): Locator {
+    return this.page.locator('[data-testid="navbar-logo"]');
   }
 
-  get footer(): Locator {
-    return this.page.locator('footer');
+  get navNewFSMButton(): Locator {
+    return this.page.locator('[data-testid="nav-new-fsm"]');
   }
 
+  get mobileMenuButton(): Locator {
+    return this.page.locator('[data-testid="mobile-menu-button"]');
+  }
+
+  get mobileMenu(): Locator {
+    return this.page.locator('[data-testid="mobile-menu"]');
+  }
+
+  /** @deprecated No loading-spinner testid exists — use page-specific loading selectors */
   get loadingSpinner(): Locator {
-    return this.page.locator('[data-testid="loading-spinner"]');
+    return this.page.locator('.animate-spin').first();
   }
 
-  get errorMessage(): Locator {
-    return this.page.locator('[data-testid="error-message"]');
-  }
-
-  get successMessage(): Locator {
-    return this.page.locator('[data-testid="success-message"]');
-  }
-
-  get themeToggle(): Locator {
-    return this.page.locator('[data-testid="theme-toggle"]');
+  // Navigation helpers
+  navLink(label: string): Locator {
+    return this.page.locator(`[data-testid="nav-link-${label.toLowerCase()}"]`);
   }
 
   // Navigation methods
@@ -50,30 +52,13 @@ export class BasePage {
     await this.page.waitForURL(`**${path}`);
   }
 
-  // Theme methods
-  async toggleTheme(): Promise<void> {
-    await this.themeToggle.click();
-    await this.page.waitForTimeout(500); // Wait for theme transition
+  async clickNavLink(label: 'home' | 'editor' | 'gallery' | 'examples' | 'about'): Promise<void> {
+    await this.navLink(label).click();
   }
 
-  async setDarkMode(): Promise<void> {
-    const isDark = await this.isDarkMode();
-    if (!isDark) {
-      await this.toggleTheme();
-    }
-  }
-
-  async setLightMode(): Promise<void> {
-    const isDark = await this.isDarkMode();
-    if (isDark) {
-      await this.toggleTheme();
-    }
-  }
-
-  async isDarkMode(): Promise<boolean> {
-    const html = this.page.locator('html');
-    const classList = await html.getAttribute('class');
-    return classList?.includes('dark') || false;
+  async clickNavNewFSM(): Promise<void> {
+    await this.navNewFSMButton.click();
+    await this.page.waitForURL('**/editor/new');
   }
 
   // Wait methods
@@ -81,27 +66,9 @@ export class BasePage {
     await this.page.waitForLoadState('networkidle');
   }
 
-  async waitForLoading(): Promise<void> {
-    await this.loadingSpinner.waitFor({ state: 'hidden', timeout: 10000 });
-  }
-
   // Assertion methods
-  async expectToBeVisible(): Promise<void> {
-    await expect(this.page).toHaveURL(/./);
-  }
-
-  async expectErrorMessage(message?: string): Promise<void> {
-    await expect(this.errorMessage).toBeVisible();
-    if (message) {
-      await expect(this.errorMessage).toContainText(message);
-    }
-  }
-
-  async expectSuccessMessage(message?: string): Promise<void> {
-    await expect(this.successMessage).toBeVisible();
-    if (message) {
-      await expect(this.successMessage).toContainText(message);
-    }
+  async expectNavbarVisible(): Promise<void> {
+    await expect(this.navbar).toBeVisible();
   }
 
   // Screenshot methods
@@ -116,11 +83,6 @@ export class BasePage {
     await expect(this.page).toHaveScreenshot(`${name}.png`, {
       maxDiffPixels: 100,
     });
-  }
-
-  // Accessibility helpers
-  async checkA11y(): Promise<void> {
-    // This will be implemented with @axe-core/playwright
   }
 
   // Console error detection

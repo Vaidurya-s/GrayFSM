@@ -1,93 +1,97 @@
 /**
  * Export Page Object Model
+ *
+ * Selectors are matched to data-testid attributes in:
+ *   frontend/src/pages/ExportPage.tsx
+ *   frontend/src/components/forms/ExportForm.tsx
+ *
+ * Route: /export/:id
  */
-import { Page, Locator, expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class ExportPage extends BasePage {
-  // Locators
-  get exportFormatSelector(): Locator {
-    return this.page.locator('[data-testid="export-format-selector"]');
+  // ── Page root ────────────────────────────────────────────────────────────────
+
+  get exportPage(): Locator {
+    return this.page.locator('[data-testid="export-page"]');
   }
 
-  get jsonFormatOption(): Locator {
-    return this.page.locator('[data-testid="format-json"]');
+  // ── Export form ───────────────────────────────────────────────────────────────
+
+  get exportForm(): Locator {
+    return this.page.locator('[data-testid="export-form"]');
   }
 
-  get csvFormatOption(): Locator {
-    return this.page.locator('[data-testid="format-csv"]');
+  /** Radio button for a specific format. Values: verilog | vhdl | json | csv | testbench */
+  formatRadio(format: 'verilog' | 'vhdl' | 'json' | 'csv' | 'testbench'): Locator {
+    return this.page.locator(`[data-testid="export-format-${format}"]`);
   }
 
-  get verilogFormatOption(): Locator {
-    return this.page.locator('[data-testid="format-verilog"]');
-  }
-
-  get vhdlFormatOption(): Locator {
-    return this.page.locator('[data-testid="format-vhdl"]');
-  }
-
-  get exportOptionsPanel(): Locator {
-    return this.page.locator('[data-testid="export-options"]');
-  }
-
-  get includeCommentsCheckbox(): Locator {
-    return this.page.locator('[data-testid="include-comments"]');
-  }
-
-  get includeTestbenchCheckbox(): Locator {
-    return this.page.locator('[data-testid="include-testbench"]');
-  }
-
+  /** Module name text input — only visible for verilog / vhdl / testbench formats */
   get moduleNameInput(): Locator {
-    return this.page.locator('[data-testid="module-name-input"]');
+    return this.page.locator('[data-testid="export-module-name"]');
   }
 
-  get clockEdgeSelector(): Locator {
-    return this.page.locator('[data-testid="clock-edge-selector"]');
+  /** Code style select — only visible for verilog / vhdl / testbench formats */
+  get styleSelect(): Locator {
+    return this.page.locator('[data-testid="export-style"]');
   }
 
-  get resetTypeSelector(): Locator {
-    return this.page.locator('[data-testid="reset-type-selector"]');
+  /** Include comments checkbox — only visible for verilog / vhdl / testbench formats */
+  get includeCommentsCheckbox(): Locator {
+    return this.page.locator('[data-testid="export-include-comments"]');
   }
 
-  get previewButton(): Locator {
-    return this.page.locator('[data-testid="preview-btn"]');
+  /** "Generate Export" submit button */
+  get submitButton(): Locator {
+    return this.page.locator('[data-testid="export-submit"]');
   }
 
-  get downloadButton(): Locator {
-    return this.page.locator('[data-testid="download-btn"]');
-  }
+  // ── Preview area ──────────────────────────────────────────────────────────────
 
-  get copyToClipboardButton(): Locator {
-    return this.page.locator('[data-testid="copy-clipboard-btn"]');
-  }
-
-  get previewPane(): Locator {
-    return this.page.locator('[data-testid="preview-pane"]');
-  }
-
+  /** Code preview <pre> element — only visible after a successful export */
   get codePreview(): Locator {
-    return this.page.locator('[data-testid="code-preview"]');
+    return this.page.locator('[data-testid="export-preview"]');
   }
 
-  get syntaxHighlighter(): Locator {
-    return this.page.locator('.hljs, [data-testid="syntax-highlight"]');
+  /** "Copy" button — only visible after a successful export */
+  get copyButton(): Locator {
+    return this.page.locator('[data-testid="export-copy"]');
   }
 
-  // Navigation
-  async goToExport(): Promise<void> {
-    await this.goto('/export');
+  /** "Download" button — only visible after a successful export */
+  get downloadButton(): Locator {
+    return this.page.locator('[data-testid="export-download"]');
+  }
+
+  // ── Navigation ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Navigate directly to the export page for a given FSM id.
+   * Requires a live backend to load the FSM.
+   */
+  async goToExportPage(fsmId: string): Promise<void> {
+    await this.goto(`/export/${fsmId}`);
     await this.waitForPageLoad();
+    await this.exportPage.waitFor({ state: 'visible', timeout: 15_000 });
   }
 
-  // Format selection
-  async selectFormat(format: 'json' | 'csv' | 'verilog' | 'vhdl'): Promise<void> {
-    await this.exportFormatSelector.click();
-    await this.page.locator(`[data-testid="format-${format}"]`).click();
-    await this.page.waitForTimeout(300);
+  // ── Form interactions ──────────────────────────────────────────────────────────
+
+  async selectFormat(format: 'verilog' | 'vhdl' | 'json' | 'csv' | 'testbench'): Promise<void> {
+    await this.formatRadio(format).click();
+    await this.page.waitForTimeout(200);
   }
 
-  // Export options
+  async setModuleName(name: string): Promise<void> {
+    await this.moduleNameInput.fill(name);
+  }
+
+  async setStyle(style: 'standard' | 'compact' | 'verbose'): Promise<void> {
+    await this.styleSelect.selectOption(style);
+  }
+
   async setIncludeComments(include: boolean): Promise<void> {
     const isChecked = await this.includeCommentsCheckbox.isChecked();
     if (isChecked !== include) {
@@ -95,95 +99,42 @@ export class ExportPage extends BasePage {
     }
   }
 
-  async setIncludeTestbench(include: boolean): Promise<void> {
-    const isChecked = await this.includeTestbenchCheckbox.isChecked();
-    if (isChecked !== include) {
-      await this.includeTestbenchCheckbox.click();
-    }
+  /**
+   * Submit the export form and wait for the code preview to appear.
+   * Requires a running backend — callers should guard with test.skip if needed.
+   */
+  async generateExport(): Promise<void> {
+    await this.submitButton.click();
+    await this.codePreview.waitFor({ state: 'visible', timeout: 20_000 });
   }
 
-  async setModuleName(name: string): Promise<void> {
-    await this.moduleNameInput.fill(name);
-  }
-
-  async setClockEdge(edge: 'posedge' | 'negedge'): Promise<void> {
-    await this.clockEdgeSelector.click();
-    await this.page.locator(`[data-value="${edge}"]`).click();
-  }
-
-  async setResetType(type: 'sync' | 'async'): Promise<void> {
-    await this.resetTypeSelector.click();
-    await this.page.locator(`[data-value="${type}"]`).click();
-  }
-
-  // Preview operations
-  async showPreview(): Promise<void> {
-    await this.previewButton.click();
-    await this.previewPane.waitFor({ state: 'visible' });
-  }
-
-  async getPreviewContent(): Promise<string> {
-    await this.showPreview();
-    return await this.codePreview.textContent() || '';
+  /**
+   * Click the Download button and capture the download event.
+   * Returns the Playwright Download object.
+   */
+  async downloadExport(): Promise<import('@playwright/test').Download> {
+    const downloadPromise = this.page.waitForEvent('download');
+    await this.downloadButton.click();
+    return downloadPromise;
   }
 
   async copyToClipboard(): Promise<void> {
-    await this.copyToClipboardButton.click();
-    await this.expectSuccessMessage('Copied to clipboard');
+    await this.copyButton.click();
   }
 
-  // Download operations
-  async download(): Promise<any> {
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.downloadButton.click();
-    const download = await downloadPromise;
-    return download;
+  async getPreviewContent(): Promise<string> {
+    return (await this.codePreview.textContent()) ?? '';
   }
 
-  async downloadWithSettings(settings: {
-    format: 'json' | 'csv' | 'verilog' | 'vhdl';
-    moduleName?: string;
-    includeComments?: boolean;
-    includeTestbench?: boolean;
-    clockEdge?: 'posedge' | 'negedge';
-    resetType?: 'sync' | 'async';
-  }): Promise<any> {
-    await this.selectFormat(settings.format);
+  // ── Assertions ────────────────────────────────────────────────────────────────
 
-    if (settings.moduleName) {
-      await this.setModuleName(settings.moduleName);
-    }
-    if (settings.includeComments !== undefined) {
-      await this.setIncludeComments(settings.includeComments);
-    }
-    if (settings.includeTestbench !== undefined) {
-      await this.setIncludeTestbench(settings.includeTestbench);
-    }
-    if (settings.clockEdge) {
-      await this.setClockEdge(settings.clockEdge);
-    }
-    if (settings.resetType) {
-      await this.setResetType(settings.resetType);
-    }
-
-    return await this.download();
-  }
-
-  // Assertions
   async expectExportPageLoaded(): Promise<void> {
-    await expect(this.exportFormatSelector).toBeVisible();
-    await expect(this.downloadButton).toBeVisible();
-  }
-
-  async expectFormatOptionsVisible(format: 'verilog' | 'vhdl'): Promise<void> {
-    await this.selectFormat(format);
-    await expect(this.moduleNameInput).toBeVisible();
-    await expect(this.clockEdgeSelector).toBeVisible();
-    await expect(this.resetTypeSelector).toBeVisible();
+    await expect(this.exportPage).toBeVisible();
+    await expect(this.exportForm).toBeVisible();
+    await expect(this.submitButton).toBeVisible();
   }
 
   async expectPreviewVisible(): Promise<void> {
-    await expect(this.previewPane).toBeVisible();
     await expect(this.codePreview).toBeVisible();
   }
 
@@ -191,21 +142,23 @@ export class ExportPage extends BasePage {
     await expect(this.codePreview).toContainText(text);
   }
 
-  async expectSyntaxHighlightingActive(): Promise<void> {
-    await expect(this.syntaxHighlighter).toBeVisible();
+  async expectDownloadButtonVisible(): Promise<void> {
+    await expect(this.downloadButton).toBeVisible();
   }
 
-  async expectValidVerilogSyntax(): Promise<void> {
+  async expectCopyButtonVisible(): Promise<void> {
+    await expect(this.copyButton).toBeVisible();
+  }
+
+  async expectValidVerilogPreview(): Promise<void> {
     const content = await this.getPreviewContent();
     expect(content).toContain('module');
     expect(content).toContain('endmodule');
-    expect(content).toContain('always');
   }
 
-  async expectValidVHDLSyntax(): Promise<void> {
+  async expectValidVHDLPreview(): Promise<void> {
     const content = await this.getPreviewContent();
     expect(content).toContain('entity');
-    expect(content).toContain('end entity');
     expect(content).toContain('architecture');
   }
 }

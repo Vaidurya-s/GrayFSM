@@ -23,6 +23,14 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     except Exception:
         db_status = "down"
 
+    # Test Redis connection
+    try:
+        from app.cache import get_redis
+        redis_client = await get_redis()
+        cache_status = "up" if redis_client else "down"
+    except Exception:
+        cache_status = "down"
+
     return {
         "status": "healthy" if db_status == "up" else "degraded",
         "version": settings.app_version,
@@ -30,7 +38,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "services": {
             "database": db_status,
-            "cache": "up",
+            "cache": cache_status,
         }
     }
 

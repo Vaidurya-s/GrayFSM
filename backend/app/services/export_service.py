@@ -43,6 +43,14 @@ class ExportService:
         """
         options = options or {}
 
+        # Check cache before loading FSM
+        from app.cache import cache_get, cache_set
+        cache_key = f"export:{fsm_id}:{format_name}"
+        cached = await cache_get(cache_key)
+        if cached:
+            logger.info(f"Cache hit for {cache_key}")
+            return cached
+
         # Load FSM from DB
         fsm = await self._load_fsm(fsm_id)
 
@@ -87,11 +95,16 @@ class ExportService:
             content_length=len(content),
         )
 
-        return {
+        result = {
             "format": format_name,
             "content": content,
             "file_name": file_name,
         }
+
+        # Cache result
+        await cache_set(cache_key, result)
+
+        return result
 
     async def list_available_formats(self) -> list:
         """

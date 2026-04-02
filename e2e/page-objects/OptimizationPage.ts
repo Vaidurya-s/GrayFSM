@@ -1,239 +1,155 @@
 /**
- * Optimization Results Page Object Model
+ * Optimization Page Object Model
+ *
+ * Selectors are matched to data-testid attributes in:
+ *   frontend/src/pages/OptimizationPage.tsx
+ *   frontend/src/components/forms/OptimizationForm.tsx
+ *   frontend/src/components/fsm/FSMCanvas.tsx
+ *
+ * Route: /optimize/:id
  */
-import { Page, Locator, expect } from '@playwright/test';
+import { Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class OptimizationPage extends BasePage {
-  // Locators
-  get resultsContainer(): Locator {
-    return this.page.locator('[data-testid="optimization-results"]');
+  // ── Page root ────────────────────────────────────────────────────────────────
+
+  get optimizationPage(): Locator {
+    return this.page.locator('[data-testid="optimization-page"]');
   }
 
-  get originalFSMCanvas(): Locator {
-    return this.page.locator('[data-testid="original-fsm-canvas"]');
+  // ── FSM Canvas (shared component) ────────────────────────────────────────────
+
+  get fsmCanvas(): Locator {
+    return this.page.locator('[data-testid="fsm-canvas"]');
   }
 
-  get optimizedFSMCanvas(): Locator {
-    return this.page.locator('[data-testid="optimized-fsm-canvas"]');
+  // ── Original / Optimized toggle buttons ──────────────────────────────────────
+
+  /** "Original" tab — only visible after an optimization run */
+  get viewOriginalButton(): Locator {
+    return this.page.locator('[data-testid="optimization-view-original"]');
   }
 
-  get metricsCard(): Locator {
-    return this.page.locator('[data-testid="metrics-card"]');
+  /** "Optimized" tab — only visible after an optimization run */
+  get viewOptimizedButton(): Locator {
+    return this.page.locator('[data-testid="optimization-view-optimized"]');
   }
 
-  get dummyStatesMetric(): Locator {
-    return this.page.locator('[data-testid="dummy-states-metric"]');
+  // ── Optimization form ─────────────────────────────────────────────────────────
+
+  get optimizationForm(): Locator {
+    return this.page.locator('[data-testid="optimization-form"]');
   }
 
-  get stateCountMetric(): Locator {
-    return this.page.locator('[data-testid="state-count-metric"]');
+  get algorithmSelect(): Locator {
+    return this.page.locator('[data-testid="optimization-algorithm-select"]');
   }
 
-  get transitionCountMetric(): Locator {
-    return this.page.locator('[data-testid="transition-count-metric"]');
+  get timeoutInput(): Locator {
+    return this.page.locator('[data-testid="optimization-timeout"]');
   }
 
-  get algorithmUsed(): Locator {
-    return this.page.locator('[data-testid="algorithm-used"]');
+  /** Only visible when algorithm is "global_sa" */
+  get temperatureInput(): Locator {
+    return this.page.locator('[data-testid="optimization-temperature"]');
   }
 
-  get executionTimeMetric(): Locator {
-    return this.page.locator('[data-testid="execution-time-metric"]');
+  /** Only visible when algorithm is "global_sa" */
+  get coolingRateInput(): Locator {
+    return this.page.locator('[data-testid="optimization-cooling-rate"]');
   }
 
-  get encodingTable(): Locator {
-    return this.page.locator('[data-testid="encoding-table"]');
+  /** Only visible when algorithm is "global_sa" or "global_ga" */
+  get iterationsInput(): Locator {
+    return this.page.locator('[data-testid="optimization-iterations"]');
   }
 
-  get hypercubeVisualization(): Locator {
-    return this.page.locator('[data-testid="hypercube-viz"]');
+  get submitButton(): Locator {
+    return this.page.locator('[data-testid="optimization-submit"]');
   }
 
-  get exportResultsButton(): Locator {
-    return this.page.locator('[data-testid="export-results-btn"]');
+  // ── Results area ──────────────────────────────────────────────────────────────
+
+  /**
+   * Link to the export page that appears in the results section after optimization.
+   * href: /export/:id?optimized=true
+   */
+  get exportLink(): Locator {
+    return this.page.locator('[data-testid="optimization-export-link"]');
   }
 
-  get compareAlgorithmsButton(): Locator {
-    return this.page.locator('[data-testid="compare-algorithms-btn"]');
-  }
+  // ── Navigation ────────────────────────────────────────────────────────────────
 
-  get downloadVerilogButton(): Locator {
-    return this.page.locator('[data-testid="download-verilog-btn"]');
-  }
-
-  get downloadVHDLButton(): Locator {
-    return this.page.locator('[data-testid="download-vhdl-btn"]');
-  }
-
-  get backToEditorButton(): Locator {
-    return this.page.locator('[data-testid="back-to-editor-btn"]');
-  }
-
-  get animationControls(): Locator {
-    return this.page.locator('[data-testid="animation-controls"]');
-  }
-
-  get playAnimationButton(): Locator {
-    return this.page.locator('[data-testid="play-animation-btn"]');
-  }
-
-  get pauseAnimationButton(): Locator {
-    return this.page.locator('[data-testid="pause-animation-btn"]');
-  }
-
-  get animationSpeedSlider(): Locator {
-    return this.page.locator('[data-testid="animation-speed-slider"]');
-  }
-
-  // Navigation
-  async goToOptimizationResults(): Promise<void> {
-    await this.goto('/optimization-results');
+  /**
+   * Navigate directly to the optimization page for a given FSM id.
+   * Requires a live backend to load the FSM.
+   */
+  async goToOptimizationPage(fsmId: string): Promise<void> {
+    await this.goto(`/optimize/${fsmId}`);
     await this.waitForPageLoad();
+    await this.optimizationPage.waitFor({ state: 'visible', timeout: 15_000 });
   }
 
-  // Metrics retrieval
-  async getOptimizationMetrics(): Promise<{
-    dummyStates: number;
-    totalStates: number;
-    totalTransitions: number;
-    algorithm: string;
-    executionTime: number;
-  }> {
-    const dummyStates = parseInt(await this.dummyStatesMetric.textContent() || '0');
-    const totalStates = parseInt(await this.stateCountMetric.textContent() || '0');
-    const totalTransitions = parseInt(await this.transitionCountMetric.textContent() || '0');
-    const algorithm = await this.algorithmUsed.textContent() || '';
-    const executionTime = parseFloat(await this.executionTimeMetric.textContent() || '0');
+  // ── Form interactions ──────────────────────────────────────────────────────────
 
-    return {
-      dummyStates,
-      totalStates,
-      totalTransitions,
-      algorithm,
-      executionTime,
-    };
+  async selectAlgorithm(algorithm: 'greedy' | 'bfs_optimal' | 'global_sa' | 'global_ga'): Promise<void> {
+    await this.algorithmSelect.selectOption(algorithm);
   }
 
-  async getEncodingFromTable(): Promise<Map<string, string>> {
-    const encodings = new Map<string, string>();
-    const rows = await this.encodingTable.locator('tbody tr').all();
-
-    for (const row of rows) {
-      const state = await row.locator('td').nth(0).textContent();
-      const encoding = await row.locator('td').nth(1).textContent();
-      if (state && encoding) {
-        encodings.set(state.trim(), encoding.trim());
-      }
-    }
-
-    return encodings;
+  async setTimeout(ms: number): Promise<void> {
+    await this.timeoutInput.fill(String(ms));
   }
 
-  // Export operations
-  async exportAsVerilog(): Promise<void> {
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.downloadVerilogButton.click();
-    const download = await downloadPromise;
-    return download;
+  /**
+   * Submit the optimization form and wait for the results section to appear.
+   * Requires a running backend — callers should guard with test.skip if needed.
+   */
+  async runOptimization(): Promise<void> {
+    await this.submitButton.click();
+    // Wait for either the toggle buttons (success) or error banner
+    await Promise.race([
+      this.viewOriginalButton.waitFor({ state: 'visible', timeout: 30_000 }),
+      this.page.locator('.bg-red-50').waitFor({ state: 'visible', timeout: 30_000 }),
+    ]);
   }
 
-  async exportAsVHDL(): Promise<void> {
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.downloadVHDLButton.click();
-    const download = await downloadPromise;
-    return download;
+  /** Switch the canvas to show the original FSM */
+  async viewOriginal(): Promise<void> {
+    await this.viewOriginalButton.click();
   }
 
-  async exportResults(format: 'json' | 'csv' | 'pdf'): Promise<void> {
-    await this.exportResultsButton.click();
-    await this.page.locator(`[data-testid="export-format-${format}"]`).click();
-
-    const downloadPromise = this.page.waitForEvent('download');
-    await this.page.locator('[data-testid="confirm-export-btn"]').click();
-    await downloadPromise;
+  /** Switch the canvas to show the optimized FSM */
+  async viewOptimized(): Promise<void> {
+    await this.viewOptimizedButton.click();
   }
 
-  // Comparison
-  async goToComparison(): Promise<void> {
-    await this.compareAlgorithmsButton.click();
-    await this.page.waitForURL('**/comparison');
+  // ── Assertions ─────────────────────────────────────────────────────────────────
+
+  async expectOptimizationPageLoaded(): Promise<void> {
+    await expect(this.optimizationPage).toBeVisible();
+    await expect(this.optimizationForm).toBeVisible();
+    await expect(this.fsmCanvas).toBeVisible();
   }
 
-  // Navigation
-  async backToEditor(): Promise<void> {
-    await this.backToEditorButton.click();
-    await this.page.waitForURL('**/editor');
+  async expectResultsVisible(): Promise<void> {
+    await expect(this.viewOriginalButton).toBeVisible();
+    await expect(this.viewOptimizedButton).toBeVisible();
+    await expect(this.exportLink).toBeVisible();
   }
 
-  // Animation controls
-  async playOptimizationAnimation(): Promise<void> {
-    await this.playAnimationButton.click();
-    await this.page.waitForTimeout(500);
+  async expectFormVisible(): Promise<void> {
+    await expect(this.optimizationForm).toBeVisible();
+    await expect(this.algorithmSelect).toBeVisible();
+    await expect(this.submitButton).toBeVisible();
   }
 
-  async pauseOptimizationAnimation(): Promise<void> {
-    await this.pauseAnimationButton.click();
+  async expectExportLinkVisible(): Promise<void> {
+    await expect(this.exportLink).toBeVisible();
   }
 
-  async setAnimationSpeed(speed: number): Promise<void> {
-    await this.animationSpeedSlider.fill(speed.toString());
-  }
-
-  // Hypercube visualization
-  async toggleHypercubeView(): Promise<void> {
-    await this.page.locator('[data-testid="toggle-hypercube-btn"]').click();
-    await this.page.waitForTimeout(500);
-  }
-
-  async rotateHypercube(x: number, y: number): Promise<void> {
-    const viz = this.hypercubeVisualization;
-    const box = await viz.boundingBox();
-
-    if (box) {
-      await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      await this.page.mouse.down();
-      await this.page.mouse.move(box.x + box.width / 2 + x, box.y + box.height / 2 + y);
-      await this.page.mouse.up();
-    }
-  }
-
-  // Assertions
-  async expectOptimizationResultsLoaded(): Promise<void> {
-    await expect(this.resultsContainer).toBeVisible();
-    await expect(this.metricsCard).toBeVisible();
-  }
-
-  async expectOriginalAndOptimizedVisible(): Promise<void> {
-    await expect(this.originalFSMCanvas).toBeVisible();
-    await expect(this.optimizedFSMCanvas).toBeVisible();
-  }
-
-  async expectMetricsCardVisible(): Promise<void> {
-    await expect(this.dummyStatesMetric).toBeVisible();
-    await expect(this.stateCountMetric).toBeVisible();
-    await expect(this.algorithmUsed).toBeVisible();
-  }
-
-  async expectDummyStatesAdded(): Promise<void> {
-    const count = parseInt(await this.dummyStatesMetric.textContent() || '0');
-    expect(count).toBeGreaterThan(0);
-  }
-
-  async expectAlgorithm(algorithm: string): Promise<void> {
-    await expect(this.algorithmUsed).toContainText(algorithm);
-  }
-
-  async expectEncodingTableVisible(): Promise<void> {
-    await expect(this.encodingTable).toBeVisible();
-  }
-
-  async expectHypercubeVisible(): Promise<void> {
-    await expect(this.hypercubeVisualization).toBeVisible();
-  }
-
-  async expectExecutionTimeLessThan(maxTime: number): Promise<void> {
-    const time = parseFloat(await this.executionTimeMetric.textContent() || '999999');
-    expect(time).toBeLessThan(maxTime);
+  async expectExportLinkHref(fsmId: string): Promise<void> {
+    const href = await this.exportLink.getAttribute('href');
+    expect(href).toContain(`/export/${fsmId}`);
   }
 }

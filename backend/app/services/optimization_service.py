@@ -56,6 +56,14 @@ class OptimizationService:
             FSMNotFoundException: If the FSM does not exist
             AlgorithmException: If the algorithm fails
         """
+        # Check cache before loading FSM
+        from app.cache import cache_get, cache_set
+        cache_key = f"optimize:{fsm_id}:{request.algorithm}"
+        cached = await cache_get(cache_key)
+        if cached:
+            logger.info(f"Cache hit for {cache_key}")
+            return OptimizationResponse(**cached)
+
         # Step 1: Load FSM from DB
         original_fsm = await self._load_fsm(fsm_id)
         logger.info(
@@ -214,7 +222,7 @@ class OptimizationService:
             max_hamming_before=max_hamming_before,
             max_hamming_after=max_hamming_after,
         )
-        return OptimizationResponse(
+        response = OptimizationResponse(
             optimized_fsm_id=optimized_fsm.id,
             algorithm=request.algorithm,
             execution_time_ms=execution_time_ms,
@@ -224,6 +232,11 @@ class OptimizationService:
             metrics=metrics,
             encoding_map=optimized_encodings,
         )
+
+        # Cache result
+        await cache_set(cache_key, response.model_dump(mode="json"))
+
+        return response
 
     async def _load_fsm(self, fsm_id: UUID) -> FSM:
         """
