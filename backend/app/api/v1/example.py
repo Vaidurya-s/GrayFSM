@@ -27,7 +27,7 @@ async def list_examples():
         List of example FSM objects with metadata and full definitions
     """
     examples = await _example_service.list_examples()
-    return {"data": examples}
+    return examples
 
 
 @router.get("/{example_name}")
@@ -46,6 +46,6 @@ async def get_example(example_name: str):
     """
     try:
         example = await _example_service.get_example(example_name)
-        return {"data": example}
+        return example
     except FSMNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -66,6 +66,14 @@ class OptimizationRequest(BaseModel):
     async_mode: bool = False
 
 
+class OptimizationMetrics(BaseModel):
+    """Hamming distance metrics for optimization results"""
+    avg_hamming_before: float
+    avg_hamming_after: float
+    max_hamming_before: int
+    max_hamming_after: int
+
+
 class OptimizationResponse(BaseModel):
     """Response schema for optimization"""
     optimized_fsm_id: UUID
@@ -74,3 +82,5 @@ class OptimizationResponse(BaseModel):
     dummy_states_added: int
     total_states: int
     improvement_percentage: float
+    metrics: OptimizationMetrics
+    encoding_map: Optional[Dict[str, str]] = None

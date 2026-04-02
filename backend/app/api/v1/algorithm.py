@@ -67,4 +67,4 @@ async def get_available_algorithms():
     Returns:
         List of algorithm metadata including name, version, and description
     """
-    return {"data": list_algorithms()}
+    return list_algorithms()

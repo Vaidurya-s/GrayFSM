@@ -21,6 +21,7 @@ from app.db.session import engine, create_db_and_tables
 from app.middleware.error_handler import error_handler_middleware
 from app.middleware.logging import logging_middleware
 from app.middleware.rate_limit import rate_limit_middleware
+from app.middleware.response_wrapper import response_wrapper_middleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.utils.logger import get_logger
 
@@ -108,7 +109,8 @@ app = FastAPI(
 #   3. GZipMiddleware              (add_middleware — added first)
 #   4. logging_middleware           (http decorator — registered last)
 #   5. error_handler_middleware     (http decorator)
-#   6. rate_limit_middleware        (http decorator — registered first)
+#   6. rate_limit_middleware        (http decorator)
+#   7. response_wrapper_middleware  (http decorator — registered first / innermost)
 # -----------------------------------------------------------------------
 
 # --- Class-based middleware (add_middleware: first = innermost) ----------
@@ -130,6 +132,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # --- Function-based middleware (http decorator: first = innermost) ------
 
+app.middleware("http")(response_wrapper_middleware)  # innermost — wraps successful JSON
 if settings.rate_limit_enabled:
     app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(error_handler_middleware)

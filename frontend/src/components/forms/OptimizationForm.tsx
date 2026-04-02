@@ -5,7 +5,7 @@ import { SUPPORTED_ALGORITHMS } from '../../config/constants';
 import type { OptimizationRequest } from '../../types/fsm';
 
 const optimizationSchema = z.object({
-  algorithm: z.enum(['greedy', 'bfs', 'global', 'simulated_annealing']),
+  algorithm: z.enum(['greedy', 'bfs_optimal', 'global_sa', 'global_ga']),
   timeout_ms: z.number().min(1000).max(60000).optional(),
   iterations: z.number().min(1).max(100000).optional(),
   temperature: z.number().min(0).max(10000).optional(),
@@ -34,7 +34,7 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
   });
 
   const selectedAlgorithm = watch('algorithm');
-  const showAdvanced = selectedAlgorithm === 'simulated_annealing' || selectedAlgorithm === 'global';
+  const showAdvanced = selectedAlgorithm === 'global_sa' || selectedAlgorithm === 'global_ga';
 
   const handleFormSubmit = (values: OptFormValues) => {
     const request: OptimizationRequest = {
@@ -92,7 +92,7 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
       {showAdvanced && (
         <div className="border-t border-gray-200 pt-4 space-y-3">
           <h4 className="text-sm font-medium text-gray-700">Advanced Options</h4>
-          {selectedAlgorithm === 'simulated_annealing' && (
+          {selectedAlgorithm === 'global_sa' && (
             <>
               <div>
                 <label htmlFor="temperature" className="block text-xs text-gray-600">

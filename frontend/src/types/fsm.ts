@@ -97,21 +97,32 @@ export interface AlgorithmResult {
 }
 
 export interface OptimizationRequest {
-  algorithm: 'greedy' | 'bfs' | 'global' | 'simulated_annealing';
+  algorithm: 'greedy' | 'bfs_optimal' | 'global_sa' | 'global_ga';
   options?: {
     timeout_ms?: number;
     iterations?: number;
     temperature?: number;
     cooling_rate?: number;
   };
+  async_mode?: boolean;
+}
+
+export interface OptimizationMetrics {
+  avg_hamming_before: number;
+  avg_hamming_after: number;
+  max_hamming_before: number;
+  max_hamming_after: number;
 }
 
 export interface OptimizationResponse {
-  original_fsm: FSM;
-  optimized_fsm: OptimizedFSM;
-  algorithm_result: AlgorithmResult;
+  optimized_fsm_id: string;
+  algorithm: string;
+  execution_time_ms: number;
   dummy_states_added: number;
-  optimization_steps?: any[];
+  total_states: number;
+  improvement_percentage: number;
+  metrics: OptimizationMetrics;
+  encoding_map?: Record<string, string>;
 }
 
 export interface ExportFormat {

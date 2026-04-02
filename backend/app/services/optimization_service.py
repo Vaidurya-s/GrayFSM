@@ -13,7 +13,7 @@ from sqlalchemy import select
 from app.core.algorithms import get_algorithm, get_algorithm_info
 from app.core.gray_code import generate_gray_codes, hamming_distance
 from app.models.fsm import FSM, AlgorithmResult
-from app.schemas.fsm import OptimizationRequest, OptimizationResponse
+from app.schemas.fsm import OptimizationMetrics, OptimizationRequest, OptimizationResponse
 from app.utils.exceptions import (
     AlgorithmException,
     FSMNotFoundException,
@@ -79,6 +79,9 @@ class OptimizationService:
         avg_hamming_before = self._calculate_avg_hamming(
             transitions, state_encodings
         )
+        max_hamming_before = self._calculate_max_hamming(
+            transitions, state_encodings
+        )
 
         # Step 3: Instantiate optimizer
         algorithm_cls = get_algorithm(request.algorithm)
@@ -121,6 +124,9 @@ class OptimizationService:
 
         # Calculate Hamming distance after optimization
         avg_hamming_after = self._calculate_avg_hamming(
+            new_transitions, optimized_encodings
+        )
+        max_hamming_after = self._calculate_max_hamming(
             new_transitions, optimized_encodings
         )
 
@@ -202,6 +208,12 @@ class OptimizationService:
         )
 
         # Step 7: Return OptimizationResponse
+        metrics = OptimizationMetrics(
+            avg_hamming_before=round(avg_hamming_before, 2),
+            avg_hamming_after=round(avg_hamming_after, 2),
+            max_hamming_before=max_hamming_before,
+            max_hamming_after=max_hamming_after,
+        )
         return OptimizationResponse(
             optimized_fsm_id=optimized_fsm.id,
             algorithm=request.algorithm,
@@ -209,6 +221,8 @@ class OptimizationService:
             dummy_states_added=len(dummy_states),
             total_states=len(optimized_states_list),
             improvement_percentage=round(improvement_pct, 2),
+            metrics=metrics,
+            encoding_map=optimized_encodings,
         )
 
     async def _load_fsm(self, fsm_id: UUID) -> FSM:
@@ -292,6 +306,34 @@ class OptimizationService:
                 count += 1
 
         return total / count if count > 0 else 0.0
+
+    @staticmethod
+    def _calculate_max_hamming(
+        transitions: List[Dict], encodings: Dict[str, str]
+    ) -> int:
+        """
+        Calculate the maximum Hamming distance across all transitions.
+
+        Args:
+            transitions: List of transition dicts with from_state/to_state
+            encodings: State -> Gray code mapping
+
+        Returns:
+            Maximum Hamming distance (0 if no transitions)
+        """
+        if not transitions:
+            return 0
+
+        distances = []
+        for trans in transitions:
+            from_state = trans.get("from_state", "")
+            to_state = trans.get("to_state", "")
+            from_code = encodings.get(from_state)
+            to_code = encodings.get(to_state)
+            if from_code and to_code and len(from_code) == len(to_code):
+                distances.append(hamming_distance(from_code, to_code))
+
+        return max(distances) if distances else 0
 
     async def _record_failure(
         self,

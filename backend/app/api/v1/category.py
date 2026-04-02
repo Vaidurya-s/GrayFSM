@@ -36,21 +36,19 @@ async def list_categories(
     service = CategoryService(db)
     categories = await service.list_categories(parent_id=parent_id)
 
-    return {
-        "data": [
-            {
-                "id": str(cat.id),
-                "name": cat.name,
-                "slug": cat.slug,
-                "description": cat.description,
-                "parent_category_id": str(cat.parent_category_id) if cat.parent_category_id else None,
-                "level": cat.level,
-                "display_order": cat.display_order,
-                "fsm_count": cat.fsm_count,
-            }
-            for cat in categories
-        ]
-    }
+    return [
+        {
+            "id": str(cat.id),
+            "name": cat.name,
+            "slug": cat.slug,
+            "description": cat.description,
+            "parent_category_id": str(cat.parent_category_id) if cat.parent_category_id else None,
+            "level": cat.level,
+            "display_order": cat.display_order,
+            "fsm_count": cat.fsm_count,
+        }
+        for cat in categories
+    ]
 
 
 @router.get("/{category_id}")
@@ -77,14 +75,12 @@ async def get_category(
         raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found")
 
     return {
-        "data": {
-            "id": str(category.id),
-            "name": category.name,
-            "slug": category.slug,
-            "description": category.description,
-            "parent_category_id": str(category.parent_category_id) if category.parent_category_id else None,
-            "level": category.level,
-            "display_order": category.display_order,
-            "fsm_count": category.fsm_count,
-        }
+        "id": str(category.id),
+        "name": category.name,
+        "slug": category.slug,
+        "description": category.description,
+        "parent_category_id": str(category.parent_category_id) if category.parent_category_id else None,
+        "level": category.level,
+        "display_order": category.display_order,
+        "fsm_count": category.fsm_count,
     }

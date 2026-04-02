@@ -7,7 +7,10 @@ import OptimizationForm from '../components/forms/OptimizationForm';
 import HammingChart from '../components/visualization/HammingChart';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import { ROUTES, generateRoute } from '../config/routes';
-import type { OptimizationRequest, OptimizationResponse } from '../types/fsm';
+import { fsmAPI } from '../api/endpoints/fsms';
+import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
+import type { APIResponse } from '../api/client';
+import type { AxiosResponse } from 'axios';
 
 export default function OptimizationPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,9 +25,11 @@ export default function OptimizationPage() {
   // Load FSM into store for the canvas
   useEffect(() => {
     if (fsmResponse) {
-      const fsm = (fsmResponse as unknown as { data: typeof fsmResponse })?.data || fsmResponse;
+      // At runtime fsmResponse is AxiosResponse<APIResponse<FSM>>, so .data.data is the FSM
+      const axiosResp = fsmResponse as unknown as AxiosResponse<APIResponse<FSM>>;
+      const fsm = axiosResp.data?.data ?? (fsmResponse as unknown as FSM);
       if (fsm && typeof fsm === 'object' && 'id' in fsm) {
-        loadFSMIntoDraft(fsm as unknown as Parameters<typeof loadFSMIntoDraft>[0]);
+        loadFSMIntoDraft(fsm);
       }
     }
   }, [fsmResponse, loadFSMIntoDraft]);
@@ -36,25 +41,38 @@ export default function OptimizationPage() {
         fsmId: id,
         request,
       });
-      const data = (response as unknown as { data: OptimizationResponse })?.data || response;
-      setResult(data as OptimizationResponse);
+      // At runtime response is AxiosResponse<APIResponse<OptimizationResponse>>,
+      // so response.data is { success: true, data: OptimizationResponse }
+      // and response.data.data is the actual OptimizationResponse
+      const axiosResp = response as unknown as AxiosResponse<APIResponse<OptimizationResponse>>;
+      const optimizationResult = axiosResp.data?.data ?? (response as unknown as OptimizationResponse);
+      setResult(optimizationResult);
     } catch {
       // Error handled by React Query
     }
   };
 
-  const handleViewOptimized = () => {
-    if (result?.optimized_fsm) {
-      loadFSMIntoDraft(result.optimized_fsm);
-      setShowOptimized(true);
+  const handleViewOptimized = async () => {
+    if (!result?.optimized_fsm_id) return;
+    try {
+      const fsmResp = await fsmAPI.get(result.optimized_fsm_id);
+      const axiosResp = fsmResp as unknown as AxiosResponse<APIResponse<FSM>>;
+      const optimizedFSM = axiosResp.data?.data ?? (fsmResp as unknown as FSM);
+      if (optimizedFSM && typeof optimizedFSM === 'object' && 'id' in optimizedFSM) {
+        loadFSMIntoDraft(optimizedFSM);
+        setShowOptimized(true);
+      }
+    } catch {
+      // Silently fail — user can retry
     }
   };
 
   const handleViewOriginal = () => {
     if (fsmResponse) {
-      const fsm = (fsmResponse as unknown as { data: typeof fsmResponse })?.data || fsmResponse;
+      const axiosResp = fsmResponse as unknown as AxiosResponse<APIResponse<FSM>>;
+      const fsm = axiosResp.data?.data ?? (fsmResponse as unknown as FSM);
       if (fsm && typeof fsm === 'object' && 'id' in fsm) {
-        loadFSMIntoDraft(fsm as unknown as Parameters<typeof loadFSMIntoDraft>[0]);
+        loadFSMIntoDraft(fsm);
       }
       setShowOptimized(false);
     }
@@ -179,28 +197,28 @@ export default function OptimizationPage() {
           </div>
 
           {/* Results */}
-          {result && result.algorithm_result && (
+          {result && (
             <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Results</h2>
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-xs text-gray-500">Algorithm:</span>
                 <span className="text-xs font-medium text-gray-900">
-                  {result.algorithm_result.algorithm}
+                  {result.algorithm}
                 </span>
               </div>
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-xs text-gray-500">Execution time:</span>
                 <span className="text-xs font-medium text-gray-900">
-                  {result.algorithm_result.execution_time_ms}ms
+                  {result.execution_time_ms}ms
                 </span>
               </div>
               <HammingChart
-                avgBefore={result.algorithm_result.avg_hamming_before}
-                avgAfter={result.algorithm_result.avg_hamming_after}
-                statesBefore={result.original_fsm?.state_count || 0}
-                statesAfter={result.algorithm_result.total_states_final}
-                dummyStatesAdded={result.algorithm_result.dummy_states_added}
-                improvementPct={result.algorithm_result.improvement_percentage}
+                avgBefore={result.metrics.avg_hamming_before}
+                avgAfter={result.metrics.avg_hamming_after}
+                statesBefore={result.total_states - result.dummy_states_added}
+                statesAfter={result.total_states}
+                dummyStatesAdded={result.dummy_states_added}
+                improvementPct={result.improvement_percentage}
               />
 
               {/* Export button */}

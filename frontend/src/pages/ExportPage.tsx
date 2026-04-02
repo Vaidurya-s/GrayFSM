@@ -5,6 +5,8 @@ import { useExportFSM } from '../hooks/useExport';
 import ExportForm from '../components/forms/ExportForm';
 import { ROUTES } from '../config/routes';
 import type { ExportRequest, ExportResponse } from '../types/fsm';
+import type { APIResponse } from '../api/client';
+import type { AxiosResponse } from 'axios';
 
 export default function ExportPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,8 +19,12 @@ export default function ExportPage() {
     if (!id) return;
     try {
       const response = await exportMutation.mutateAsync({ fsmId: id, request });
-      const data = (response as unknown as { data: ExportResponse })?.data || response;
-      setExportResult(data as ExportResponse);
+      // At runtime response is AxiosResponse<APIResponse<ExportResponse>>,
+      // so response.data is { success: true, data: ExportResponse }
+      // and response.data.data is the actual ExportResponse
+      const axiosResp = response as unknown as AxiosResponse<APIResponse<ExportResponse>>;
+      const exportResult = axiosResp.data?.data ?? (response as unknown as ExportResponse);
+      setExportResult(exportResult);
     } catch {
       // Error handled by React Query
     }

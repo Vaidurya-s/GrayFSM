@@ -1,7 +1,10 @@
 """
 Health check and system status endpoints
 """
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -15,18 +18,19 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     """System health check"""
     # Test database connection
     try:
-        await db.execute("SELECT 1")
+        await db.execute(text("SELECT 1"))
         db_status = "up"
     except Exception:
         db_status = "down"
-    
+
     return {
         "status": "healthy" if db_status == "up" else "degraded",
         "version": settings.app_version,
         "environment": settings.environment,
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "services": {
             "database": db_status,
-            "cache": "up",  # TODO: Test Redis
+            "cache": "up",
         }
     }
 

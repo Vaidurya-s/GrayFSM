@@ -10,13 +10,13 @@ export const MAX_PAGE_SIZE = 100;
 
 export const SUPPORTED_ALGORITHMS = [
   { value: 'greedy', label: 'Greedy', description: 'Fast local optimization' },
-  { value: 'bfs', label: 'BFS-Optimized', description: 'Breadth-first search' },
+  { value: 'bfs_optimal', label: 'BFS-Optimal', description: 'Breadth-first optimal search' },
   {
-    value: 'simulated_annealing',
+    value: 'global_sa',
     label: 'Simulated Annealing',
-    description: 'Global optimization',
+    description: 'Global optimization via simulated annealing',
   },
-  { value: 'global', label: 'Global', description: 'Exhaustive search (slow)' },
+  { value: 'global_ga', label: 'Genetic Algorithm', description: 'Global optimization via genetic algorithm' },
 ] as const;
 
 export const EXPORT_FORMATS = [

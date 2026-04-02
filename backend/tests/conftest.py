@@ -8,6 +8,8 @@ import json
 import os
 import sys
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 
 # Ensure 'backend/' is on the import path so 'app.*' imports work
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -75,6 +77,46 @@ def simple_moore_2state():
         ],
         "outputs": {"S0": "0", "S1": "1"},
         "fsm_type": "moore",
+    }
+
+
+@pytest_asyncio.fixture
+async def client():
+    """Async HTTP test client for the FastAPI application.
+
+    Uses an in-process ASGI transport so no real server is needed.
+    The database dependency must be available (or overridden in the test
+    module) for endpoints that hit the DB.
+    """
+    from app.main import app
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as ac:
+        yield ac
+
+
+# ---------------------------------------------------------------------------
+# Sample FSM payload helpers used by integration tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def sample_fsm_payload():
+    """Minimal valid FSM creation payload (3-state Moore)."""
+    return {
+        "name": "Test Traffic Light",
+        "description": "A simple 3-state traffic light FSM",
+        "fsm_type": "moore",
+        "states": ["red", "green", "yellow"],
+        "initial_state": "red",
+        "transitions": [
+            {"from_state": "red", "to_state": "green", "input": "go"},
+            {"from_state": "green", "to_state": "yellow", "input": "slow"},
+            {"from_state": "yellow", "to_state": "red", "input": "stop"},
+        ],
+        "outputs": {"red": "stop", "green": "go", "yellow": "slow"},
+        "visibility": "public",
     }
 
 

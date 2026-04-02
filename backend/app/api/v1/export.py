@@ -83,4 +83,4 @@ async def get_available_formats():
     Returns:
         List of format metadata including name, extension, and description
     """
-    return {"data": list_formats()}
+    return list_formats()
