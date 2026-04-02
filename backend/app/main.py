@@ -21,6 +21,7 @@ from app.db.session import engine, create_db_and_tables
 from app.middleware.error_handler import error_handler_middleware
 from app.middleware.logging import logging_middleware
 from app.middleware.rate_limit import rate_limit_middleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.utils.logger import get_logger
 
 # Configure logging
@@ -36,7 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     """
     # Startup
     logger.info("Starting GrayFSM Backend API", extra={"version": settings.app_version})
-    
+
     # Initialize database
     try:
         await create_db_and_tables()
@@ -44,11 +45,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
-    
+
+    # Initialize observability (telemetry + metrics)
+    try:
+        from app.observability.telemetry import setup_telemetry
+        from app.observability.metrics import setup_metrics
+        setup_telemetry(app)
+        setup_metrics(app)
+        logger.info("Observability initialized")
+    except Exception as e:
+        logger.warning(f"Observability init skipped: {e}")
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down GrayFSM Backend API")
+
+    # Shutdown telemetry gracefully
+    try:
+        from app.observability.telemetry import shutdown_telemetry
+        shutdown_telemetry()
+    except Exception:
+        pass
+
     await engine.dispose()
 
 
@@ -57,13 +76,13 @@ app = FastAPI(
     title=settings.app_name,
     description="""
     RESTful API for GrayFSM - Automated Finite State Machine Optimization using Gray Code Encoding.
-    
+
     ## Features
     - FSM creation, management, and validation
     - Multiple optimization algorithms (Greedy, BFS, Global Optimization)
     - HDL export (Verilog, VHDL, testbenches)
     - Real-time optimization progress via WebSocket
-    
+
     ## Documentation
     - Interactive API docs: /docs
     - Alternative docs: /redoc
@@ -76,6 +95,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# -----------------------------------------------------------------------
+# Middleware stack
+#
+# Starlette processes ``add_middleware`` calls in reverse registration
+# order (last added = outermost).  ``app.middleware("http")`` decorators
+# are similarly stacked (last registered = outermost).
+#
+# Desired execution order (outermost -> innermost):
+#   1. SecurityHeadersMiddleware   (add_middleware — added last)
+#   2. CORSMiddleware              (add_middleware)
+#   3. GZipMiddleware              (add_middleware — added first)
+#   4. logging_middleware           (http decorator — registered last)
+#   5. error_handler_middleware     (http decorator)
+#   6. rate_limit_middleware        (http decorator — registered first)
+# -----------------------------------------------------------------------
+
+# --- Class-based middleware (add_middleware: first = innermost) ----------
+
+# GZip Compression (innermost of the class-based group)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -85,14 +125,15 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
-# GZip Compression
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+# Security Headers (outermost — every response gets security headers)
+app.add_middleware(SecurityHeadersMiddleware)
 
-# Custom Middleware
-app.middleware("http")(logging_middleware)
-app.middleware("http")(error_handler_middleware)
+# --- Function-based middleware (http decorator: first = innermost) ------
+
 if settings.rate_limit_enabled:
     app.middleware("http")(rate_limit_middleware)
+app.middleware("http")(error_handler_middleware)
+app.middleware("http")(logging_middleware)
 
 # Include API routers
 API_PREFIX = "/api/v1"
@@ -154,7 +195,7 @@ async def root() -> JSONResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,

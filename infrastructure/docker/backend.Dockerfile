@@ -41,6 +41,9 @@ ENV PATH=/home/appuser/.local/bin:$PATH \
 COPY backend/app ./app
 COPY backend/.env.example ./.env.example
 
+# Create logs directory (referenced by LOGGING_CONFIG)
+RUN mkdir -p /app/logs
+
 # Change ownership to appuser
 RUN chown -R appuser:appuser /app
 

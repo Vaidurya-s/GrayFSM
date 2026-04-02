@@ -1,0 +1,308 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import FSMCanvas from '../components/fsm/FSMCanvas';
+import PropertyPanel from '../components/fsm/PropertyPanel';
+import FSMCreateForm from '../components/forms/FSMCreateForm';
+import { useFSM } from '../hooks/useFSM';
+import { useFSMStore } from '../store/fsmStore';
+import { useUIStore } from '../store/uiStore';
+import { ROUTES, generateRoute } from '../config/routes';
+import { cn } from '../utils/cn';
+
+export default function EditorPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const { data: fsmResponse, isLoading, error } = useFSM(id);
+
+  const {
+    draftStates,
+    draftTransitions,
+    draftName,
+    draftInitialState,
+    addState,
+    loadFSMIntoDraft,
+    resetDraft,
+  } = useFSMStore();
+
+  const { sidebarOpen, toggleSidebar } = useUIStore();
+
+  // Load FSM into editor when data arrives
+  useEffect(() => {
+    if (fsmResponse) {
+      const fsm = (fsmResponse as unknown as { data: typeof fsmResponse })?.data || fsmResponse;
+      if (fsm && typeof fsm === 'object' && 'id' in fsm) {
+        loadFSMIntoDraft(fsm as unknown as Parameters<typeof loadFSMIntoDraft>[0]);
+      }
+    }
+  }, [fsmResponse, loadFSMIntoDraft]);
+
+  // Reset on unmount or when creating new
+  useEffect(() => {
+    if (!id) {
+      resetDraft();
+    }
+    return () => {
+      // Don't reset on unmount, user might navigate to optimize
+    };
+  }, [id, resetDraft]);
+
+  const handleAddState = useCallback(() => {
+    const stateNumber = draftStates.length;
+    const newState = {
+      id: `S${stateNumber}`,
+      name: `S${stateNumber}`,
+      position: {
+        x: 150 + (stateNumber % 4) * 220,
+        y: 100 + Math.floor(stateNumber / 4) * 180,
+      },
+    };
+    addState(newState);
+  }, [draftStates.length, addState]);
+
+  const handleSave = useCallback(async () => {
+    if (id) {
+      // TODO: Use update mutation
+      return;
+    }
+    setShowCreateForm(true);
+  }, [id]);
+
+  const handleCreateSuccess = useCallback(
+    (fsmId: string) => {
+      setShowCreateForm(false);
+      navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
+    },
+    [navigate]
+  );
+
+  const handleOptimize = useCallback(() => {
+    if (id) {
+      navigate(generateRoute(ROUTES.OPTIMIZE, { id }));
+    }
+  }, [id, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+          <p className="mt-4 text-sm text-gray-600">Loading FSM...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <h2 className="text-lg font-semibold text-red-800">Failed to load FSM</h2>
+            <p className="text-sm text-red-600 mt-2">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            <button
+              onClick={() => navigate(ROUTES.HOME)}
+              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Go Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
+      {/* Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleSidebar}
+            data-testid="editor-toggle-sidebar"
+            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            title="Toggle sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-sm font-semibold text-gray-900">
+              {id ? draftName || 'Edit FSM' : 'New FSM'}
+            </h1>
+            <p className="text-xs text-gray-500">
+              {draftStates.length} states, {draftTransitions.length} transitions
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAddState}
+            data-testid="editor-add-state"
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            + Add State
+          </button>
+          <button
+            onClick={handleSave}
+            data-testid="editor-save"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            {id ? 'Save' : 'Create'}
+          </button>
+          {id && (
+            <button
+              onClick={handleOptimize}
+              data-testid="editor-optimize"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+            >
+              Optimize
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main editor area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Canvas */}
+        <div className="flex-1 relative">
+          {draftStates.length === 0 ? (
+            <div className="flex items-center justify-center h-full bg-gray-50">
+              <div className="text-center max-w-md">
+                <svg
+                  className="mx-auto h-16 w-16 text-gray-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                  No states yet
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Click "Add State" to start building your FSM, or connect states
+                  by dragging from one handle to another.
+                </p>
+                <button
+                  onClick={handleAddState}
+                  data-testid="editor-add-state-empty"
+                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                >
+                  Add First State
+                </button>
+              </div>
+            </div>
+          ) : (
+            <FSMCanvas />
+          )}
+        </div>
+
+        {/* Sidebar */}
+        {sidebarOpen && (
+          <div
+            className={cn(
+              'w-72 border-l border-gray-200 bg-white overflow-y-auto',
+              'flex flex-col gap-4 p-4'
+            )}
+            data-testid="editor-sidebar"
+          >
+            <PropertyPanel />
+
+            {/* State list */}
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">States</h3>
+              {draftStates.length === 0 ? (
+                <p className="text-xs text-gray-500">No states added yet.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {draftStates.map((s) => (
+                    <li
+                      key={s.id}
+                      className={cn(
+                        'text-xs px-2 py-1.5 rounded cursor-pointer flex items-center gap-2',
+                        s.id === draftInitialState && 'bg-green-50 text-green-700',
+                        s.is_dummy && 'bg-orange-50 text-orange-700',
+                        !s.is_dummy &&
+                          s.id !== draftInitialState &&
+                          'hover:bg-gray-50 text-gray-700'
+                      )}
+                    >
+                      <span className="font-medium">{s.name}</span>
+                      {s.id === draftInitialState && (
+                        <span className="text-[10px] bg-green-100 px-1 rounded">
+                          initial
+                        </span>
+                      )}
+                      {s.is_dummy && (
+                        <span className="text-[10px] bg-orange-100 px-1 rounded">
+                          dummy
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Transition list */}
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                Transitions
+              </h3>
+              {draftTransitions.length === 0 ? (
+                <p className="text-xs text-gray-500">
+                  No transitions. Connect states by dragging between handles.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {draftTransitions.map((t, i) => (
+                    <li
+                      key={i}
+                      className="text-xs px-2 py-1.5 rounded hover:bg-gray-50 text-gray-700"
+                    >
+                      {t.from_state} &rarr; {t.to_state}
+                      {t.input && (
+                        <span className="text-gray-400 ml-1">
+                          [{t.input}{t.output ? `/${t.output}` : ''}]
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Create FSM modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            data-testid="create-fsm-modal"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Create New FSM
+            </h2>
+            <FSMCreateForm
+              onSuccess={handleCreateSuccess}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

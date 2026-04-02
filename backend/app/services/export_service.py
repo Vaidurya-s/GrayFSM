@@ -1,0 +1,150 @@
+"""
+Export Service - Orchestrates FSM export to various formats (Verilog, VHDL, JSON)
+"""
+from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.core.exporters import get_exporter, get_file_extension, list_formats
+from app.models.fsm import FSM
+from app.utils.exceptions import ExportException, FSMNotFoundException
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class ExportService:
+    """Service for exporting FSMs to HDL and other formats"""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def export_fsm(
+        self,
+        fsm_id: UUID,
+        format_name: str,
+        options: dict = None,
+    ) -> dict:
+        """
+        Export an FSM to the specified format.
+
+        Args:
+            fsm_id: UUID of the FSM to export
+            format_name: Target format ('verilog', 'vhdl', 'json')
+            options: Format-specific options
+
+        Returns:
+            Dictionary with format, content, and file_name
+
+        Raises:
+            FSMNotFoundException: If the FSM does not exist
+            ExportException: If export generation fails
+        """
+        options = options or {}
+
+        # Load FSM from DB
+        fsm = await self._load_fsm(fsm_id)
+
+        logger.info(
+            "Exporting FSM",
+            fsm_id=str(fsm_id),
+            format=format_name,
+        )
+
+        # Get the exporter
+        exporter = get_exporter(format_name)
+
+        # Generate content
+        try:
+            content = exporter.export(
+                definition=fsm.definition,
+                fsm_type=fsm.fsm_type,
+                name=fsm.name,
+                options=options,
+            )
+        except ExportException:
+            raise
+        except Exception as e:
+            raise ExportException(
+                f"Failed to export FSM to {format_name}: {str(e)}"
+            )
+
+        # Build file name
+        extension = get_file_extension(format_name)
+        safe_name = self._sanitize_filename(fsm.name)
+        file_name = f"{safe_name}{extension}"
+
+        # Increment export count
+        fsm.export_count = (fsm.export_count or 0) + 1
+        await self.db.commit()
+
+        logger.info(
+            "Export complete",
+            fsm_id=str(fsm_id),
+            format=format_name,
+            file_name=file_name,
+            content_length=len(content),
+        )
+
+        return {
+            "format": format_name,
+            "content": content,
+            "file_name": file_name,
+        }
+
+    async def list_available_formats(self) -> list:
+        """
+        List all available export formats.
+
+        Returns:
+            List of format metadata dictionaries
+        """
+        return list_formats()
+
+    async def _load_fsm(self, fsm_id: UUID) -> FSM:
+        """
+        Load an FSM from the database.
+
+        Args:
+            fsm_id: UUID of the FSM
+
+        Returns:
+            FSM ORM instance
+
+        Raises:
+            FSMNotFoundException: If the FSM does not exist
+        """
+        result = await self.db.execute(
+            select(FSM).where(FSM.id == fsm_id)
+        )
+        fsm = result.scalar_one_or_none()
+
+        if not fsm:
+            raise FSMNotFoundException(str(fsm_id))
+
+        if not fsm.definition:
+            raise ExportException(
+                f"FSM '{fsm_id}' has no definition data to export"
+            )
+
+        return fsm
+
+    @staticmethod
+    def _sanitize_filename(name: str) -> str:
+        """
+        Sanitize an FSM name for use as a file name.
+
+        Args:
+            name: Original FSM name
+
+        Returns:
+            Sanitized file name (without extension)
+        """
+        sanitized = ""
+        for ch in name:
+            if ch.isalnum() or ch in ("_", "-"):
+                sanitized += ch
+            elif ch == " ":
+                sanitized += "_"
+        return sanitized.lower() or "fsm_export"

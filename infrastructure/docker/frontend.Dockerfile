@@ -13,9 +13,8 @@ COPY frontend/package.json frontend/package-lock.json ./
 # Install dependencies
 RUN npm ci --prefer-offline --no-audit
 
-# Copy source code
+# Copy source code and config files
 COPY frontend/src ./src
-COPY frontend/public ./public
 COPY frontend/index.html ./
 COPY frontend/vite.config.ts ./
 COPY frontend/tsconfig.json ./
@@ -36,9 +35,6 @@ RUN apk add --no-cache curl
 # Copy nginx configuration
 COPY infrastructure/docker/nginx.conf /etc/nginx/nginx.conf
 COPY infrastructure/docker/default.conf /etc/nginx/conf.d/default.conf
-
-# Create non-root user
-RUN addgroup -g 101 -S nginx && adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
 
 # Copy built application from builder
 COPY --from=builder /app/dist /usr/share/nginx/html

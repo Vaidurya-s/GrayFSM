@@ -1,60 +1,99 @@
 """
-Pytest configuration and fixtures for GrayFSM tests.
+Pytest configuration and fixtures for GrayFSM backend tests.
+
+All core algorithm tests are pure functions with no database dependency.
 """
 
+import json
+import os
+import sys
 import pytest
-from grayfsm.core.fsm_model import FSM, FSMType, Transition
+
+# Ensure 'backend/' is on the import path so 'app.*' imports work
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from app.core.fsm_model import FSMType, Transition, State
+
+
+# ---------------------------------------------------------------------------
+# Example FSM data loaded from backend/examples/ JSON files
+# ---------------------------------------------------------------------------
+
+EXAMPLES_DIR = os.path.join(os.path.dirname(__file__), "..", "examples")
+
+
+def _load_example(filename: str) -> dict:
+    """Load an example FSM JSON file."""
+    path = os.path.join(EXAMPLES_DIR, filename)
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 @pytest.fixture
-def simple_moore_fsm():
-    """Simple 2-state Moore machine for testing."""
-    return FSM(
-        name="Simple Moore",
-        fsm_type=FSMType.MOORE,
-        states=["S0", "S1"],
-        initial_state="S0",
-        transitions=[
-            Transition("S0", "S1"),
-            Transition("S1", "S0")
+def elevator_fsm_data():
+    """Elevator controller FSM data (7-state Moore)."""
+    return _load_example("elevator.json")
+
+
+@pytest.fixture
+def traffic_light_fsm_data():
+    """Traffic light controller FSM data (4-state Moore)."""
+    return _load_example("traffic_light.json")
+
+
+@pytest.fixture
+def sequence_detector_fsm_data():
+    """101 sequence detector FSM data (4-state Mealy)."""
+    return _load_example("sequence_detector.json")
+
+
+@pytest.fixture
+def vending_machine_fsm_data():
+    """Vending machine FSM data (4-state Moore)."""
+    return _load_example("vending_machine.json")
+
+
+@pytest.fixture(params=["elevator.json", "traffic_light.json",
+                         "sequence_detector.json", "vending_machine.json"])
+def any_example_fsm_data(request):
+    """Parametrized fixture that yields each example FSM in turn."""
+    return _load_example(request.param)
+
+
+# ---------------------------------------------------------------------------
+# Pre-built dictionaries suitable for the optimizer APIs
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def simple_moore_2state():
+    """Minimal 2-state Moore FSM with Gray encodings."""
+    return {
+        "states": {"S0": "0", "S1": "1"},
+        "transitions": [
+            {"from_state": "S0", "to_state": "S1", "input": "go"},
+            {"from_state": "S1", "to_state": "S0", "input": "back"},
         ],
-        outputs={"S0": "0", "S1": "1"}
-    )
+        "outputs": {"S0": "0", "S1": "1"},
+        "fsm_type": "moore",
+    }
 
 
 @pytest.fixture
-def traffic_light_fsm():
-    """Traffic light controller FSM."""
-    return FSM(
-        name="Traffic Light",
-        fsm_type=FSMType.MOORE,
-        states=["Red", "RedYellow", "Green", "Yellow"],
-        initial_state="Red",
-        transitions=[
-            Transition("Red", "RedYellow"),
-            Transition("RedYellow", "Green"),
-            Transition("Green", "Yellow"),
-            Transition("Yellow", "Red")
+def four_state_moore_with_gap():
+    """4-state Moore FSM where some transitions have Hamming distance > 1."""
+    import math
+    states = ["A", "B", "C", "D"]
+    n_bits = math.ceil(math.log2(len(states)))  # 2 bits
+    from app.core.gray_code import int_to_gray
+    encodings = {s: int_to_gray(i, n_bits) for i, s in enumerate(states)}
+    # A=00, B=01, C=11, D=10
+    return {
+        "states": encodings,
+        "transitions": [
+            {"from_state": "A", "to_state": "C", "input": "x"},  # 00->11 HD=2
+            {"from_state": "C", "to_state": "A", "input": "y"},  # 11->00 HD=2
+            {"from_state": "B", "to_state": "D", "input": "z"},  # 01->10 HD=2
         ],
-        outputs={
-            "Red": "100",
-            "RedYellow": "110",
-            "Green": "001",
-            "Yellow": "010"
-        }
-    )
-
-
-@pytest.fixture
-def simple_mealy_fsm():
-    """Simple Mealy machine for testing."""
-    return FSM(
-        name="Simple Mealy",
-        fsm_type=FSMType.MEALY,
-        states=["S0", "S1"],
-        initial_state="S0",
-        transitions=[
-            Transition("S0", "S1", input="0", output="0"),
-            Transition("S1", "S0", input="1", output="1")
-        ]
-    )
+        "outputs": {"A": "00", "B": "01", "C": "10", "D": "11"},
+        "fsm_type": "moore",
+    }

@@ -47,6 +47,11 @@ export interface FSM {
   created_by?: string;
   view_count?: number;
   fork_count?: number;
+  is_optimized?: boolean;
+  dummy_state_count?: number;
+  optimization_algorithm?: string;
+  avg_hamming_distance?: number;
+  encoding_type?: string;
 }
 
 export interface FSMCreate {

@@ -1,17 +1,21 @@
 """
 Hypercube graph operations using NetworkX
+
+Nodes are Gray code strings (e.g. "010"). Edges connect codes
+that differ by exactly one bit.
 """
 import networkx as nx
-from typing import List, Tuple, Dict
-from app.core.gray_code import int_to_gray, gray_to_int, hamming_distance
+from typing import List
+
+from app.core.gray_code import generate_gray_codes, hamming_distance
 
 
 class HypercubeGraph:
     """
     N-dimensional hypercube graph for Gray code navigation.
 
-    In a hypercube, each vertex represents a Gray code,
-    and edges connect codes that differ by exactly one bit.
+    Each vertex is a Gray code string, and edges connect codes
+    that differ by exactly one bit.
     """
 
     def __init__(self, bit_width: int):
@@ -21,42 +25,67 @@ class HypercubeGraph:
         Args:
             bit_width: Number of bits (dimension of hypercube)
         """
+        if bit_width < 1:
+            raise ValueError("bit_width must be >= 1")
         self.bit_width = bit_width
         self.graph = self._build_hypercube()
 
     def _build_hypercube(self) -> nx.Graph:
-        """Build n-dimensional hypercube graph"""
-        return nx.hypercube_graph(self.bit_width)
+        """
+        Build n-dimensional hypercube graph with Gray code string nodes.
+
+        Each node is a binary string of length bit_width. Two nodes are
+        connected iff they differ in exactly one bit position.
+        """
+        g = nx.Graph()
+        codes = generate_gray_codes(self.bit_width)
+        g.add_nodes_from(codes)
+
+        # All 2^n codes — connect pairs that differ by exactly 1 bit.
+        # We can iterate over each code and flip each bit position.
+        for code in codes:
+            bits = list(code)
+            for pos in range(self.bit_width):
+                neighbor_bits = bits.copy()
+                neighbor_bits[pos] = '1' if bits[pos] == '0' else '0'
+                neighbor = ''.join(neighbor_bits)
+                if neighbor in g and not g.has_edge(code, neighbor):
+                    g.add_edge(code, neighbor)
+
+        return g
 
     def shortest_path(self, start_code: str, end_code: str) -> List[str]:
         """
         Find shortest path between two Gray codes in hypercube.
 
         Args:
-            start_code: Starting Gray code
-            end_code: Ending Gray code
+            start_code: Starting Gray code string
+            end_code: Ending Gray code string
 
         Returns:
-            List of Gray codes forming the shortest path
+            List of Gray code strings forming the shortest path
+            (includes start and end)
         """
-        start_int = gray_to_int(start_code)
-        end_int = gray_to_int(end_code)
+        if len(start_code) != self.bit_width or len(end_code) != self.bit_width:
+            raise ValueError(
+                f"Codes must be {self.bit_width} bits, "
+                f"got {len(start_code)} and {len(end_code)}"
+            )
+
+        if start_code == end_code:
+            return [start_code]
 
         try:
-            # Get shortest path as list of integers
-            path_ints = nx.shortest_path(self.graph, start_int, end_int)
-
-            # Convert back to Gray codes
-            path_codes = [int_to_gray(node, self.bit_width) for node in path_ints]
-
-            return path_codes
+            return nx.shortest_path(self.graph, start_code, end_code)
+        except nx.NodeNotFound as e:
+            raise ValueError(f"Code not found in hypercube: {e}")
         except nx.NetworkXNoPath:
             # Should never happen in a hypercube, but handle gracefully
             return [start_code, end_code]
 
     def find_intermediate_states(
-        self, 
-        start_code: str, 
+        self,
+        start_code: str,
         end_code: str
     ) -> List[str]:
         """
@@ -71,6 +100,8 @@ class HypercubeGraph:
         """
         path = self.shortest_path(start_code, end_code)
         # Return only intermediate states (exclude start and end)
+        if len(path) <= 2:
+            return []
         return path[1:-1]
 
     def get_neighbors(self, code: str) -> List[str]:
@@ -78,11 +109,15 @@ class HypercubeGraph:
         Get all Gray codes that differ by one bit.
 
         Args:
-            code: Gray code
+            code: Gray code string
 
         Returns:
-            List of neighboring Gray codes
+            List of neighboring Gray code strings
         """
-        code_int = gray_to_int(code)
-        neighbor_ints = self.graph.neighbors(code_int)
-        return [int_to_gray(n, self.bit_width) for n in neighbor_ints]
+        if len(code) != self.bit_width:
+            raise ValueError(
+                f"Code must be {self.bit_width} bits, got {len(code)}"
+            )
+        if code not in self.graph:
+            raise ValueError(f"Code '{code}' not found in hypercube")
+        return list(self.graph.neighbors(code))

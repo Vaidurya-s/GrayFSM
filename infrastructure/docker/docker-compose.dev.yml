@@ -1,0 +1,77 @@
+# Development overrides for GrayFSM
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+version: '3.9'
+
+services:
+  # Backend: hot-reload via uvicorn --reload with source mounted
+  backend:
+    build:
+      target: builder          # use the builder stage (has dev deps)
+    command: >
+      python -m uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+        --reload-dir /app
+        --log-level debug
+    volumes:
+      - ../../backend/app:/app/app:cached
+      - ../../backend/requirements.txt:/app/requirements.txt:ro
+    environment:
+      DEBUG: "true"
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      JAEGER_ENABLED: "true"
+      JAEGER_HOST: jaeger
+      OTLP_ENABLED: "true"
+      OTLP_ENDPOINT: "http://jaeger:4317"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+      - "5678:5678"            # debugpy remote attach
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+
+  # Frontend: Vite dev server with HMR instead of nginx production build
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+      target: builder          # stay in the node builder stage
+    command: npx vite --host 0.0.0.0 --port 5173
+    volumes:
+      - ../../frontend/src:/app/src:cached
+      - ../../frontend/index.html:/app/index.html:cached
+      - ../../frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ../../frontend/tailwind.config.js:/app/tailwind.config.js:ro
+      - ../../frontend/postcss.config.js:/app/postcss.config.js:ro
+      - ../../frontend/tsconfig.json:/app/tsconfig.json:ro
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # Postgres: expose more logs in dev
+  postgres:
+    command: >
+      postgres
+        -c log_statement=all
+        -c log_duration=on
+        -c log_min_duration_statement=100
+
+  # Observability always on in dev
+  prometheus:
+    profiles: []               # always start (override any profile)
+
+  grafana:
+    profiles: []
+
+  jaeger:
+    profiles: []

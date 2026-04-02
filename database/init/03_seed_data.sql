@@ -1,432 +1,217 @@
 -- ================================================================
 -- GrayFSM Database - Seed Data
 -- Initial data for categories and example FSMs
+-- Kept in sync with Alembic migration a1b2c3d4e5f6
 -- ================================================================
 
 \echo 'Loading seed data...'
 
 -- ----------------------------------------------------------------
 -- CATEGORIES
+-- Uses same UUIDs as Alembic migration for consistency
 -- ----------------------------------------------------------------
 
-INSERT INTO categories (id, name, slug, description, level, display_order, color) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 'Controllers', 'controllers',
- 'Control logic FSMs for digital systems', 0, 1, '#3B82F6'),
-('550e8400-e29b-41d4-a716-446655440002', 'Processors', 'processors',
- 'CPU and microcontroller state machines', 0, 2, '#8B5CF6'),
-('550e8400-e29b-41d4-a716-446655440003', 'Protocols', 'protocols',
- 'Communication protocol implementations', 0, 3, '#10B981'),
-('550e8400-e29b-41d4-a716-446655440004', 'Academic', 'academic',
- 'Educational and textbook examples', 0, 4, '#F59E0B'),
-('550e8400-e29b-41d4-a716-446655440005', 'Safety-Critical', 'safety-critical',
- 'Safety-critical system FSMs', 0, 5, '#EF4444')
+INSERT INTO categories (id, name, slug, description, level, display_order, fsm_count) VALUES
+('c0000001-0000-0000-0000-000000000001', 'Digital Logic', 'digital-logic',
+ 'Basic digital logic FSM designs', 0, 1, 0),
+('c0000001-0000-0000-0000-000000000002', 'Communication Protocols', 'communication-protocols',
+ 'Protocol state machines (UART, SPI, I2C, etc.)', 0, 2, 0),
+('c0000001-0000-0000-0000-000000000003', 'Control Systems', 'control-systems',
+ 'Real-world control system FSMs', 0, 3, 0),
+('c0000001-0000-0000-0000-000000000004', 'Sequence Detectors', 'sequence-detectors',
+ 'Pattern recognition and sequence detection FSMs', 0, 4, 0),
+('c0000001-0000-0000-0000-000000000005', 'Game Logic', 'game-logic',
+ 'Game and entertainment state machines', 0, 5, 0)
 ON CONFLICT (id) DO NOTHING;
-
--- Update category paths
-UPDATE categories SET full_path = name WHERE parent_category_id IS NULL;
 
 \echo 'Categories loaded: 5 categories'
 
 -- ----------------------------------------------------------------
--- SYSTEM USER
--- ----------------------------------------------------------------
-
-INSERT INTO users (
-    id, username, email, password_hash, display_name, role, email_verified, status
-) VALUES (
-    '00000000-0000-0000-0000-000000000000',
-    'system',
-    'system@grayfsm.com',
-    '$2b$12$dummy.hash.for.system.user.only.not.used.for.login',
-    'GrayFSM System',
-    'admin',
-    TRUE,
-    'active'
-)
-ON CONFLICT (id) DO NOTHING;
-
-\echo 'System user created'
-
--- ----------------------------------------------------------------
--- EXAMPLE FSM 1: Traffic Light Controller
+-- EXAMPLE FSM 1: Elevator Controller
+-- Category: Control Systems | 7 states, 8 transitions, bit_width=3
 -- ----------------------------------------------------------------
 
 INSERT INTO fsms (
-    id,
-    name,
-    description,
-    fsm_type,
-    definition,
-    state_count,
-    transition_count,
-    initial_state,
-    bit_width,
-    encoding_type,
-    category_id,
-    visibility,
-    is_optimized,
-    tags,
-    created_by
+    id, name, description, fsm_type, definition,
+    state_count, transition_count, initial_state, bit_width,
+    encoding_type, category_id, tags, visibility,
+    is_optimized, dummy_state_count, view_count, fork_count, export_count
 ) VALUES (
-    '550e8400-e29b-41d4-a716-446655440100',
-    'Traffic Light Controller',
-    'Simple 4-state traffic light FSM with timer-based transitions. Uses Gray code encoding to minimize glitches.',
+    'f0000001-0000-0000-0000-000000000001',
+    'Elevator Controller',
+    '3-floor elevator with explicit moving states',
     'moore',
     '{
+        "name": "Elevator Controller",
+        "description": "3-floor elevator with explicit moving states",
         "type": "moore",
-        "states": [
-            {
-                "id": "S0",
-                "label": "Red",
-                "output": "100",
-                "encoding": "00",
-                "position": {"x": 100, "y": 100},
-                "isDummy": false
-            },
-            {
-                "id": "S1",
-                "label": "Red+Yellow",
-                "output": "110",
-                "encoding": "01",
-                "position": {"x": 300, "y": 100},
-                "isDummy": false
-            },
-            {
-                "id": "S2",
-                "label": "Green",
-                "output": "001",
-                "encoding": "11",
-                "position": {"x": 500, "y": 100},
-                "isDummy": false
-            },
-            {
-                "id": "S3",
-                "label": "Yellow",
-                "output": "010",
-                "encoding": "10",
-                "position": {"x": 300, "y": 300},
-                "isDummy": false
-            }
-        ],
+        "states": ["Floor1", "Moving1to2", "Floor2", "Moving2to3", "Floor3", "Moving3to2", "Moving2to1"],
+        "initial_state": "Floor1",
         "transitions": [
-            {
-                "id": "T0",
-                "from": "S0",
-                "to": "S1",
-                "input": "timer",
-                "label": "30s elapsed",
-                "output": null
-            },
-            {
-                "id": "T1",
-                "from": "S1",
-                "to": "S2",
-                "input": "timer",
-                "label": "3s elapsed",
-                "output": null
-            },
-            {
-                "id": "T2",
-                "from": "S2",
-                "to": "S3",
-                "input": "timer",
-                "label": "25s elapsed",
-                "output": null
-            },
-            {
-                "id": "T3",
-                "from": "S3",
-                "to": "S0",
-                "input": "timer",
-                "label": "5s elapsed",
-                "output": null
-            }
+            {"from_state": "Floor1", "to_state": "Moving1to2", "input": "up"},
+            {"from_state": "Moving1to2", "to_state": "Floor2"},
+            {"from_state": "Floor2", "to_state": "Moving2to3", "input": "up"},
+            {"from_state": "Floor2", "to_state": "Moving2to1", "input": "down"},
+            {"from_state": "Moving2to3", "to_state": "Floor3"},
+            {"from_state": "Floor3", "to_state": "Moving3to2", "input": "down"},
+            {"from_state": "Moving3to2", "to_state": "Floor2"},
+            {"from_state": "Moving2to1", "to_state": "Floor1"}
         ],
-        "initial_state": "S0",
-        "metadata": {
-            "author": "GrayFSM System",
-            "date_created": "2025-11-29",
-            "tool_version": "1.0.0",
-            "description": "Classic traffic light example with 4 states"
+        "outputs": {
+            "Floor1": "001",
+            "Moving1to2": "010",
+            "Floor2": "011",
+            "Moving2to3": "100",
+            "Floor3": "101",
+            "Moving3to2": "110",
+            "Moving2to1": "111"
         }
     }'::jsonb,
-    4,
-    4,
-    'S0',
-    2,
-    'gray',
-    '550e8400-e29b-41d4-a716-446655440001',
-    'example',
-    FALSE,
-    ARRAY['traffic', 'controller', 'safety-critical', 'moore'],
-    '00000000-0000-0000-0000-000000000000'
+    7, 8, 'Floor1', 3,
+    'binary',
+    'c0000001-0000-0000-0000-000000000003',
+    ARRAY['elevator', 'controller', 'moore', 'control-systems'],
+    'public',
+    FALSE, 0, 0, 0, 0
 )
 ON CONFLICT (id) DO NOTHING;
 
-\echo 'Example FSM 1 loaded: Traffic Light Controller'
+\echo 'Example FSM 1 loaded: Elevator Controller'
 
 -- ----------------------------------------------------------------
--- EXAMPLE FSM 2: Vending Machine
+-- EXAMPLE FSM 2: Sequence Detector 101
+-- Category: Sequence Detectors | 4 states, 8 transitions, bit_width=2
 -- ----------------------------------------------------------------
 
 INSERT INTO fsms (
-    id,
-    name,
-    description,
-    fsm_type,
-    definition,
-    state_count,
-    transition_count,
-    initial_state,
-    bit_width,
-    encoding_type,
-    category_id,
-    visibility,
-    is_optimized,
-    tags,
-    created_by
+    id, name, description, fsm_type, definition,
+    state_count, transition_count, initial_state, bit_width,
+    encoding_type, category_id, tags, visibility,
+    is_optimized, dummy_state_count, view_count, fork_count, export_count
 ) VALUES (
-    '550e8400-e29b-41d4-a716-446655440101',
-    'Vending Machine Controller',
-    'Mealy machine for coin-operated vending machine. Accepts nickels (5¢) and dispenses item at 15¢.',
+    'f0000001-0000-0000-0000-000000000002',
+    'Sequence Detector 101',
+    'Mealy machine that detects the sequence ''101'' in binary input',
     'mealy',
     '{
+        "name": "Sequence Detector 101",
+        "description": "Mealy machine that detects the sequence ''101'' in binary input",
         "type": "mealy",
-        "states": [
-            {
-                "id": "S0",
-                "label": "0 cents",
-                "encoding": "00",
-                "position": {"x": 100, "y": 200},
-                "isDummy": false
-            },
-            {
-                "id": "S1",
-                "label": "5 cents",
-                "encoding": "01",
-                "position": {"x": 300, "y": 200},
-                "isDummy": false
-            },
-            {
-                "id": "S2",
-                "label": "10 cents",
-                "encoding": "11",
-                "position": {"x": 500, "y": 200},
-                "isDummy": false
-            }
-        ],
-        "transitions": [
-            {
-                "id": "T0",
-                "from": "S0",
-                "to": "S1",
-                "input": "nickel",
-                "output": "dispense_nothing",
-                "label": "Insert 5¢"
-            },
-            {
-                "id": "T1",
-                "from": "S1",
-                "to": "S2",
-                "input": "nickel",
-                "output": "dispense_nothing",
-                "label": "Insert 5¢"
-            },
-            {
-                "id": "T2",
-                "from": "S2",
-                "to": "S0",
-                "input": "nickel",
-                "output": "dispense_item",
-                "label": "Insert 5¢, dispense"
-            }
-        ],
+        "states": ["S0", "S1", "S2", "S3"],
         "initial_state": "S0",
-        "metadata": {
-            "author": "GrayFSM System",
-            "date_created": "2025-11-29",
-            "tool_version": "1.0.0",
-            "description": "Simple vending machine accepting nickels"
-        }
+        "transitions": [
+            {"from_state": "S0", "to_state": "S0", "input": "0", "output": "0"},
+            {"from_state": "S0", "to_state": "S1", "input": "1", "output": "0"},
+            {"from_state": "S1", "to_state": "S2", "input": "0", "output": "0"},
+            {"from_state": "S1", "to_state": "S1", "input": "1", "output": "0"},
+            {"from_state": "S2", "to_state": "S0", "input": "0", "output": "0"},
+            {"from_state": "S2", "to_state": "S3", "input": "1", "output": "1"},
+            {"from_state": "S3", "to_state": "S2", "input": "0", "output": "0"},
+            {"from_state": "S3", "to_state": "S1", "input": "1", "output": "0"}
+        ]
     }'::jsonb,
-    3,
-    3,
-    'S0',
-    2,
-    'gray',
-    '550e8400-e29b-41d4-a716-446655440001',
-    'example',
-    FALSE,
-    ARRAY['vending', 'machine', 'mealy', 'commercial'],
-    '00000000-0000-0000-0000-000000000000'
+    4, 8, 'S0', 2,
+    'binary',
+    'c0000001-0000-0000-0000-000000000004',
+    ARRAY['sequence', 'detector', 'mealy', 'digital-logic'],
+    'public',
+    FALSE, 0, 0, 0, 0
 )
 ON CONFLICT (id) DO NOTHING;
 
-\echo 'Example FSM 2 loaded: Vending Machine Controller'
+\echo 'Example FSM 2 loaded: Sequence Detector 101'
 
 -- ----------------------------------------------------------------
--- EXAMPLE FSM 3: Sequence Detector
+-- EXAMPLE FSM 3: Traffic Light Controller
+-- Category: Control Systems | 4 states, 4 transitions, bit_width=2
 -- ----------------------------------------------------------------
 
 INSERT INTO fsms (
-    id,
-    name,
-    description,
-    fsm_type,
-    definition,
-    state_count,
-    transition_count,
-    initial_state,
-    bit_width,
-    encoding_type,
-    category_id,
-    visibility,
-    is_optimized,
-    tags,
-    created_by
+    id, name, description, fsm_type, definition,
+    state_count, transition_count, initial_state, bit_width,
+    encoding_type, category_id, tags, visibility,
+    is_optimized, dummy_state_count, view_count, fork_count, export_count
 ) VALUES (
-    '550e8400-e29b-41d4-a716-446655440102',
-    'Sequence Detector (1011)',
-    'Moore machine that detects the binary sequence 1011 in an input stream.',
+    'f0000001-0000-0000-0000-000000000003',
+    'Traffic Light Controller',
+    'Simple 4-state traffic light with standard cycle',
     'moore',
     '{
+        "name": "Traffic Light Controller",
+        "description": "Simple 4-state traffic light with standard cycle",
         "type": "moore",
-        "states": [
-            {
-                "id": "S0",
-                "label": "Start",
-                "output": "0",
-                "encoding": "000",
-                "position": {"x": 100, "y": 200},
-                "isDummy": false
-            },
-            {
-                "id": "S1",
-                "label": "Got 1",
-                "output": "0",
-                "encoding": "001",
-                "position": {"x": 250, "y": 100},
-                "isDummy": false
-            },
-            {
-                "id": "S2",
-                "label": "Got 10",
-                "output": "0",
-                "encoding": "011",
-                "position": {"x": 400, "y": 100},
-                "isDummy": false
-            },
-            {
-                "id": "S3",
-                "label": "Got 101",
-                "output": "0",
-                "encoding": "010",
-                "position": {"x": 550, "y": 200},
-                "isDummy": false
-            },
-            {
-                "id": "S4",
-                "label": "Got 1011 (Match)",
-                "output": "1",
-                "encoding": "110",
-                "position": {"x": 400, "y": 300},
-                "isDummy": false
-            }
-        ],
+        "states": ["Red", "RedYellow", "Green", "Yellow"],
+        "initial_state": "Red",
         "transitions": [
-            {
-                "id": "T0",
-                "from": "S0",
-                "to": "S1",
-                "input": "1",
-                "label": "Input: 1"
-            },
-            {
-                "id": "T1",
-                "from": "S0",
-                "to": "S0",
-                "input": "0",
-                "label": "Input: 0"
-            },
-            {
-                "id": "T2",
-                "from": "S1",
-                "to": "S2",
-                "input": "0",
-                "label": "Input: 0"
-            },
-            {
-                "id": "T3",
-                "from": "S1",
-                "to": "S1",
-                "input": "1",
-                "label": "Input: 1"
-            },
-            {
-                "id": "T4",
-                "from": "S2",
-                "to": "S3",
-                "input": "1",
-                "label": "Input: 1"
-            },
-            {
-                "id": "T5",
-                "from": "S2",
-                "to": "S0",
-                "input": "0",
-                "label": "Input: 0"
-            },
-            {
-                "id": "T6",
-                "from": "S3",
-                "to": "S4",
-                "input": "1",
-                "label": "Input: 1"
-            },
-            {
-                "id": "T7",
-                "from": "S3",
-                "to": "S2",
-                "input": "0",
-                "label": "Input: 0"
-            },
-            {
-                "id": "T8",
-                "from": "S4",
-                "to": "S1",
-                "input": "1",
-                "label": "Input: 1"
-            },
-            {
-                "id": "T9",
-                "from": "S4",
-                "to": "S2",
-                "input": "0",
-                "label": "Input: 0"
-            }
+            {"from_state": "Red", "to_state": "RedYellow"},
+            {"from_state": "RedYellow", "to_state": "Green"},
+            {"from_state": "Green", "to_state": "Yellow"},
+            {"from_state": "Yellow", "to_state": "Red"}
         ],
-        "initial_state": "S0",
-        "metadata": {
-            "author": "GrayFSM System",
-            "date_created": "2025-11-29",
-            "tool_version": "1.0.0",
-            "description": "Sequence detector for pattern 1011"
+        "outputs": {
+            "Red": "100",
+            "RedYellow": "110",
+            "Green": "001",
+            "Yellow": "010"
         }
     }'::jsonb,
-    5,
-    10,
-    'S0',
-    3,
-    'gray',
-    '550e8400-e29b-41d4-a716-446655440004',
-    'example',
-    FALSE,
-    ARRAY['sequence', 'detector', 'moore', 'digital-design'],
-    '00000000-0000-0000-0000-000000000000'
+    4, 4, 'Red', 2,
+    'binary',
+    'c0000001-0000-0000-0000-000000000003',
+    ARRAY['traffic', 'controller', 'moore', 'safety-critical'],
+    'public',
+    FALSE, 0, 0, 0, 0
 )
 ON CONFLICT (id) DO NOTHING;
 
-\echo 'Example FSM 3 loaded: Sequence Detector'
+\echo 'Example FSM 3 loaded: Traffic Light Controller'
+
+-- ----------------------------------------------------------------
+-- EXAMPLE FSM 4: Vending Machine
+-- Category: Digital Logic | 4 states, 6 transitions, bit_width=2
+-- ----------------------------------------------------------------
+
+INSERT INTO fsms (
+    id, name, description, fsm_type, definition,
+    state_count, transition_count, initial_state, bit_width,
+    encoding_type, category_id, tags, visibility,
+    is_optimized, dummy_state_count, view_count, fork_count, export_count
+) VALUES (
+    'f0000001-0000-0000-0000-000000000004',
+    'Vending Machine',
+    'Accepts 5 cent and 10 cent coins, dispenses item at 15 cents',
+    'moore',
+    '{
+        "name": "Vending Machine",
+        "description": "Accepts 5 cent and 10 cent coins, dispenses item at 15 cents",
+        "type": "moore",
+        "states": ["S0_0c", "S1_5c", "S2_10c", "S3_15c"],
+        "initial_state": "S0_0c",
+        "transitions": [
+            {"from_state": "S0_0c", "to_state": "S1_5c", "input": "nickel"},
+            {"from_state": "S0_0c", "to_state": "S2_10c", "input": "dime"},
+            {"from_state": "S1_5c", "to_state": "S2_10c", "input": "nickel"},
+            {"from_state": "S1_5c", "to_state": "S3_15c", "input": "dime"},
+            {"from_state": "S2_10c", "to_state": "S3_15c", "input": "nickel"},
+            {"from_state": "S3_15c", "to_state": "S0_0c", "input": "dispense"}
+        ],
+        "outputs": {
+            "S0_0c": "00",
+            "S1_5c": "00",
+            "S2_10c": "00",
+            "S3_15c": "01"
+        }
+    }'::jsonb,
+    4, 6, 'S0_0c', 2,
+    'binary',
+    'c0000001-0000-0000-0000-000000000001',
+    ARRAY['vending', 'machine', 'moore', 'digital-logic'],
+    'public',
+    FALSE, 0, 0, 0, 0
+)
+ON CONFLICT (id) DO NOTHING;
+
+\echo 'Example FSM 4 loaded: Vending Machine'
 
 -- ----------------------------------------------------------------
 -- Update category FSM counts
@@ -437,7 +222,6 @@ SET fsm_count = (
     SELECT COUNT(*)
     FROM fsms f
     WHERE f.category_id = c.id
-    AND f.visibility = 'example'
 );
 
 \echo 'Category counts updated'
@@ -457,15 +241,10 @@ SELECT
 FROM categories
 UNION ALL
 SELECT
-    'Users' as entity,
-    COUNT(*)::text as count
-FROM users
-UNION ALL
-SELECT
     'Example FSMs' as entity,
     COUNT(*)::text as count
 FROM fsms
-WHERE visibility = 'example';
+WHERE visibility = 'public';
 
 \echo '================================================================'
 \echo 'Seed data loaded successfully!'

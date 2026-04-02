@@ -2,11 +2,22 @@
 Algorithm optimization endpoints
 """
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.algorithms import list_algorithms
 from app.db.session import get_db
 from app.schemas.fsm import OptimizationRequest, OptimizationResponse
+from app.services.optimization_service import OptimizationService
+from app.utils.exceptions import (
+    AlgorithmException,
+    FSMNotFoundException,
+    FSMValidationException,
+)
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -15,11 +26,45 @@ router = APIRouter()
 async def optimize_fsm(
     fsm_id: UUID,
     request: OptimizationRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    Optimize FSM using specified algorithm.
-    
-    TODO: Implement optimization service
+    Optimize an FSM using the specified algorithm.
+
+    Runs the selected optimization algorithm on the FSM identified by fsm_id.
+    Creates a new optimized FSM record and returns optimization metrics.
+
+    Args:
+        fsm_id: UUID of the FSM to optimize
+        request: Optimization parameters (algorithm, options, async_mode)
+
+    Returns:
+        OptimizationResponse with the optimized FSM ID and metrics
+
+    Raises:
+        404: FSM not found
+        422: FSM validation error
+        400: Algorithm error (unknown algorithm or execution failure)
     """
-    raise HTTPException(status_code=501, detail="Optimization not yet implemented")
+    service = OptimizationService(db)
+
+    try:
+        result = await service.optimize_fsm(fsm_id, request)
+        return result
+    except FSMNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FSMValidationException as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except AlgorithmException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/algorithms")
+async def get_available_algorithms():
+    """
+    List all available optimization algorithms.
+
+    Returns:
+        List of algorithm metadata including name, version, and description
+    """
+    return {"data": list_algorithms()}
