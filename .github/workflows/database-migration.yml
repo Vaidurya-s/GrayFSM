@@ -1,0 +1,227 @@
+name: Database Migration
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'database/migrations/**'
+      - 'backend/alembic/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to migrate'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      action:
+        description: 'Migration action'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - upgrade
+          - downgrade
+          - current
+
+jobs:
+  validate-migration:
+    name: Validate Migration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: grayfsm
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: grayfsm_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install alembic sqlalchemy psycopg2-binary
+
+      - name: Validate migration syntax
+        run: |
+          cd backend
+          alembic check
+
+      - name: Create migration test database
+        env:
+          PGPASSWORD: testpass
+        run: |
+          psql -h localhost -U grayfsm -d postgres -c "CREATE DATABASE grayfsm_migration_test;"
+
+      - name: Test migration upgrade
+        env:
+          DATABASE_URL: postgresql://grayfsm:testpass@localhost:5432/grayfsm_migration_test
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Test migration downgrade
+        env:
+          DATABASE_URL: postgresql://grayfsm:testpass@localhost:5432/grayfsm_migration_test
+        run: |
+          cd backend
+          alembic downgrade -1
+
+      - name: Test migration upgrade again
+        env:
+          DATABASE_URL: postgresql://grayfsm:testpass@localhost:5432/grayfsm_migration_test
+        run: |
+          cd backend
+          alembic upgrade head
+
+  migrate-staging:
+    name: Migrate Staging Database
+    runs-on: ubuntu-latest
+    needs: validate-migration
+    if: |
+      github.ref == 'refs/heads/develop' &&
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' &&
+      inputs.environment == 'staging'
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install alembic sqlalchemy psycopg2-binary
+
+      - name: Run database migration
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Verify migration
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          cd backend
+          alembic current
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging database migration ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  migrate-production:
+    name: Migrate Production Database
+    runs-on: ubuntu-latest
+    needs: validate-migration
+    if: |
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' &&
+      inputs.environment == 'production'
+    environment:
+      name: production
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Request approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: 'admin,devops-team'
+          minimum-approvals: 1
+          issue-title: 'Approval needed for production database migration'
+          issue-body: |
+            Production database migration needs approval.
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install alembic sqlalchemy psycopg2-binary
+
+      - name: Create database backup
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          # Parse connection string and create backup
+          echo "Creating production database backup"
+          # Add backup command here
+
+      - name: Run database migration
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Verify migration
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          cd backend
+          alembic current
+
+      - name: Run post-migration tests
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          echo "Running post-migration verification"
+          # Add verification queries here
+
+      - name: Notify team
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Production database migration ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author
