@@ -115,18 +115,8 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-sm text-red-800">Failed to load gallery</p>
-          <p className="text-xs text-red-600 mt-1">
-            {error instanceof Error ? error.message : 'Unknown error'}
-          </p>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !error && fsms.length === 0 && (
+      {/* Empty / offline state */}
+      {!isLoading && (error || fsms.length === 0) && (
         <div className="bg-white rounded-lg shadow p-12 border border-gray-200 text-center">
           <svg
             className="mx-auto h-12 w-12 text-gray-300"

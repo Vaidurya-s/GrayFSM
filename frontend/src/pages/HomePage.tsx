@@ -12,6 +12,7 @@ export default function HomePage() {
       const response = await api.get<FSM[]>('/fsms?limit=10')
       return response.data
     },
+    retry: 1,
   })
 
   const { data: healthData } = useQuery({
@@ -24,25 +25,36 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">GrayFSM</h1>
-              <p className="text-sm text-gray-600">Finite State Machine Optimizer</p>
-            </div>
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-3xl font-bold">Optimize Your FSMs</h1>
+          <p className="mt-2 text-blue-100 max-w-2xl">
+            Design finite state machines and apply Gray code optimization to minimize
+            glitches and race conditions in hardware implementations.
+          </p>
+          <div className="mt-6 flex items-center gap-3">
+            <a
+              href="/editor/new"
+              className="px-5 py-2 text-sm font-medium bg-white text-blue-700 rounded-md hover:bg-blue-50"
+            >
+              Create New FSM
+            </a>
+            <a
+              href="/examples"
+              className="px-5 py-2 text-sm font-medium border border-blue-300 text-white rounded-md hover:bg-blue-700"
+            >
+              View Examples
+            </a>
             {healthData && (
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${healthData.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span className="text-sm text-gray-600">
-                  {healthData.status === 'healthy' ? 'API Connected' : 'API Disconnected'}
-                </span>
-              </div>
+              <span className="ml-auto flex items-center gap-2 text-sm text-blue-200">
+                <span className={`w-2 h-2 rounded-full ${healthData.status === 'healthy' ? 'bg-green-400' : 'bg-red-400'}`} />
+                {healthData.status === 'healthy' ? 'API Connected' : 'API Offline'}
+              </span>
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -61,10 +73,10 @@ export default function HomePage() {
               )}
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded p-4">
-                  <p className="text-sm text-red-800">Failed to load FSMs</p>
-                  <p className="text-xs text-red-600 mt-1">
-                    {error instanceof Error ? error.message : 'Unknown error'}
+                <div className="bg-gray-50 border border-gray-200 rounded p-4 text-center">
+                  <p className="text-sm text-gray-600">Backend not connected</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Start the API server to manage FSMs
                   </p>
                 </div>
               )}
@@ -209,6 +221,43 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Feature highlights */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Visual Editor</h3>
+            <p className="text-xs text-gray-500">
+              Drag-and-drop FSM designer with real-time state and transition editing.
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+            <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Gray Code Optimization</h3>
+            <p className="text-xs text-gray-500">
+              Minimize glitches with single-bit state transitions via hypercube pathfinding.
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+            <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">HDL Export</h3>
+            <p className="text-xs text-gray-500">
+              Export optimized FSMs to synthesizable Verilog, VHDL, or testbench formats.
+            </p>
           </div>
         </div>
       </main>

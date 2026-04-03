@@ -1,5 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000/api/v1';
-export const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:9000/ws';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+export const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
 
 export const APP_NAME = 'GrayFSM';
 export const APP_VERSION = '1.0.0';

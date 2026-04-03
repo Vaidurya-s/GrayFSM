@@ -24,5 +24,20 @@ node_modules/
 .DS_Store
 
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.egg-info/
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Logs
+*.log
+
 # Claude
 .claude/

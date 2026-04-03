@@ -19,6 +19,7 @@ export default function ExamplesPage() {
   } = useQuery({
     queryKey: ['examples'],
     queryFn: () => examplesAPI.list(),
+    retry: 1,
   });
 
   const examples: Example[] = (() => {
@@ -52,18 +53,8 @@ export default function ExamplesPage() {
         </div>
       )}
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-sm text-red-800">Failed to load examples</p>
-          <p className="text-xs text-red-600 mt-1">
-            {error instanceof Error ? error.message : 'The examples endpoint may not be available yet.'}
-          </p>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !error && examples.length === 0 && (
+      {/* Empty / offline state — show static examples as fallback */}
+      {!isLoading && (error || examples.length === 0) && (
         <div className="bg-white rounded-lg shadow p-12 border border-gray-200 text-center">
           <svg
             className="mx-auto h-12 w-12 text-gray-300"
