@@ -41,6 +41,27 @@ UserToken = Dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
+# Token blacklist (in-memory, for distributed systems use Redis)
+# ---------------------------------------------------------------------------
+
+_token_blacklist: set = set()
+
+
+def blacklist_token(token: str) -> None:
+    """
+    Add a token to the blacklist (e.g., for logout).
+
+    In production, consider using Redis or a database for distributed systems.
+    """
+    _token_blacklist.add(token)
+
+
+def is_token_blacklisted(token: str) -> bool:
+    """Check if a token has been blacklisted."""
+    return token in _token_blacklist
+
+
+# ---------------------------------------------------------------------------
 # Bearer scheme (auto_error=False so missing header => None, not 403)
 # ---------------------------------------------------------------------------
 
@@ -56,7 +77,13 @@ def _decode_token(token: str) -> Optional[UserToken]:
     Decode and validate a JWT token.
 
     Returns the payload dict on success, ``None`` on any failure.
+    Checks audience claim and token blacklist.
     """
+    # Check if token is blacklisted (e.g., after logout)
+    if is_token_blacklisted(token):
+        logger.debug("Token has been blacklisted")
+        return None
+
     try:
         from jose import JWTError, jwt  # noqa: WPS433  (lazy import)
     except ImportError:
@@ -71,6 +98,7 @@ def _decode_token(token: str) -> Optional[UserToken]:
             token,
             settings.secret_key,
             algorithms=[settings.algorithm],
+            audience="grayfsm-api",
         )
     except JWTError as exc:
         logger.debug("JWT decode failed", extra={"error": str(exc)})
@@ -100,6 +128,7 @@ def create_access_token(
     Create a signed JWT access token.
 
     ``data`` must contain at least ``{"sub": "<user_id>"}``.
+    Includes audience claim for additional security validation.
     """
     try:
         from jose import jwt  # noqa: WPS433
@@ -118,6 +147,7 @@ def create_access_token(
         "exp": expire,
         "iat": datetime.utcnow(),
         "type": "access",
+        "aud": "grayfsm-api",
     })
 
     return jwt.encode(
@@ -132,6 +162,7 @@ def create_access_token(
 # ---------------------------------------------------------------------------
 
 async def get_optional_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
 ) -> Optional[UserToken]:
     """
@@ -139,11 +170,19 @@ async def get_optional_current_user(
 
     **Never raises 401.**  Endpoints using this dependency will work
     identically whether or not the client sends a token.
+    Checks Authorization header first, then falls back to httpOnly cookie.
     """
-    if credentials is None:
+    token: Optional[str] = None
+
+    if credentials is not None:
+        token = credentials.credentials
+    else:
+        token = request.cookies.get("access_token")
+
+    if token is None:
         return None
 
-    user = _decode_token(credentials.credentials)
+    user = _decode_token(token)
     if user is None:
         # Token was present but invalid — still return None rather
         # than blocking the request.  Log for observability.
@@ -154,21 +193,30 @@ async def get_optional_current_user(
 
 
 async def get_required_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
 ) -> UserToken:
     """
     FastAPI dependency: returns the current user **or raises 401**.
 
     Use this only on endpoints that explicitly need authentication.
+    Checks Authorization header first, then falls back to httpOnly cookie.
     """
-    if credentials is None:
+    token: Optional[str] = None
+
+    if credentials is not None:
+        token = credentials.credentials
+    else:
+        token = request.cookies.get("access_token")
+
+    if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = _decode_token(credentials.credentials)
+    user = _decode_token(token)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

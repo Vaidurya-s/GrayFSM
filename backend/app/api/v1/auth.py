@@ -1,13 +1,15 @@
 """
 Authentication API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db.session import get_db
 from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserResponse
 from app.services.auth_service import AuthService
-from app.middleware.auth import get_required_current_user, create_access_token, UserToken
+from app.middleware.auth import get_required_current_user, create_access_token, blacklist_token, UserToken
 from app.utils.exceptions import (
     UserAlreadyExistsException,
     UserNotFoundException,
@@ -106,7 +108,16 @@ async def login(
         }
     )
 
-    return AuthResponse(access_token=token, token_type="bearer")
+    response = JSONResponse(content={"access_token": token, "token_type": "bearer"})
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        max_age=settings.access_token_expire_minutes * 60,
+    )
+    return response
 
 
 @router.get("/me", response_model=UserResponse)
@@ -143,3 +154,32 @@ async def get_current_user(
         is_active=user.is_active,
         created_at=user.created_at,
     )
+
+
+@router.post("/logout")
+async def logout(
+    current_user: UserToken = Depends(get_required_current_user),
+    request: Request = None,
+) -> dict:
+    """
+    Logout the current user by blacklisting their token.
+
+    Args:
+        current_user: Current user from token (ensures authentication required)
+        request: HTTP request to extract token from Authorization header
+
+    Returns:
+        Logout confirmation message
+
+    Raises:
+        HTTP 401: Authentication required
+    """
+    # Extract token from Authorization header
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.replace("Bearer ", "")
+
+    if token:
+        blacklist_token(token)
+        logger.info(f"User {current_user['user_id']} logged out")
+
+    return {"message": "Logged out successfully"}

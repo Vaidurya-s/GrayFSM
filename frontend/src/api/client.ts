@@ -4,6 +4,7 @@ import { API_BASE_URL } from '@/config/constants';
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true, // Send httpOnly auth cookie automatically
   headers: {
     'Content-Type': 'application/json',
   },
