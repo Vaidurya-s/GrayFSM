@@ -23,7 +23,7 @@ import type { State, Transition } from '../../types/fsm';
 const nodeTypes = { stateNode: StateNode };
 const edgeTypes = { transitionEdge: TransitionEdge };
 
-function statesToNodes(states: State[], initialState: string): Node[] {
+function statesToNodes(states: State[], initialState: string, fsmType: 'moore' | 'mealy'): Node[] {
   return states.map((s, i) => ({
     id: s.id,
     type: 'stateNode',
@@ -36,11 +36,12 @@ function statesToNodes(states: State[], initialState: string): Node[] {
       output: s.output,
       isInitial: s.id === initialState || s.name === initialState,
       isDummy: s.is_dummy,
+      fsmType,
     },
   }));
 }
 
-function transitionsToEdges(transitions: Transition[]): Edge[] {
+function transitionsToEdges(transitions: Transition[], fsmType: 'moore' | 'mealy'): Edge[] {
   return transitions.map((t, i) => ({
     id: t.id || `e-${t.from_state}-${t.to_state}-${i}`,
     source: t.from_state,
@@ -51,6 +52,7 @@ function transitionsToEdges(transitions: Transition[]): Edge[] {
       input: t.input,
       output: t.output,
       label: t.label,
+      fsmType,
     },
   }));
 }
@@ -64,6 +66,7 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
     draftStates,
     draftTransitions,
     draftInitialState,
+    draftFsmType,
     setSelectedNode,
     setSelectedEdge,
     updateState,
@@ -71,12 +74,12 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
   } = useFSMStore();
 
   const initialNodes = useMemo(
-    () => statesToNodes(draftStates, draftInitialState),
-    [draftStates, draftInitialState]
+    () => statesToNodes(draftStates, draftInitialState, draftFsmType),
+    [draftStates, draftInitialState, draftFsmType]
   );
   const initialEdges = useMemo(
-    () => transitionsToEdges(draftTransitions),
-    [draftTransitions]
+    () => transitionsToEdges(draftTransitions, draftFsmType),
+    [draftTransitions, draftFsmType]
   );
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
@@ -120,14 +123,14 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
               ...connection,
               type: 'transitionEdge',
               markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
-              data: { input: '', output: '' },
+              data: { input: '', output: '', fsmType: draftFsmType },
             },
             eds
           )
         );
       }
     },
-    [readOnly, addTransition, setEdges]
+    [readOnly, addTransition, setEdges, draftFsmType]
   );
 
   const onNodeClick = useCallback(
@@ -171,8 +174,8 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
         <Controls />
         <MiniMap
           nodeColor={(node) => {
-            if (node.data?.isInitial) return '#22c55e';
-            if (node.data?.isDummy) return '#f97316';
+            if (node.data?.isInitial) return '#0072B2';
+            if (node.data?.isDummy) return '#E69F00';
             return '#e5e7eb';
           }}
           maskColor="rgba(0,0,0,0.1)"
