@@ -21,10 +21,12 @@ networkx>=3.2.1,<4.0.0
 
 # Authentication
 passlib[bcrypt]>=1.7.4,<2.0.0
+bcrypt>=4.0.0,<4.1.0  # passlib 1.7.x not compatible with bcrypt>=4.1
 python-jose[cryptography]>=3.3.0,<4.0.0
 
 # Logging
 structlog>=23.2.0
+python-json-logger>=2.0.0
 
 # Configuration
 python-dotenv>=1.0.0,<2.0.0
