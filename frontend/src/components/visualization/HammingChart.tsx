@@ -52,11 +52,11 @@ export default function HammingChart({
   return (
     <div className="space-y-6" data-testid="hamming-chart">
       {/* Improvement banner */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-        <div className="text-3xl font-bold text-green-700">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+        <div className="text-3xl font-bold" style={{ color: '#0072B2' }}>
           {improvementPct.toFixed(1)}%
         </div>
-        <div className="text-sm text-green-600">Improvement</div>
+        <div className="text-sm" style={{ color: '#0072B2' }}>Improvement</div>
       </div>
 
       {/* Hamming distance comparison */}
@@ -71,8 +71,8 @@ export default function HammingChart({
             <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
             <Tooltip />
             <Legend />
-            <Bar dataKey="Before" fill="#ef4444" name="Before" radius={[0, 4, 4, 0]} />
-            <Bar dataKey="After" fill="#22c55e" name="After" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Before" fill="#E69F00" name="Before" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="After" fill="#0072B2" name="After" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
