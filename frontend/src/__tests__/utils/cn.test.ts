@@ -117,7 +117,7 @@ describe('cn - Tailwind CSS Class Merger', () => {
   })
 
   it('should handle empty input', () => {
-    expect(cn()).toBeTruthy()
+    expect(cn()).toBe('')
     const result = cn('', '', '')
     expect(typeof result).toBe('string')
   })
