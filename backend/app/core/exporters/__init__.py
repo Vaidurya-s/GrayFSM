@@ -12,6 +12,7 @@ from app.core.exporters.vhdl import VHDLExporter
 from app.core.exporters.json_exporter import JSONExporter
 from app.core.exporters.csv_exporter import CSVExporter
 from app.core.exporters.testbench import TestbenchExporter
+from app.core.exporters.sva_exporter import SVAExporter
 from app.utils.exceptions import ExportException
 
 
@@ -22,6 +23,7 @@ EXPORTER_REGISTRY: Dict[str, Any] = {
     "json": JSONExporter,
     "csv": CSVExporter,
     "testbench": TestbenchExporter,
+    "sva": SVAExporter,
 }
 
 # File extension mapping
@@ -31,6 +33,7 @@ FORMAT_EXTENSIONS: Dict[str, str] = {
     "json": ".json",
     "csv": ".csv",
     "testbench": ".v",
+    "sva": ".sv",
 }
 
 # Export format metadata
@@ -59,6 +62,11 @@ FORMAT_INFO = {
         "name": "Verilog Testbench",
         "extension": ".v",
         "description": "Verilog testbench with clock, reset, stimulus, and waveform generation",
+    },
+    "sva": {
+        "name": "SystemVerilog Assertions",
+        "extension": ".sv",
+        "description": "SystemVerilog assertions module with assert/cover properties",
     },
 }
 
