@@ -1,6 +1,7 @@
 """
 Algorithm optimization endpoints
 """
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.algorithms import list_algorithms
 from app.db.session import get_db
+from app.middleware.auth import UserToken, get_optional_current_user, get_required_current_user
 from app.schemas.fsm import OptimizationRequest, OptimizationResponse
 from app.services.optimization_service import OptimizationService
 from app.utils.exceptions import (
@@ -28,6 +30,7 @@ async def optimize_fsm(
     fsm_id: UUID,
     request: OptimizationRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: UserToken = Depends(get_required_current_user),
 ):
     """
     Optimize an FSM using the specified algorithm.
@@ -75,7 +78,9 @@ async def optimize_fsm(
 
 
 @router.get("/algorithms")
-async def get_available_algorithms():
+async def get_available_algorithms(
+    current_user: Optional[UserToken] = Depends(get_optional_current_user),
+):
     """
     List all available optimization algorithms.
 

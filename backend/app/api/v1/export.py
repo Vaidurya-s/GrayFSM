@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exporters import list_formats
 from app.db.session import get_db
+from app.middleware.auth import UserToken, get_required_current_user
 from app.services.export_service import ExportService
 from app.utils.exceptions import ExportException, FSMNotFoundException
 from app.utils.logger import get_logger
@@ -43,6 +44,7 @@ async def export_fsm(
     fsm_id: UUID,
     request: ExportRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: UserToken = Depends(get_required_current_user),
 ):
     """
     Export FSM to the specified format (Verilog, VHDL, JSON).

@@ -1,13 +1,14 @@
 """
 FSM CRUD API endpoints
 """
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.middleware.auth import UserToken, get_optional_current_user, get_required_current_user
 from app.schemas.fsm import FSMCreate, FSMResponse
 from app.services.fsm_service import FSMService
 from app.utils.exceptions import FSMNotFoundException, FSMValidationException
@@ -18,7 +19,8 @@ router = APIRouter()
 @router.post("", response_model=FSMResponse, status_code=201)
 async def create_fsm(
     fsm_data: FSMCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: UserToken = Depends(get_required_current_user),
 ):
     """
     Create a new FSM.
@@ -44,7 +46,8 @@ async def create_fsm(
 @router.get("/{fsm_id}", response_model=FSMResponse)
 async def get_fsm(
     fsm_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[UserToken] = Depends(get_optional_current_user),
 ):
     """
     Get FSM by ID.
@@ -72,7 +75,8 @@ async def list_fsms(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     visibility: str = Query(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[UserToken] = Depends(get_optional_current_user),
 ):
     """
     List FSMs with pagination.
@@ -93,7 +97,8 @@ async def list_fsms(
 @router.delete("/{fsm_id}", status_code=204)
 async def delete_fsm(
     fsm_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: UserToken = Depends(get_required_current_user),
 ):
     """Delete FSM by ID"""
     service = FSMService(db)
