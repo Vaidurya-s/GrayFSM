@@ -71,11 +71,16 @@ jobs:
           echo "TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test" >> .env
 
       - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
         run: |
           cd backend
           alembic upgrade head
 
       - name: Start API server
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
+          SECRET_KEY: ci-test-secret-key-not-for-production
         run: |
           cd backend
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
@@ -169,6 +174,8 @@ jobs:
           echo "TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test" >> .env
 
       - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
         run: |
           cd backend
           alembic upgrade head
@@ -247,11 +254,16 @@ jobs:
           echo "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test" >> backend/.env
 
       - name: Run migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
         run: |
           cd backend
           alembic upgrade head
 
       - name: Start API server
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
+          SECRET_KEY: ci-test-secret-key-not-for-production
         run: |
           cd backend
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
