@@ -45,7 +45,7 @@ tavern==2.9.2
 
 # WebSocket Testing
 websocket-client==1.7.0
-pytest-websocket==0.0.13
+# pytest-websocket does not exist on PyPI — use websocket-client directly
 
 # Authentication Testing
 PyJWT==2.8.0
