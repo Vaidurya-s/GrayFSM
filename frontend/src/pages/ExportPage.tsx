@@ -10,11 +10,9 @@ import {
   CardHeader,
   CardBody,
   Tabs,
-  TabList,
-  Tab,
   TabPanel,
   Alert,
-  FullPageSpinner,
+  Spinner,
   Badge,
 } from '../components/ui';
 import type { ExportFormat, ExportResponse } from '../types/fsm';
@@ -38,7 +36,7 @@ interface FormatOptions {
 // ------------------------------------------------------------------ //
 
 function fsmTypeBadgeVariant(type: string) {
-  return type === 'moore' ? ('primary' as const) : ('purple' as const);
+  return type === 'moore' ? ('info' as const) : ('default' as const);
 }
 
 function fileExtension(format: FormatId): string {
@@ -79,7 +77,7 @@ function OptionsPanel({
   const hdl = isHDLFormat(format);
 
   return (
-    <Card padding="none" className="sticky top-4">
+    <Card className="sticky top-4">
       <CardHeader>
         <h2 className="text-sm font-semibold text-gray-900">Export Options</h2>
       </CardHeader>
@@ -170,7 +168,7 @@ function OptionsPanel({
         <Button
           variant="primary"
           size="md"
-          isLoading={isGenerating}
+          loading={isGenerating}
           onClick={onGenerate}
           data-testid="export-submit"
           className="w-full"
@@ -327,8 +325,9 @@ export default function ExportPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <FullPageSpinner label="Loading FSM…" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center gap-4">
+        <Spinner size="lg" />
+        <p className="text-sm text-gray-500">Loading FSM…</p>
       </div>
     );
   }
@@ -397,20 +396,16 @@ export default function ExportPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* ---- Left: format tabs + preview ---- */}
         <div className="flex-1 min-w-0">
-          <Card padding="none">
+          <Card>
             {/* Format selection via Tabs */}
-            <Tabs defaultTab="verilog" onChange={handleFormatChange}>
-              <TabList className="px-2 pt-2">
-                {EXPORT_FORMATS.map((fmt) => (
-                  <Tab key={fmt.value} id={fmt.value}>
-                    {fmt.label}
-                  </Tab>
-                ))}
-              </TabList>
-
+            <Tabs
+              tabs={EXPORT_FORMATS.map((fmt) => ({ value: fmt.value, label: fmt.label }))}
+              value={activeFormat}
+              onChange={handleFormatChange}
+            >
               {/* Preview area — shared across all tab panels */}
               {EXPORT_FORMATS.map((fmt) => (
-                <TabPanel key={fmt.value} id={fmt.value}>
+                <TabPanel key={fmt.value} value={fmt.value} activeValue={activeFormat}>
                   {/* Preview toolbar */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
                     <span className="text-xs text-gray-500 font-mono">
@@ -422,7 +417,7 @@ export default function ExportPage() {
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
-                          size="xs"
+                          size="sm"
                           onClick={handleCopy}
                           data-testid="export-copy"
                           leftIcon={
@@ -450,7 +445,7 @@ export default function ExportPage() {
                         </Button>
                         <Button
                           variant="primary"
-                          size="xs"
+                          size="sm"
                           onClick={handleDownload}
                           data-testid="export-download"
                           leftIcon={
@@ -528,7 +523,7 @@ export default function ExportPage() {
           />
 
           {/* Quick tips */}
-          <Card padding="sm" className="mt-4">
+          <Card className="mt-4">
             <p className="text-xs font-semibold text-gray-700 mb-1">Tips</p>
             <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside leading-relaxed">
               <li>Use <strong>Verilog</strong> for Xilinx / Vivado synthesis.</li>

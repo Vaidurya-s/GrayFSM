@@ -71,7 +71,7 @@ describe('cn - Tailwind CSS Class Merger', () => {
 
   it('should handle complex real-world case', () => {
     const isDisabled = true
-    const variant = 'primary'
+    const variant: string = 'primary'
 
     const result = cn(
       'px-4 py-2 rounded transition-colors',

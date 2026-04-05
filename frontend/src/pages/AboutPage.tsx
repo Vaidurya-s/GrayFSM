@@ -12,8 +12,7 @@ import { APP_NAME, APP_VERSION, APP_DESCRIPTION } from '../config/constants';
 import {
   Zap,
   Code2,
-  Grid3x3,
-  Cube,
+  Box,
   BarChart3,
   Globe,
   Layers,
@@ -68,7 +67,7 @@ export default function AboutPage() {
     {
       title: '3D Visualization',
       description: 'Explore hypercube state space with Three.js rendering',
-      icon: <Cube className="w-6 h-6 text-indigo-600" />,
+      icon: <Box className="w-6 h-6 text-indigo-600" />,
     },
     {
       title: 'Metrics Dashboard',
@@ -318,7 +317,7 @@ export default function AboutPage() {
 
                 {/* Steps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {steps.map((step, idx) => (
+                  {steps.map((step) => (
                     <Card key={step.number} variant="bordered">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0">

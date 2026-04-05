@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Zap, ChevronRight, Layers, ArrowRight } from 'lucide-react';
@@ -7,14 +8,12 @@ import {
   Button,
   Badge,
   Card,
-  CardContent,
+  CardBody,
   CardFooter,
   Alert,
   Spinner,
   Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
+  TabPanel,
 } from '../components/ui';
 import type { Example } from '../types/api';
 
@@ -88,10 +87,10 @@ const STATIC_EXAMPLES: StaticExample[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const DIFFICULTY_VARIANT: Record<Difficulty, 'success' | 'warning' | 'destructive'> = {
+const DIFFICULTY_VARIANT: Record<Difficulty, 'success' | 'warning' | 'danger'> = {
   beginner: 'success',
   intermediate: 'warning',
-  advanced: 'destructive',
+  advanced: 'danger',
 };
 
 const CATEGORY_TABS: Category[] = ['Simple', 'Medium', 'Complex'];
@@ -115,8 +114,8 @@ function StaticExampleCard({ example }: { example: StaticExample }) {
   const navigate = useNavigate();
 
   return (
-    <Card hover className="flex flex-col rounded-xl">
-      <CardContent className="pt-5 flex-1">
+    <Card className="flex flex-col rounded-xl">
+      <CardBody className="pt-5 flex-1">
         {/* Title + difficulty */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-sm font-semibold text-gray-900 leading-tight">{example.name}</h3>
@@ -148,11 +147,11 @@ function StaticExampleCard({ example }: { example: StaticExample }) {
             </span>
           ))}
         </div>
-      </CardContent>
+      </CardBody>
 
       <CardFooter className="pt-0 pb-5">
         <Button
-          variant="default"
+          variant="primary"
           size="sm"
           className="w-full"
           onClick={() => navigate(`${ROUTES.EDITOR_NEW}?example=${example.id}`)}
@@ -183,11 +182,10 @@ function ApiExampleCard({ example }: { example: Example }) {
 
   return (
     <Card
-      hover
       className="flex flex-col rounded-xl"
       data-testid={`example-card-${example.id}`}
     >
-      <CardContent className="pt-5 flex-1">
+      <CardBody className="pt-5 flex-1">
         {/* Title + difficulty */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-sm font-semibold text-gray-900 leading-tight">{example.name}</h3>
@@ -221,11 +219,11 @@ function ApiExampleCard({ example }: { example: Example }) {
             ))}
           </div>
         )}
-      </CardContent>
+      </CardBody>
 
       <CardFooter className="pt-0 pb-5 gap-2">
         <Button
-          variant="default"
+          variant="primary"
           size="sm"
           className="flex-1"
           onClick={() => navigate(generateRoute(ROUTES.EXAMPLE_DETAIL, { id: example.id }))}
@@ -246,10 +244,15 @@ function ApiExampleCard({ example }: { example: Example }) {
   );
 }
 
+// ── Tabs definition ──────────────────────────────────────────────────────────
+
+const CATEGORY_TAB_DEFS = CATEGORY_TABS.map((cat) => ({ value: cat, label: cat }));
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function ExamplesPage() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>('Simple');
 
   const {
     data: examplesResponse,
@@ -321,22 +324,26 @@ export default function ExamplesPage() {
             the editor with the example pre-loaded.
           </Alert>
 
-          <Tabs defaultValue="Simple">
-            <TabsList className="mb-6">
-              {CATEGORY_TABS.map((cat) => (
-                <TabsTrigger key={cat} value={cat}>
-                  {cat}
-                  {byCategory[cat].length > 0 && (
+          <Tabs
+            tabs={CATEGORY_TAB_DEFS.map((t) => ({
+              value: t.value,
+              label: (
+                <>
+                  {t.label}
+                  {byCategory[t.value as Category].length > 0 && (
                     <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
-                      {byCategory[cat].length}
+                      {byCategory[t.value as Category].length}
                     </span>
                   )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
+                </>
+              ),
+            }))}
+            value={activeTab}
+            onChange={setActiveTab}
+            className="mb-6"
+          >
             {CATEGORY_TABS.map((cat) => (
-              <TabsContent key={cat} value={cat}>
+              <TabPanel key={cat} value={cat} activeValue={activeTab}>
                 {byCategory[cat].length === 0 ? (
                   <div className="py-12 text-center text-sm text-gray-400">
                     No {cat.toLowerCase()} examples available.
@@ -348,7 +355,7 @@ export default function ExamplesPage() {
                     ))}
                   </div>
                 )}
-              </TabsContent>
+              </TabPanel>
             ))}
           </Tabs>
         </>
@@ -356,41 +363,46 @@ export default function ExamplesPage() {
 
       {/* API examples with tabs */}
       {!isLoading && !error && apiExamples.length > 0 && (
-        <Tabs defaultValue="Simple">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <TabsList>
-              {CATEGORY_TABS.map((cat) => (
-                <TabsTrigger key={cat} value={cat}>
-                  {cat}
-                  {byDifficulty[cat].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
-                      {byDifficulty[cat].length}
-                    </span>
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <p className="text-xs text-gray-400">
               {apiExamples.length} example{apiExamples.length !== 1 ? 's' : ''} available
             </p>
           </div>
-
-          {CATEGORY_TABS.map((cat) => (
-            <TabsContent key={cat} value={cat}>
-              {byDifficulty[cat].length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-400">
-                  No {cat.toLowerCase()} examples available yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {byDifficulty[cat].map((ex) => (
-                    <ApiExampleCard key={ex.id} example={ex} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
+          <Tabs
+            tabs={CATEGORY_TAB_DEFS.map((t) => ({
+              value: t.value,
+              label: (
+                <>
+                  {t.label}
+                  {byDifficulty[t.value].length > 0 && (
+                    <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
+                      {byDifficulty[t.value].length}
+                    </span>
+                  )}
+                </>
+              ),
+            }))}
+            value={activeTab}
+            onChange={setActiveTab}
+          >
+            {CATEGORY_TABS.map((cat) => (
+              <TabPanel key={cat} value={cat} activeValue={activeTab}>
+                {byDifficulty[cat].length === 0 ? (
+                  <div className="py-12 text-center text-sm text-gray-400">
+                    No {cat.toLowerCase()} examples available yet.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {byDifficulty[cat].map((ex) => (
+                      <ApiExampleCard key={ex.id} example={ex} />
+                    ))}
+                  </div>
+                )}
+              </TabPanel>
+            ))}
+          </Tabs>
+        </>
       )}
 
       {/* API returned empty — show static examples as fallback content */}
@@ -401,22 +413,26 @@ export default function ExamplesPage() {
             <span>Showing built-in examples — live examples will appear here once published.</span>
           </div>
 
-          <Tabs defaultValue="Simple">
-            <TabsList className="mb-6">
-              {CATEGORY_TABS.map((cat) => (
-                <TabsTrigger key={cat} value={cat}>
-                  {cat}
-                  {byCategory[cat].length > 0 && (
+          <Tabs
+            tabs={CATEGORY_TAB_DEFS.map((t) => ({
+              value: t.value,
+              label: (
+                <>
+                  {t.label}
+                  {byCategory[t.value as Category].length > 0 && (
                     <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
-                      {byCategory[cat].length}
+                      {byCategory[t.value as Category].length}
                     </span>
                   )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
+                </>
+              ),
+            }))}
+            value={activeTab}
+            onChange={setActiveTab}
+            className="mb-6"
+          >
             {CATEGORY_TABS.map((cat) => (
-              <TabsContent key={cat} value={cat}>
+              <TabPanel key={cat} value={cat} activeValue={activeTab}>
                 {byCategory[cat].length === 0 ? (
                   <div className="py-12 text-center text-sm text-gray-400">
                     No {cat.toLowerCase()} examples available.
@@ -428,7 +444,7 @@ export default function ExamplesPage() {
                     ))}
                   </div>
                 )}
-              </TabsContent>
+              </TabPanel>
             ))}
           </Tabs>
         </>

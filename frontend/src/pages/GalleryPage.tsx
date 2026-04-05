@@ -7,11 +7,10 @@ import {
   Button,
   Badge,
   Card,
-  CardContent,
+  CardBody,
   CardFooter,
   Input,
   Alert,
-  Spinner,
 } from '../components/ui';
 import type { FSMListParams } from '../types/api';
 import type { FSMType } from '../types/fsm';
@@ -46,8 +45,8 @@ const SORT_OPTIONS = [
   { value: 'view_count-desc', label: 'Most Viewed' },
 ] as const;
 
-function FSMTypeVariant(fsmType: string): 'purple' | 'indigo' {
-  return fsmType === 'moore' ? 'purple' : 'indigo';
+function FSMTypeVariant(fsmType: string): 'default' | 'info' {
+  return fsmType === 'moore' ? 'default' : 'info';
 }
 
 function formatDate(iso?: string) {
@@ -119,7 +118,7 @@ export default function GalleryPage() {
             Browse publicly shared finite state machines from the community.
           </p>
         </div>
-        <Button onClick={() => navigate(ROUTES.EDITOR_NEW)} size="default">
+        <Button onClick={() => navigate(ROUTES.EDITOR_NEW)} size="md">
           <Plus className="h-4 w-4" />
           New FSM
         </Button>
@@ -247,8 +246,8 @@ export default function GalleryPage() {
                 data-testid={`gallery-card-${fsm.id}`}
                 className="group block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl"
               >
-                <Card hover className="h-full rounded-xl transition-all group-hover:border-blue-200">
-                  <CardContent className="pt-5">
+                <Card className="h-full rounded-xl transition-all group-hover:border-blue-200">
+                  <CardBody className="pt-5">
                     {/* Title row */}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-700 transition-colors">
@@ -310,7 +309,7 @@ export default function GalleryPage() {
                         )}
                       </div>
                     )}
-                  </CardContent>
+                  </CardBody>
 
                   <CardFooter className="pt-0 pb-4 justify-between">
                     {/* Optimized badge */}
