@@ -57,13 +57,17 @@ def upgrade() -> None:
     # 3. FULL-TEXT SEARCH INDEX
     # ================================================================
 
-    # Full-text search index — use 'simple' config for portability
-    # ('english' config is not IMMUTABLE on some PostgreSQL setups)
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_fsms_search_text "
-        "ON fsms USING gin(to_tsvector('simple', "
-        "coalesce(name, '') || ' ' || coalesce(description, '')))"
-    )
+    # Full-text search index — wrapped in try/except because to_tsvector
+    # is not IMMUTABLE on all PostgreSQL versions/configs
+    try:
+        op.execute(
+            "CREATE INDEX IF NOT EXISTS idx_fsms_search_text "
+            "ON fsms USING gin(to_tsvector('simple'::regconfig, "
+            "coalesce(name, '') || ' ' || coalesce(description, '')))"
+        )
+    except Exception:
+        # Skip FTS index if not supported — app still works without it
+        pass
 
     # ================================================================
     # 4. JSONB INDEXES FOR DEFINITION QUERIES
