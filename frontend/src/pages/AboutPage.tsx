@@ -1,186 +1,460 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Tabs,
+  TabPanel,
+  Card,
+  Badge,
+  Button,
+} from '../components/ui';
 import { ROUTES } from '../config/routes';
 import { APP_NAME, APP_VERSION, APP_DESCRIPTION } from '../config/constants';
+import {
+  Zap,
+  Code2,
+  Grid3x3,
+  Cube,
+  BarChart3,
+  Globe,
+  Layers,
+  BookOpen,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react';
+
+interface FeatureItem {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+interface TechItem {
+  category: string;
+  items: string[];
+}
+
+interface StepItem {
+  number: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+interface ApiEndpoint {
+  method: string;
+  path: string;
+  description: string;
+}
 
 export default function AboutPage() {
+  const [activeTab, setActiveTab] = useState<string>('about');
+
+  const features: FeatureItem[] = [
+    {
+      title: 'Visual FSM Editor',
+      description: 'React Flow drag-and-drop interface for intuitive FSM design',
+      icon: <Layers className="w-6 h-6 text-blue-600" />,
+    },
+    {
+      title: 'Gray Code Optimization',
+      description: 'Minimize glitches and race conditions in hardware transitions',
+      icon: <Zap className="w-6 h-6 text-yellow-600" />,
+    },
+    {
+      title: 'HDL Export',
+      description: 'Export to Verilog, VHDL, testbenches, and other formats',
+      icon: <Code2 className="w-6 h-6 text-purple-600" />,
+    },
+    {
+      title: '3D Visualization',
+      description: 'Explore hypercube state space with Three.js rendering',
+      icon: <Cube className="w-6 h-6 text-indigo-600" />,
+    },
+    {
+      title: 'Metrics Dashboard',
+      description: 'Before/after analysis with detailed optimization metrics',
+      icon: <BarChart3 className="w-6 h-6 text-green-600" />,
+    },
+    {
+      title: 'REST API',
+      description: 'Full REST API for programmatic access and integration',
+      icon: <Globe className="w-6 h-6 text-red-600" />,
+    },
+  ];
+
+  const techStack: TechItem[] = [
+    {
+      category: 'Frontend',
+      items: ['React 18', 'TypeScript', 'Tailwind CSS', 'React Flow', 'Three.js', 'Recharts'],
+    },
+    {
+      category: 'Backend',
+      items: ['FastAPI', 'SQLAlchemy', 'PostgreSQL', 'Alembic', 'Celery', 'Redis'],
+    },
+    {
+      category: 'Testing',
+      items: ['Pytest', 'Vitest', 'Playwright'],
+    },
+    {
+      category: 'Infrastructure',
+      items: ['Docker', 'Kubernetes', 'GitHub Actions', 'CI/CD'],
+    },
+  ];
+
+  const steps: StepItem[] = [
+    {
+      number: 1,
+      title: 'Design',
+      description:
+        'Create your FSM by defining states and transitions in the visual editor with drag-and-drop simplicity.',
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    },
+    {
+      number: 2,
+      title: 'Optimize',
+      description:
+        'Select from multiple algorithms (Greedy, BFS, Simulated Annealing) to apply Gray code encoding.',
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    },
+    {
+      number: 3,
+      title: 'Compare',
+      description:
+        'View before/after metrics and visualizations to understand the optimization impact.',
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    },
+    {
+      number: 4,
+      title: 'Export',
+      description:
+        'Download your optimized FSM in Verilog, VHDL, testbench, or other formats for synthesis.',
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    },
+  ];
+
+  const apiEndpoints: ApiEndpoint[] = [
+    {
+      method: 'POST',
+      path: '/fsm',
+      description: 'Create a new FSM',
+    },
+    {
+      method: 'GET',
+      path: '/fsm/{id}',
+      description: 'Retrieve FSM details',
+    },
+    {
+      method: 'PUT',
+      path: '/fsm/{id}',
+      description: 'Update an FSM',
+    },
+    {
+      method: 'DELETE',
+      path: '/fsm/{id}',
+      description: 'Delete an FSM',
+    },
+    {
+      method: 'POST',
+      path: '/fsm/{id}/optimize',
+      description: 'Run optimization on an FSM',
+    },
+    {
+      method: 'POST',
+      path: '/fsm/{id}/export',
+      description: 'Export FSM to desired format',
+    },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12" data-testid="about-page">
-      {/* Hero */}
-      <div className="text-center mb-12">
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <span className="text-white font-bold text-2xl">G</span>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white" data-testid="about-page">
+      {/* Hero Section */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <span className="text-white font-bold text-3xl">G</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
+            {APP_NAME}
+          </h1>
+          <p className="text-xl text-gray-600 mb-2">{APP_DESCRIPTION}</p>
+          <span className="inline-block text-sm text-gray-400">v{APP_VERSION}</span>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">{APP_NAME}</h1>
-        <p className="text-lg text-gray-600 mt-2">{APP_DESCRIPTION}</p>
-        <span className="inline-block mt-2 text-xs text-gray-400">v{APP_VERSION}</span>
-      </div>
 
-      {/* What is GrayFSM */}
-      <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          What is GrayFSM?
-        </h2>
-        <div className="prose text-gray-600 text-sm space-y-3">
-          <p>
-            GrayFSM is a full-stack web application for optimizing Finite State Machines
-            using Gray code encoding. It minimizes glitches and race conditions in hardware
-            FSM implementations by ensuring adjacent state transitions differ by only one
-            bit.
-          </p>
-          <p>
-            When state transitions require multi-bit changes, GrayFSM automatically inserts
-            dummy states along hypercube shortest paths to guarantee single-bit transitions,
-            making your digital circuits more robust and reliable.
-          </p>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              step: '1',
-              title: 'Design Your FSM',
-              description:
-                'Use the visual editor to create states and transitions with a drag-and-drop interface.',
-            },
-            {
-              step: '2',
-              title: 'Optimize',
-              description:
-                'Choose an optimization algorithm (greedy, BFS, simulated annealing, or global search) to apply Gray code encoding.',
-            },
-            {
-              step: '3',
-              title: 'Export',
-              description:
-                'Export your optimized FSM to Verilog, VHDL, or other formats ready for synthesis.',
-            },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="bg-white rounded-lg shadow p-6 border border-gray-200 text-center"
-            >
-              <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center mx-auto mb-3 text-lg font-bold">
-                {item.step}
-              </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                {item.title}
-              </h3>
-              <p className="text-xs text-gray-500">{item.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Algorithms */}
-      <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Optimization Algorithms
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            {
-              name: 'Greedy',
-              description:
-                'Fast local optimization that assigns Gray code encodings by processing transitions in order of frequency. Best for quick results.',
-              speed: 'Fast',
-              quality: 'Good',
-            },
-            {
-              name: 'BFS-Optimal',
-              description:
-                'Breadth-first search through encoding space to find optimal assignments for small FSMs. Guarantees minimum Hamming distance.',
-              speed: 'Medium',
-              quality: 'Optimal',
-            },
-            {
-              name: 'Simulated Annealing',
-              description:
-                'Global optimization using probabilistic acceptance of worse solutions to escape local minima. Good for medium-large FSMs.',
-              speed: 'Slow',
-              quality: 'Near-optimal',
-            },
-            {
-              name: 'Global Search',
-              description:
-                'Exhaustive search over all possible encodings. Guarantees the best result but only practical for very small FSMs.',
-              speed: 'Very Slow',
-              quality: 'Best',
-            },
-          ].map((algo) => (
-            <div
-              key={algo.name}
-              className="bg-white rounded-lg shadow p-5 border border-gray-200"
-            >
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                {algo.name}
-              </h3>
-              <p className="text-xs text-gray-500 mb-3">{algo.description}</p>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-gray-400">
-                  Speed: <span className="text-gray-700 font-medium">{algo.speed}</span>
-                </span>
-                <span className="text-gray-400">
-                  Quality:{' '}
-                  <span className="text-gray-700 font-medium">{algo.quality}</span>
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tech stack */}
-      <section className="mb-12">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Technology Stack</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { name: 'React 18', category: 'Frontend' },
-            { name: 'TypeScript', category: 'Language' },
-            { name: 'FastAPI', category: 'Backend' },
-            { name: 'PostgreSQL', category: 'Database' },
-            { name: 'ReactFlow', category: 'Diagrams' },
-            { name: 'Tailwind CSS', category: 'Styling' },
-            { name: 'Zustand', category: 'State' },
-            { name: 'React Query', category: 'Data' },
-          ].map((tech) => (
-            <div
-              key={tech.name}
-              className="bg-gray-50 rounded-lg p-3 text-center border border-gray-200"
-            >
-              <div className="text-sm font-medium text-gray-900">{tech.name}</div>
-              <div className="text-xs text-gray-400">{tech.category}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <div className="text-center bg-blue-50 rounded-lg p-8 border border-blue-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Ready to optimize your FSMs?
-        </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Start by creating a new FSM or explore the gallery for inspiration.
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          <Link
-            to={ROUTES.EDITOR_NEW}
-            data-testid="about-create-fsm"
-            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <Tabs
+            tabs={[
+              { value: 'about', label: 'About' },
+              { value: 'tech', label: 'Tech Stack' },
+              { value: 'how', label: 'How It Works' },
+              { value: 'api', label: 'API' },
+            ]}
+            value={activeTab}
+            onChange={setActiveTab}
+            className="p-6"
+            variant="underline"
           >
-            Create FSM
-          </Link>
-          <Link
-            to={ROUTES.GALLERY}
-            data-testid="about-browse-gallery"
-            className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Browse Gallery
-          </Link>
+            {/* TAB 1: About */}
+            <TabPanel value="about" activeValue={activeTab}>
+              <div className="space-y-10">
+                {/* Project Description */}
+                <section>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">What is GrayFSM?</h2>
+                  <div className="space-y-3 text-gray-600">
+                    <p>
+                      GrayFSM is a full-stack web application for optimizing Finite State Machines
+                      using Gray code encoding. It minimizes glitches and race conditions in hardware
+                      FSM implementations by ensuring adjacent state transitions differ by only one
+                      bit.
+                    </p>
+                    <p>
+                      When state transitions require multi-bit changes, GrayFSM automatically inserts
+                      dummy states along hypercube shortest paths to guarantee single-bit transitions,
+                      making your digital circuits more robust and reliable.
+                    </p>
+                  </div>
+                </section>
+
+                {/* Features Grid */}
+                <section>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Core Features</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {features.map((feature) => (
+                      <Card
+                        key={feature.title}
+                        variant="bordered"
+                        className="hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">{feature.icon}</div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-sm">
+                              {feature.title}
+                            </h4>
+                            <p className="text-gray-600 text-sm mt-1">
+                              {feature.description}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+
+                {/* CTA Section */}
+                <section className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 border border-blue-200">
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      Ready to optimize your FSMs?
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Start by creating a new FSM or explore the gallery for inspiration.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Link to={ROUTES.EDITOR_NEW} data-testid="about-create-fsm">
+                        <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                          Create FSM
+                        </Button>
+                      </Link>
+                      <Link to={ROUTES.GALLERY} data-testid="about-browse-gallery">
+                        <Button variant="outline" size="lg">
+                          Browse Gallery
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </TabPanel>
+
+            {/* TAB 2: Tech Stack */}
+            <TabPanel value="tech" activeValue={activeTab}>
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Technology Stack</h2>
+                  <p className="text-gray-600 mb-8">
+                    GrayFSM is built with modern, production-grade technologies across the full stack.
+                  </p>
+                </div>
+
+                {techStack.map((category) => (
+                  <section key={category.category}>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      {category.category}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {category.items.map((tech) => (
+                        <Badge key={tech} variant="info" size="md">
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+
+                <Card variant="bordered" className="bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Want to learn more?</h4>
+                      <p className="text-sm text-gray-600">
+                        Check out the full documentation and architecture guide.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </TabPanel>
+
+            {/* TAB 3: How It Works */}
+            <TabPanel value="how" activeValue={activeTab}>
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Workflow Overview</h2>
+                  <p className="text-gray-600">
+                    GrayFSM simplifies FSM optimization into four intuitive steps.
+                  </p>
+                </div>
+
+                {/* Steps */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {steps.map((step, idx) => (
+                    <Card key={step.number} variant="bordered">
+                      <div className="flex gap-4">
+                        <div className="flex-shrink-0">
+                          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100 text-blue-700 font-bold">
+                            {step.number}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 text-sm">
+                            {step.title}
+                          </h4>
+                          <p className="text-gray-600 text-sm mt-2">
+                            {step.description}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Gray Code Explanation */}
+                <Card variant="bordered" className="bg-blue-50 border-blue-200">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-yellow-600" />
+                    Understanding Gray Code Optimization
+                  </h3>
+                  <div className="text-sm text-gray-700 space-y-2">
+                    <p>
+                      Gray code is a binary numeral system where two successive values differ in only
+                      one bit. In FSM design, this property is crucial because:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Prevents race conditions from simultaneous bit changes</li>
+                      <li>Minimizes glitches and metastable state occurrences</li>
+                      <li>Improves circuit reliability and timing margins</li>
+                      <li>Reduces unnecessary dummy state insertions</li>
+                    </ul>
+                  </div>
+                </Card>
+              </div>
+            </TabPanel>
+
+            {/* TAB 4: API */}
+            <TabPanel value="api" activeValue={activeTab}>
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">REST API</h2>
+                  <p className="text-gray-600">
+                    GrayFSM provides a comprehensive REST API for programmatic access to all features.
+                  </p>
+                </div>
+
+                {/* API Info Card */}
+                <Card variant="bordered" className="bg-gray-50">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <strong>Base URL:</strong> <code className="bg-white px-2 py-1 rounded text-xs">/api/v1</code>
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <strong>Interactive Docs:</strong>{' '}
+                      <a href="/docs" className="text-blue-600 hover:text-blue-700 underline">
+                        Swagger UI
+                      </a>
+                    </p>
+                  </div>
+                </Card>
+
+                {/* Endpoints Table */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Endpoints</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                            Method
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                            Path
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                            Description
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {apiEndpoints.map((endpoint, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm">
+                              <Badge
+                                variant={
+                                  endpoint.method === 'GET'
+                                    ? 'info'
+                                    : endpoint.method === 'POST'
+                                      ? 'success'
+                                      : endpoint.method === 'PUT'
+                                        ? 'warning'
+                                        : 'danger'
+                                }
+                                size="sm"
+                              >
+                                {endpoint.method}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-mono text-gray-700">
+                              {endpoint.path}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {endpoint.description}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Documentation Card */}
+                <Card variant="bordered" className="bg-blue-50 border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <Globe className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm">Full API Documentation</h4>
+                      <p className="text-sm text-gray-600">
+                        Visit{' '}
+                        <a href="/docs" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                          /docs
+                        </a>
+                        {' '}for interactive Swagger UI with request/response examples and schema definitions.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </TabPanel>
+          </Tabs>
         </div>
       </div>
     </div>

@@ -6,11 +6,22 @@ import { useFSMStore } from '../store/fsmStore';
 import OptimizationForm from '../components/forms/OptimizationForm';
 import HammingChart from '../components/visualization/HammingChart';
 import FSMCanvas from '../components/fsm/FSMCanvas';
+import ComparisonView from '../components/visualization/ComparisonView';
+import MetricsDashboard from '../components/visualization/MetricsDashboard';
+import Hypercube3D from '../components/visualization/Hypercube3D';
 import { ROUTES, generateRoute } from '../config/routes';
 import { fsmAPI } from '../api/endpoints/fsms';
 import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
 import type { APIResponse } from '../api/client';
 import type { AxiosResponse } from 'axios';
+import { Button, Card, Spinner, Alert, Badge } from '../components/ui';
+
+type ResultTab = 'comparison' | 'metrics' | 'hypercube';
+
+function computeNumBits(totalStates: number): number {
+  if (totalStates <= 1) return 2;
+  return Math.min(5, Math.max(2, Math.ceil(Math.log2(totalStates))));
+}
 
 export default function OptimizationPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,9 +31,11 @@ export default function OptimizationPage() {
   const { loadFSMIntoDraft } = useFSMStore();
 
   const [result, setResult] = useState<OptimizationResponse | null>(null);
-  const [showOptimized, setShowOptimized] = useState(false);
+  const [originalFSM, setOriginalFSM] = useState<FSM | null>(null);
+  const [optimizedFSM, setOptimizedFSM] = useState<FSM | null>(null);
+  const [activeTab, setActiveTab] = useState<ResultTab>('comparison');
 
-  // Load FSM into store for the canvas
+  // Load FSM into store for the canvas and capture it as originalFSM
   useEffect(() => {
     if (fsmResponse) {
       // At runtime fsmResponse is AxiosResponse<APIResponse<FSM>>, so .data.data is the FSM
@@ -30,6 +43,7 @@ export default function OptimizationPage() {
       const fsm = axiosResp.data?.data ?? (fsmResponse as unknown as FSM);
       if (fsm && typeof fsm === 'object' && 'id' in fsm) {
         loadFSMIntoDraft(fsm);
+        setOriginalFSM(fsm);
       }
     }
   }, [fsmResponse, loadFSMIntoDraft]);
@@ -47,34 +61,25 @@ export default function OptimizationPage() {
       const axiosResp = response as unknown as AxiosResponse<APIResponse<OptimizationResponse>>;
       const optimizationResult = axiosResp.data?.data ?? (response as unknown as OptimizationResponse);
       setResult(optimizationResult);
+
+      // Fetch optimized FSM immediately so ComparisonView has both sides ready
+      if (optimizationResult?.optimized_fsm_id) {
+        try {
+          const fsmResp = await fsmAPI.get(optimizationResult.optimized_fsm_id);
+          const fsmAxiosResp = fsmResp as unknown as AxiosResponse<APIResponse<FSM>>;
+          const optFSM = fsmAxiosResp.data?.data ?? (fsmResp as unknown as FSM);
+          if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
+            setOptimizedFSM(optFSM);
+          }
+        } catch {
+          // Silently fail — ComparisonView tab will show a loading fallback
+        }
+      }
+
+      // Default to the comparison tab when results arrive
+      setActiveTab('comparison');
     } catch {
       // Error handled by React Query
-    }
-  };
-
-  const handleViewOptimized = async () => {
-    if (!result?.optimized_fsm_id) return;
-    try {
-      const fsmResp = await fsmAPI.get(result.optimized_fsm_id);
-      const axiosResp = fsmResp as unknown as AxiosResponse<APIResponse<FSM>>;
-      const optimizedFSM = axiosResp.data?.data ?? (fsmResp as unknown as FSM);
-      if (optimizedFSM && typeof optimizedFSM === 'object' && 'id' in optimizedFSM) {
-        loadFSMIntoDraft(optimizedFSM);
-        setShowOptimized(true);
-      }
-    } catch {
-      // Silently fail — user can retry
-    }
-  };
-
-  const handleViewOriginal = () => {
-    if (fsmResponse) {
-      const axiosResp = fsmResponse as unknown as AxiosResponse<APIResponse<FSM>>;
-      const fsm = axiosResp.data?.data ?? (fsmResponse as unknown as FSM);
-      if (fsm && typeof fsm === 'object' && 'id' in fsm) {
-        loadFSMIntoDraft(fsm);
-      }
-      setShowOptimized(false);
     }
   };
 
@@ -83,7 +88,7 @@ export default function OptimizationPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <Spinner size="lg" className="mx-auto" />
             <p className="mt-4 text-sm text-gray-600">Loading FSM...</p>
           </div>
         </div>
@@ -94,18 +99,12 @@ export default function OptimizationPage() {
   if (error || !id) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <h2 className="text-lg font-semibold text-red-800">
-            {!id ? 'No FSM ID provided' : 'Failed to load FSM'}
-          </h2>
-          <p className="text-sm text-red-600 mt-2">
-            {error instanceof Error ? error.message : 'Please select an FSM to optimize.'}
-          </p>
-          <Link
-            to={ROUTES.HOME}
-            className="mt-4 inline-block px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            Go Home
+        <Alert variant="error" title={!id ? 'No FSM ID provided' : 'Failed to load FSM'}>
+          {error instanceof Error ? error.message : 'Please select an FSM to optimize.'}
+        </Alert>
+        <div className="mt-4">
+          <Link to={ROUTES.HOME}>
+            <Button>Go Home</Button>
           </Link>
         </div>
       </div>
@@ -137,74 +136,124 @@ export default function OptimizationPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: FSM Visualization */}
+        {/* Left / Main area */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow border border-gray-200">
-            {/* Toggle bar */}
-            {result && (
-              <div className="flex border-b border-gray-200">
-                <button
-                  onClick={handleViewOriginal}
-                  data-testid="optimization-view-original"
-                  className={`flex-1 px-4 py-2 text-sm font-medium ${
-                    !showOptimized
-                      ? 'text-blue-700 border-b-2 border-blue-500 bg-blue-50'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Original
-                </button>
-                <button
-                  onClick={handleViewOptimized}
-                  data-testid="optimization-view-optimized"
-                  className={`flex-1 px-4 py-2 text-sm font-medium ${
-                    showOptimized
-                      ? 'text-blue-700 border-b-2 border-blue-500 bg-blue-50'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Optimized
-                </button>
+          {!result ? (
+            /* Before optimization: show the original FSM canvas */
+            <Card variant="bordered" className="overflow-hidden">
+              <div className="h-[500px]">
+                <FSMCanvas readOnly />
               </div>
-            )}
-            <div className="h-[500px]">
-              <FSMCanvas readOnly />
+            </Card>
+          ) : (
+            /* After optimization: tabbed interface */
+            <div className="bg-white rounded-lg shadow border border-gray-200 flex flex-col">
+              {/* Tab bar */}
+              <div className="flex border-b border-gray-200 shrink-0">
+                {(
+                  [
+                    { id: 'comparison', label: 'Comparison' },
+                    { id: 'metrics', label: 'Metrics' },
+                    { id: 'hypercube', label: 'Hypercube' },
+                  ] as { id: ResultTab; label: string }[]
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    data-testid={`optimization-tab-${tab.id}`}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeTab === tab.id
+                        ? 'text-blue-700 border-b-2 border-blue-500 bg-blue-50'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab panels */}
+              <div className="flex-1 overflow-auto">
+                {/* Comparison tab */}
+                {activeTab === 'comparison' && (
+                  <div className="h-[560px] p-4">
+                    {originalFSM && optimizedFSM ? (
+                      <ComparisonView
+                        originalFSM={originalFSM}
+                        optimizedFSM={optimizedFSM}
+                        metrics={result}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center text-gray-400">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3" />
+                          <p className="text-sm">Loading optimized FSM...</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Metrics tab */}
+                {activeTab === 'metrics' && (
+                  <div className="p-6 overflow-y-auto max-h-[560px]">
+                    <MetricsDashboard metrics={result} />
+                  </div>
+                )}
+
+                {/* Hypercube tab */}
+                {activeTab === 'hypercube' && (
+                  <div className="h-[560px] p-4">
+                    <Hypercube3D
+                      numBits={computeNumBits(result.total_states)}
+                      highlightedStates={
+                        result.encoding_map
+                          ? Object.values(result.encoding_map)
+                          : (originalFSM?.states ?? [])
+                      }
+                      transitions={originalFSM?.transitions ?? []}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right: Controls & Results */}
         <div className="space-y-6">
           {/* Optimization Form */}
-          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Optimization Settings
-            </h2>
+          <Card
+            variant="bordered"
+            header={
+              <h2 className="text-lg font-semibold text-gray-900">
+                Optimization Settings
+              </h2>
+            }
+          >
             <OptimizationForm
               onSubmit={handleOptimize}
               isLoading={optimizeMutation.isPending}
             />
             {optimizeMutation.isError && (
-              <div className="mt-4 bg-red-50 border border-red-200 rounded p-3">
-                <p className="text-sm text-red-800">
-                  Optimization failed.{' '}
-                  {optimizeMutation.error instanceof Error
-                    ? optimizeMutation.error.message
-                    : 'The backend may not support this operation yet.'}
-                </p>
-              </div>
+              <Alert variant="error" className="mt-4">
+                Optimization failed.{' '}
+                {optimizeMutation.error instanceof Error
+                  ? optimizeMutation.error.message
+                  : 'The backend may not support this operation yet.'}
+              </Alert>
             )}
-          </div>
+          </Card>
 
           {/* Results */}
           {result && (
-            <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Results</h2>
+            <Card
+              variant="bordered"
+              header={<h2 className="text-lg font-semibold text-gray-900">Results</h2>}
+            >
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-xs text-gray-500">Algorithm:</span>
-                <span className="text-xs font-medium text-gray-900">
-                  {result.algorithm}
-                </span>
+                <Badge variant="info" size="sm">{result.algorithm}</Badge>
               </div>
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-xs text-gray-500">Execution time:</span>
@@ -226,12 +275,15 @@ export default function OptimizationPage() {
                 <Link
                   to={`/export/${id}?optimized=true`}
                   data-testid="optimization-export-link"
-                  className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
                 >
-                  Export Optimized FSM
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                  >
+                    Export Optimized FSM
+                  </Button>
                 </Link>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       </div>

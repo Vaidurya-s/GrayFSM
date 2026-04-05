@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import type { FSM } from '../types/fsm'
+import { Button, Card, Badge } from '../components/ui'
 
 export default function HomePage() {
   const [selectedFSM, setSelectedFSM] = useState<FSM | null>(null)
@@ -34,22 +35,33 @@ export default function HomePage() {
             glitches and race conditions in hardware implementations.
           </p>
           <div className="mt-6 flex items-center gap-3">
-            <a
-              href="/editor/new"
-              className="px-5 py-2 text-sm font-medium bg-white text-blue-700 rounded-md hover:bg-blue-50"
-            >
-              Create New FSM
+            <a href="/editor/new">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="bg-white text-blue-700 hover:bg-blue-50 border-transparent"
+              >
+                Create New FSM
+              </Button>
             </a>
-            <a
-              href="/examples"
-              className="px-5 py-2 text-sm font-medium border border-blue-300 text-white rounded-md hover:bg-blue-700"
-            >
-              View Examples
+            <a href="/examples">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-blue-300 text-white hover:bg-blue-700 bg-transparent"
+              >
+                View Examples
+              </Button>
             </a>
             {healthData && (
               <span className="ml-auto flex items-center gap-2 text-sm text-blue-200">
-                <span className={`w-2 h-2 rounded-full ${healthData.status === 'healthy' ? 'bg-green-400' : 'bg-red-400'}`} />
-                {healthData.status === 'healthy' ? 'API Connected' : 'API Offline'}
+                <Badge
+                  variant={healthData.status === 'healthy' ? 'success' : 'danger'}
+                  size="sm"
+                  className="bg-opacity-80"
+                >
+                  {healthData.status === 'healthy' ? 'API Connected' : 'API Offline'}
+                </Badge>
               </span>
             )}
           </div>
@@ -61,8 +73,8 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* FSM List */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Your FSMs</h2>
+            <Card header={<h2 className="text-lg font-semibold text-gray-900">Your FSMs</h2>}>
+              <div>
 
               {isLoading && (
                 <div className="space-y-3">
@@ -105,25 +117,22 @@ export default function HomePage() {
                         {fsm.state_count} states • {fsm.transition_count} transitions
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                          {fsm.fsm_type}
-                        </span>
+                        <Badge variant="default" size="sm">{fsm.fsm_type}</Badge>
                         {fsm.is_optimized && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            Optimized
-                          </span>
+                          <Badge variant="success" size="sm">Optimized</Badge>
                         )}
                       </div>
                     </button>
                   ))}
                 </div>
               )}
-            </div>
+              </div>
+            </Card>
           </div>
 
           {/* FSM Details */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow p-6">
+            <Card>
               {!selectedFSM ? (
                 <div className="text-center py-12 text-gray-500">
                   <svg
@@ -208,25 +217,20 @@ export default function HomePage() {
                       <h3 className="text-sm font-medium text-gray-900 mb-2">Tags</h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedFSM.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            {tag}
-                          </span>
+                          <Badge key={index} variant="info">{tag}</Badge>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
 
         {/* Feature highlights */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+          <Card variant="bordered">
             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -236,8 +240,8 @@ export default function HomePage() {
             <p className="text-xs text-gray-500">
               Drag-and-drop FSM designer with real-time state and transition editing.
             </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+          </Card>
+          <Card variant="bordered">
             <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-4">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -247,8 +251,8 @@ export default function HomePage() {
             <p className="text-xs text-gray-500">
               Minimize glitches with single-bit state transitions via hypercube pathfinding.
             </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+          </Card>
+          <Card variant="bordered">
             <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -258,7 +262,7 @@ export default function HomePage() {
             <p className="text-xs text-gray-500">
               Export optimized FSMs to synthesizable Verilog, VHDL, or testbench formats.
             </p>
-          </div>
+          </Card>
         </div>
       </main>
     </div>

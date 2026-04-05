@@ -9,10 +9,27 @@ import GalleryPage from './pages/GalleryPage'
 import ExamplesPage from './pages/ExamplesPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { ToastProvider } from './components/ui/Toast'
+import { ThemeProvider } from './components/providers/ThemeProvider'
+import { CommandPalette, useCommandPalette } from './components/ui/CommandPalette'
+import type { ReactNode } from 'react'
+
+function AppWithCommandPalette({ children }: { children: ReactNode }) {
+  const { isOpen, close } = useCommandPalette()
+  return (
+    <>
+      {children}
+      <CommandPalette isOpen={isOpen} onClose={close} />
+    </>
+  )
+}
 
 function App() {
   return (
+    <ThemeProvider>
+    <ToastProvider>
     <BrowserRouter>
+      <AppWithCommandPalette>
       <Routes>
         {/* Home */}
         <Route
@@ -135,7 +152,10 @@ function App() {
         />
         <Route path={ROUTES.NOT_FOUND} element={<Navigate to="/404" replace />} />
       </Routes>
+      </AppWithCommandPalette>
     </BrowserRouter>
+    </ToastProvider>
+    </ThemeProvider>
   )
 }
 

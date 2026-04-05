@@ -8,6 +8,7 @@ import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';
 import { ROUTES, generateRoute } from '../config/routes';
 import { cn } from '../utils/cn';
+import { Button, Modal, Spinner, Alert } from '../components/ui';
 
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +88,7 @@ export default function EditorPage() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+          <Spinner size="lg" className="mx-auto" />
           <p className="mt-4 text-sm text-gray-600">Loading FSM...</p>
         </div>
       </div>
@@ -97,18 +98,12 @@ export default function EditorPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <h2 className="text-lg font-semibold text-red-800">Failed to load FSM</h2>
-            <p className="text-sm text-red-600 mt-2">
-              {error instanceof Error ? error.message : 'Unknown error occurred'}
-            </p>
-            <button
-              onClick={() => navigate(ROUTES.HOME)}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Go Home
-            </button>
+        <div className="max-w-md w-full px-4">
+          <Alert variant="error" title="Failed to load FSM">
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </Alert>
+          <div className="mt-4 text-center">
+            <Button onClick={() => navigate(ROUTES.HOME)}>Go Home</Button>
           </div>
         </div>
       </div>
@@ -141,28 +136,32 @@ export default function EditorPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleAddState}
             data-testid="editor-add-state"
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             + Add State
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleSave}
             data-testid="editor-save"
-            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
             {id ? 'Save' : 'Create'}
-          </button>
+          </Button>
           {id && (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleOptimize}
               data-testid="editor-optimize"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 focus:ring-green-500"
             >
               Optimize
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -194,13 +193,13 @@ export default function EditorPage() {
                   Click "Add State" to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
-                <button
+                <Button
                   onClick={handleAddState}
                   data-testid="editor-add-state-empty"
-                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  className="mt-4"
                 >
                   Add First State
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -287,22 +286,19 @@ export default function EditorPage() {
       </div>
 
       {/* Create FSM modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
-            data-testid="create-fsm-modal"
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Create New FSM
-            </h2>
-            <FSMCreateForm
-              onSuccess={handleCreateSuccess}
-              onCancel={() => setShowCreateForm(false)}
-            />
-          </div>
+      <Modal
+        isOpen={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        title="Create New FSM"
+        size="md"
+      >
+        <div data-testid="create-fsm-modal">
+          <FSMCreateForm
+            onSuccess={handleCreateSuccess}
+            onCancel={() => setShowCreateForm(false)}
+          />
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
