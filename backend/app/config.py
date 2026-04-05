@@ -5,9 +5,12 @@ This module handles all application configuration using Pydantic Settings.
 Configuration is loaded from environment variables with validation.
 """
 
+import logging
 from typing import List, Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_config_logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -17,7 +20,7 @@ class Settings(BaseSettings):
     app_name: str = "GrayFSM API"
     app_version: str = "1.0.0"
     environment: str = "development"
-    debug: bool = True
+    debug: bool = False
     log_level: str = "INFO"
     
     # Server
@@ -41,13 +44,13 @@ class Settings(BaseSettings):
     redis_max_connections: int = 50
     
     # Authentication (Phase 4)
-    secret_key: str = "your-secret-key-change-in-production"
+    secret_key: str = ""
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     
     # CORS
-    cors_origins: List[str] = ["*"]
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     cors_allow_credentials: bool = False
     cors_allow_methods: List[str] = ["*"]
     cors_allow_headers: List[str] = ["*"]
@@ -104,7 +107,33 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
-    
+
+    @model_validator(mode="after")
+    def validate_production_settings(self) -> "Settings":
+        """Enforce secure defaults when running in production."""
+        if self.environment.lower() != "production":
+            return self
+
+        if not self.secret_key or "change-in-production" in self.secret_key:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong, unique value in production. "
+                "It must not be empty or contain the placeholder 'change-in-production'."
+            )
+
+        if self.debug:
+            raise ValueError(
+                "DEBUG must be False in production. "
+                "Set the DEBUG environment variable to 'false'."
+            )
+
+        if self.cors_origins == ["*"]:
+            _config_logger.warning(
+                "SECURITY WARNING: cors_origins is set to ['*'] in production. "
+                "Consider restricting CORS_ORIGINS to specific trusted origins."
+            )
+
+        return self
+
     @property
     def is_production(self) -> bool:
         """Check if running in production environment"""
