@@ -81,10 +81,13 @@ function ToastItem({
     };
   }, [toast.id, duration, onRemove]);
 
+  const isAssertive = toast.type === 'error' || toast.type === 'warning';
+
   return (
     <div
-      role="status"
-      aria-live="polite"
+      role={isAssertive ? 'alert' : 'status'}
+      aria-live={isAssertive ? 'assertive' : 'polite'}
+      aria-atomic="true"
       className={cn(
         'flex items-start gap-3 w-80 rounded-lg border shadow-lg p-4',
         'animate-in slide-in-from-right-5 fade-in-0 duration-200',

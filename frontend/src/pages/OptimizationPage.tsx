@@ -245,7 +245,8 @@ export default function OptimizationPage() {
             )}
           </Card>
 
-          {/* Results */}
+          {/* Results — aria-live so screen readers announce optimization completion */}
+          <div aria-live="polite" aria-atomic="true">
           {result && (
             <Card
               variant="bordered"
@@ -285,6 +286,7 @@ export default function OptimizationPage() {
               </div>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </div>
