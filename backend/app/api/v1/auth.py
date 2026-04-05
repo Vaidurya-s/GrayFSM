@@ -86,16 +86,10 @@ async def login(
 
     try:
         user = await service.login(email=request.email, password=request.password)
-    except UserNotFoundException as exc:
+    except (UserNotFoundException, InvalidCredentialsException) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    except InvalidCredentialsException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=exc.message,
+            detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
