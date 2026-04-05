@@ -57,17 +57,17 @@ def upgrade() -> None:
     # 3. FULL-TEXT SEARCH INDEX
     # ================================================================
 
-    # Full-text search index — wrapped in try/except because to_tsvector
-    # is not IMMUTABLE on all PostgreSQL versions/configs
-    try:
-        op.execute(
-            "CREATE INDEX IF NOT EXISTS idx_fsms_search_text "
-            "ON fsms USING gin(to_tsvector('simple'::regconfig, "
-            "coalesce(name, '') || ' ' || coalesce(description, '')))"
-        )
-    except Exception:
-        # Skip FTS index if not supported — app still works without it
-        pass
+    # Full-text search index — create an IMMUTABLE wrapper function first
+    op.execute("""
+        CREATE OR REPLACE FUNCTION fsm_search_vector(name text, description text)
+        RETURNS tsvector LANGUAGE sql IMMUTABLE AS $$
+            SELECT to_tsvector('simple', coalesce(name, '') || ' ' || coalesce(description, ''));
+        $$;
+    """)
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_fsms_search_text "
+        "ON fsms USING gin(fsm_search_vector(name, description))"
+    )
 
     # ================================================================
     # 4. JSONB INDEXES FOR DEFINITION QUERIES
@@ -201,6 +201,7 @@ def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS idx_fsms_definition_states")
     op.execute("DROP INDEX IF EXISTS idx_fsms_definition_gin")
     op.execute("DROP INDEX IF EXISTS idx_fsms_search_text")
+    op.execute("DROP FUNCTION IF EXISTS fsm_search_vector(text, text)")
 
     # Created_at descending
     op.execute("DROP INDEX IF EXISTS idx_fsms_created_at_desc")

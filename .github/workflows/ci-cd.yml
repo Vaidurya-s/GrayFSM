@@ -314,7 +314,7 @@ jobs:
       name: production
       url: https://grayfsm.example.com
     permissions:
-      contents: read
+      contents: write
       deployments: write
 
     steps:
