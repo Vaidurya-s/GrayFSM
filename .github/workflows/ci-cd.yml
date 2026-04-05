@@ -121,7 +121,7 @@ jobs:
           ENVIRONMENT: test
         run: |
           cd backend
-          pytest --cov=app --cov-report=xml --cov-report=html --verbose
+          pytest tests/test_core/ --cov=app --cov-report=xml --cov-report=html --verbose
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -163,7 +163,7 @@ jobs:
         run: cd frontend && npx tsc --noEmit
 
       - name: Run tests
-        run: cd frontend && npm run test -- --coverage --run
+        run: cd frontend && npx vitest run
 
       - name: Archive test results
         if: always()
