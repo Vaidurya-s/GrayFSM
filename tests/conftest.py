@@ -80,8 +80,9 @@ async def db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Create an async HTTP client for testing."""
+    transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
-        app=app,
+        transport=transport,
         base_url="http://testserver/api/v1",
         timeout=30.0
     ) as client:

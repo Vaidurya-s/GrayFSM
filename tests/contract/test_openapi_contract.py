@@ -8,8 +8,11 @@ import pytest
 import schemathesis
 from hypothesis import settings
 
-# Load OpenAPI schema
-schema = schemathesis.from_uri("http://localhost:8000/openapi.json")
+# Load OpenAPI schema — compatible with schemathesis 3.x and 4.x
+_loader = getattr(schemathesis, 'from_uri', None) or getattr(schemathesis, 'from_url', None)
+if _loader is None:
+    raise ImportError("schemathesis has no from_uri or from_url — check version")
+schema = _loader("http://localhost:8000/openapi.json")
 
 
 @pytest.mark.contract
