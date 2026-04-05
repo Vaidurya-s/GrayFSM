@@ -370,7 +370,7 @@ export default function EditorPage() {
                   No states yet
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Click "Add State" to start building your FSM, or connect states
+                  Click &quot;Add State&quot; to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
                 <div className="mt-4 flex items-center justify-center gap-3">

@@ -317,7 +317,7 @@ export default function ExamplesPage() {
       {!isLoading && error && (
         <>
           <Alert variant="warning" title="Using offline examples" className="mb-6">
-            Could not reach the server. Showing built-in example definitions — "Try it" will open
+            Could not reach the server. Showing built-in example definitions — &quot;Try it&quot; will open
             the editor with the example pre-loaded.
           </Alert>
 
