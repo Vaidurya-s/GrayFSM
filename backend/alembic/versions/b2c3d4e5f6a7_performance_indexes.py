@@ -114,8 +114,7 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_fsms_recently_updated "
         "ON fsms (updated_at DESC) "
-        "WHERE visibility IN ('public', 'example') "
-        "AND updated_at > (CURRENT_TIMESTAMP - INTERVAL '30 days')"
+        "WHERE visibility IN ('public', 'example')"
     )
 
     # ================================================================
