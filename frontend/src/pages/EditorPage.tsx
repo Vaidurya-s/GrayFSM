@@ -36,6 +36,12 @@ export default function EditorPage() {
     removeTransition,
     setSelectedNode,
     setSelectedEdge,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    copySelected,
+    pasteClipboard,
   } = useFSMStore();
 
   const { sidebarOpen, toggleSidebar } = useUIStore();
@@ -144,27 +150,33 @@ export default function EditorPage() {
       {
         key: 'z',
         ctrlOrCmd: true,
-        handler: () => {
-          // Undo placeholder — store has no undo yet
-        },
+        handler: () => undo(),
         description: 'Undo',
       },
       {
         key: 'z',
         ctrlOrCmd: true,
         shift: true,
-        handler: () => {
-          // Redo placeholder
-        },
+        handler: () => redo(),
         description: 'Redo',
       },
       {
         key: 'y',
         ctrlOrCmd: true,
-        handler: () => {
-          // Redo alternate placeholder
-        },
+        handler: () => redo(),
         description: 'Redo (alternate)',
+      },
+      {
+        key: 'c',
+        ctrlOrCmd: true,
+        handler: () => copySelected(),
+        description: 'Copy selected state',
+      },
+      {
+        key: 'v',
+        ctrlOrCmd: true,
+        handler: () => pasteClipboard(),
+        description: 'Paste copied state',
       },
       {
         key: 'delete',
@@ -187,7 +199,7 @@ export default function EditorPage() {
         description: 'Show keyboard shortcuts',
       },
     ],
-    [handleSave, handleDelete, handleDeselect],
+    [handleSave, handleDelete, handleDeselect, undo, redo, copySelected, pasteClipboard],
   );
 
   useKeyboardShortcuts(shortcuts);
@@ -269,6 +281,35 @@ export default function EditorPage() {
               />
             </svg>
           </button>
+
+          {/* Undo / Redo buttons */}
+          <div className="flex items-center gap-1 border border-gray-200 rounded-md">
+            <button
+              onClick={() => undo()}
+              disabled={!canUndo}
+              data-testid="editor-undo"
+              title="Undo (Ctrl+Z)"
+              aria-label="Undo"
+              className="p-1.5 rounded-l-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 010 10H9m-6-10l4-4M3 10l4 4" />
+              </svg>
+            </button>
+            <div className="w-px h-5 bg-gray-200" />
+            <button
+              onClick={() => redo()}
+              disabled={!canRedo}
+              data-testid="editor-redo"
+              title="Redo (Ctrl+Shift+Z)"
+              aria-label="Redo"
+              className="p-1.5 rounded-r-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a5 5 0 000 10h4m6-10l-4-4m4 4l-4 4" />
+              </svg>
+            </button>
+          </div>
 
           {/* Import button */}
           <button

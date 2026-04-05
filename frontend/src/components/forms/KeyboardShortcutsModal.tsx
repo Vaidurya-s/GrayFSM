@@ -8,6 +8,8 @@ const SHORTCUTS: ShortcutRow[] = [
   { keys: ['Ctrl', 'Z'], description: 'Undo' },
   { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo' },
   { keys: ['Ctrl', 'Y'], description: 'Redo (alternate)' },
+  { keys: ['Ctrl', 'C'], description: 'Copy selected state' },
+  { keys: ['Ctrl', 'V'], description: 'Paste copied state (+20 px offset)' },
   { keys: ['Delete'], description: 'Remove selected state or transition' },
   { keys: ['Backspace'], description: 'Remove selected state or transition' },
   { keys: ['Escape'], description: 'Deselect all' },
