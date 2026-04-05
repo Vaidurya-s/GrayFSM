@@ -10,6 +10,7 @@ from typing import Dict, Type
 
 from app.core.algorithms.greedy import GreedyOptimizer
 from app.core.algorithms.bfs_optimal import BFSOptimizer
+from app.core.algorithms.simulated_annealing import SimulatedAnnealingOptimizer
 from app.utils.exceptions import AlgorithmException
 
 
@@ -17,6 +18,7 @@ from app.utils.exceptions import AlgorithmException
 ALGORITHM_REGISTRY: Dict[str, Type[GreedyOptimizer]] = {
     "greedy": GreedyOptimizer,
     "bfs_optimal": BFSOptimizer,
+    "simulated_annealing": SimulatedAnnealingOptimizer,
 }
 
 # Algorithm metadata for API consumers
@@ -32,6 +34,17 @@ ALGORITHM_INFO = {
         "version": "1.0.0",
         "description": "Uses BFS with smart encoding reuse to minimize total dummy states across all transitions.",
         "complexity": "O(T * N)",
+    },
+    "simulated_annealing": {
+        "name": "Simulated Annealing Encoding Optimizer",
+        "version": "1.0.0",
+        "description": (
+            "Optimises the state encoding assignment to minimise total Hamming distance "
+            "across all transitions before resolving remaining HD>1 transitions with dummy "
+            "states. Accepts worse solutions with a temperature-dependent probability to "
+            "escape local optima."
+        ),
+        "complexity": "O(I * T) where I is max_iterations, T is transitions",
     },
 }
 
