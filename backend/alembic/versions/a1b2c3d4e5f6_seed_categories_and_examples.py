@@ -217,7 +217,7 @@ def upgrade() -> None:
         sa.column('encoding_type', sa.String),
         sa.column('category_id', sa.UUID),
         sa.column('tags', sa.ARRAY(sa.String)),
-        sa.column('visibility', sa.String),
+        sa.column('visibility', sa.Enum('private', 'public', 'unlisted', 'example', name='fsm_visibility')),
         sa.column('is_optimized', sa.Boolean),
         sa.column('dummy_state_count', sa.Integer),
         sa.column('view_count', sa.Integer),
