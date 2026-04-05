@@ -57,9 +57,11 @@ def upgrade() -> None:
     # 3. FULL-TEXT SEARCH INDEX
     # ================================================================
 
+    # Full-text search index — use 'simple' config for portability
+    # ('english' config is not IMMUTABLE on some PostgreSQL setups)
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_fsms_search_text "
-        "ON fsms USING gin(to_tsvector('english', "
+        "ON fsms USING gin(to_tsvector('simple', "
         "coalesce(name, '') || ' ' || coalesce(description, '')))"
     )
 
