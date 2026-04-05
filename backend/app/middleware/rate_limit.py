@@ -220,6 +220,14 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
+# Path-specific rate limits for sensitive auth endpoints
+# Format: path -> (limit, window_seconds)
+_AUTH_RATE_LIMITS = {
+    "/api/v1/auth/login": (5, 60),    # 5 requests per 60 seconds
+    "/api/v1/auth/register": (3, 60),  # 3 requests per 60 seconds
+}
+
+
 # Paths that should never be rate-limited
 _EXEMPT_PATHS = frozenset({
     "/health",
@@ -259,6 +267,61 @@ async def rate_limit_middleware(request: Request, call_next):
 
     # Build the rate-limit key
     client_ip = _get_client_ip(request)
+    path = request.url.path
+
+    # Check for path-specific (auth) rate limits — stricter than the global limit
+    if path in _AUTH_RATE_LIMITS:
+        auth_limit, auth_window = _AUTH_RATE_LIMITS[path]
+        auth_key = f"rl:auth:{client_ip}:{path}"
+
+        auth_allowed = True
+        auth_rate_info: Dict = {}
+
+        try:
+            redis = await _get_redis_store()
+            if redis and redis.available:
+                auth_allowed, auth_rate_info = await redis.is_allowed(auth_key, auth_limit, auth_window)
+            else:
+                auth_allowed, auth_rate_info = _memory_store.is_allowed(auth_key, auth_limit, auth_window)
+        except Exception as exc:
+            logger.error(
+                "Auth rate limiter error, allowing request through",
+                extra={"error": str(exc), "client_ip": client_ip, "path": path},
+            )
+            auth_allowed = True
+            auth_rate_info = {}
+
+        if not auth_allowed:
+            logger.warning(
+                "Auth rate limit exceeded",
+                extra={
+                    "client_ip": client_ip,
+                    "path": path,
+                    "limit": auth_limit,
+                    "window": auth_window,
+                },
+            )
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={
+                    "success": False,
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": "Too many requests. Please try again later.",
+                        "details": {
+                            "limit": auth_rate_info.get("limit"),
+                            "reset": auth_rate_info.get("reset"),
+                        },
+                    },
+                },
+                headers={
+                    "Retry-After": str(auth_window),
+                    "X-RateLimit-Limit": str(auth_rate_info.get("limit", auth_limit)),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(auth_rate_info.get("reset", "")),
+                },
+            )
+
     key = f"rl:ip:{client_ip}"
 
     # Try Redis first, fall back to in-memory
