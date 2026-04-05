@@ -1,11 +1,15 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import PropertyPanel from '../components/fsm/PropertyPanel';
 import FSMCreateForm from '../components/forms/FSMCreateForm';
+import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
+import ImportForm from '../components/forms/ImportForm';
 import { useFSM } from '../hooks/useFSM';
 import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import type { ShortcutDefinition } from '../hooks/useKeyboardShortcuts';
 import { ROUTES, generateRoute } from '../config/routes';
 import { cn } from '../utils/cn';
 
@@ -13,6 +17,8 @@ export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const { data: fsmResponse, isLoading, error } = useFSM(id);
 
@@ -24,6 +30,12 @@ export default function EditorPage() {
     addState,
     loadFSMIntoDraft,
     resetDraft,
+    selectedNode,
+    selectedEdge,
+    removeState,
+    removeTransition,
+    setSelectedNode,
+    setSelectedEdge,
   } = useFSMStore();
 
   const { sidebarOpen, toggleSidebar } = useUIStore();
@@ -77,11 +89,110 @@ export default function EditorPage() {
     [navigate]
   );
 
+  const handleImportSuccess = useCallback(
+    (fsmId: string) => {
+      setShowImportModal(false);
+      navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
+    },
+    [navigate]
+  );
+
   const handleOptimize = useCallback(() => {
     if (id) {
       navigate(generateRoute(ROUTES.OPTIMIZE, { id }));
     }
   }, [id, navigate]);
+
+  /**
+   * Delete the currently selected node or edge.
+   */
+  const handleDelete = useCallback(() => {
+    if (selectedNode) {
+      removeState(selectedNode);
+    } else if (selectedEdge !== null) {
+      // selectedEdge is stored as a string; transitions are indexed numerically
+      const idx = parseInt(selectedEdge, 10);
+      if (!isNaN(idx)) {
+        removeTransition(idx);
+      } else {
+        // Edge id might be a string — find matching transition by id field
+        const idx2 = draftTransitions.findIndex((t) => t.id === selectedEdge);
+        if (idx2 !== -1) removeTransition(idx2);
+      }
+      setSelectedEdge(null);
+    }
+  }, [selectedNode, selectedEdge, removeState, removeTransition, setSelectedEdge, draftTransitions]);
+
+  /**
+   * Deselect everything.
+   */
+  const handleDeselect = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  }, [setSelectedNode, setSelectedEdge]);
+
+  // ---- Keyboard shortcuts ----
+
+  const shortcuts = useMemo<ShortcutDefinition[]>(
+    () => [
+      {
+        key: 's',
+        ctrlOrCmd: true,
+        handler: () => handleSave(),
+        description: 'Save / Create FSM',
+      },
+      {
+        key: 'z',
+        ctrlOrCmd: true,
+        handler: () => {
+          // Undo placeholder — store has no undo yet
+        },
+        description: 'Undo',
+      },
+      {
+        key: 'z',
+        ctrlOrCmd: true,
+        shift: true,
+        handler: () => {
+          // Redo placeholder
+        },
+        description: 'Redo',
+      },
+      {
+        key: 'y',
+        ctrlOrCmd: true,
+        handler: () => {
+          // Redo alternate placeholder
+        },
+        description: 'Redo (alternate)',
+      },
+      {
+        key: 'delete',
+        handler: () => handleDelete(),
+        description: 'Remove selected element',
+      },
+      {
+        key: 'backspace',
+        handler: () => handleDelete(),
+        description: 'Remove selected element',
+      },
+      {
+        key: 'escape',
+        handler: () => handleDeselect(),
+        description: 'Deselect all',
+      },
+      {
+        key: '?',
+        handler: () => setShowShortcutsModal(true),
+        description: 'Show keyboard shortcuts',
+      },
+    ],
+    [handleSave, handleDelete, handleDeselect],
+  );
+
+  useKeyboardShortcuts(shortcuts);
+
+  // ---- Render ----
 
   if (isLoading) {
     return (
@@ -141,6 +252,33 @@ export default function EditorPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Keyboard shortcuts help button */}
+          <button
+            onClick={() => setShowShortcutsModal(true)}
+            data-testid="editor-shortcuts-help"
+            title="Keyboard shortcuts (?)"
+            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            aria-label="Show keyboard shortcuts"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+
+          {/* Import button */}
+          <button
+            onClick={() => setShowImportModal(true)}
+            data-testid="editor-import"
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Import
+          </button>
+
           <button
             onClick={handleAddState}
             data-testid="editor-add-state"
@@ -194,13 +332,22 @@ export default function EditorPage() {
                   Click "Add State" to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
-                <button
-                  onClick={handleAddState}
-                  data-testid="editor-add-state-empty"
-                  className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  Add First State
-                </button>
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <button
+                    onClick={handleAddState}
+                    data-testid="editor-add-state-empty"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Add First State
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    data-testid="editor-import-empty"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Import JSON
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -299,6 +446,38 @@ export default function EditorPage() {
             <FSMCreateForm
               onSuccess={handleCreateSuccess}
               onCancel={() => setShowCreateForm(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard shortcuts modal */}
+      {showShortcutsModal && (
+        <KeyboardShortcutsModal onClose={() => setShowShortcutsModal(false)} />
+      )}
+
+      {/* Import FSM modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            data-testid="import-fsm-modal"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Import FSM</h2>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ImportForm
+              onSuccess={handleImportSuccess}
+              onCancel={() => setShowImportModal(false)}
             />
           </div>
         </div>
