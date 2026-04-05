@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 /**
  * Hypercube3D — Interactive 3D hypercube visualization for Gray code FSM states.
  *

@@ -1,5 +1,5 @@
 # Contract Testing
-dredd==14.1.0
+# dredd is a Node.js tool — install via npm, not pip
 schemathesis==3.19.7
 openapi-spec-validator==0.7.1
 
@@ -14,7 +14,7 @@ pytest-timeout==2.2.0
 
 # Load Testing
 locust==2.20.0
-k6==0.1.0
+# k6 is a standalone binary — install separately, not via pip
 
 # Data Generation & Fixtures
 faker==20.1.0
