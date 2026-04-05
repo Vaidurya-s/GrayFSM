@@ -176,6 +176,7 @@ jobs:
       - name: Run database migrations
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
+          SECRET_KEY: ci-test-secret-key-not-for-production
         run: |
           cd backend
           alembic upgrade head
@@ -191,8 +192,10 @@ jobs:
             --cov-report=term \
             --maxfail=5
         env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
           REDIS_URL: redis://localhost:6379/1
+          SECRET_KEY: ci-test-secret-key-not-for-production
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
