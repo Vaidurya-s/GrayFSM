@@ -1,10 +1,10 @@
 """
 Authentication Service - Business logic for user authentication
 """
-import hashlib
 from typing import Optional
 from uuid import UUID
 
+from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -19,14 +19,12 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 def hash_password(password: str) -> str:
     """
-    Hash a password using SHA-256.
-
-    Falls back to SHA-256 if passlib is not available.
-    For production, install passlib with bcrypt:
-        pip install passlib[bcrypt]
+    Hash a password using bcrypt.
 
     Args:
         password: Plain text password to hash
@@ -34,24 +32,12 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password string
     """
-    try:
-        from passlib.context import CryptContext
-        # This would be the production approach with bcrypt
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        return pwd_context.hash(password)
-    except ImportError:
-        # Fallback to SHA-256 for development/testing
-        logger.warning(
-            "passlib not installed; using SHA-256 for password hashing. "
-            "For production, install: pip install passlib[bcrypt]"
-        )
-        salt = hashlib.sha256(b"grayfsm_salt").hexdigest()[:16]
-        return hashlib.sha256((password + salt).encode()).hexdigest()
+    return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a password against a hash.
+    Verify a password against a bcrypt hash.
 
     Args:
         plain_password: Plain text password to verify
@@ -60,14 +46,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    try:
-        from passlib.context import CryptContext
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        return pwd_context.verify(plain_password, hashed_password)
-    except ImportError:
-        # Fallback to SHA-256 comparison
-        salt = hashlib.sha256(b"grayfsm_salt").hexdigest()[:16]
-        return hashlib.sha256((plain_password + salt).encode()).hexdigest() == hashed_password
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 class AuthService:
