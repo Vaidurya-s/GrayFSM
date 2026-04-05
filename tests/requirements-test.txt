@@ -1,56 +1,53 @@
 # Contract Testing
-# dredd is a Node.js tool — install via npm, not pip
-schemathesis==3.19.7
-openapi-spec-validator==0.7.1
+schemathesis>=3.19
+openapi-spec-validator>=0.7
 
 # API Testing
-httpx==0.25.2
-requests==2.31.0
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-pytest-xdist==3.5.0
-pytest-timeout==2.2.0
+httpx>=0.25
+requests>=2.31
+pytest>=7.4
+pytest-asyncio>=0.21
+pytest-cov>=4.1
+pytest-xdist>=3.5
+pytest-timeout>=2.2
 
 # Load Testing
-locust==2.20.0
-# k6 is a standalone binary — install separately, not via pip
+locust>=2.20
 
 # Data Generation & Fixtures
-faker==20.1.0
-factory-boy==3.3.0
-hypothesis==6.92.1
+faker>=20.0
+factory-boy>=3.3
+hypothesis>=6.92
 
 # Database Testing
-pytest-postgresql==5.0.0
-pytest-alembic==0.10.7
+pytest-postgresql>=5.0
+pytest-alembic>=0.10
 
 # Mocking & Stubbing
-responses==0.24.1
-pytest-mock==3.12.0
-freezegun==1.4.0
+responses>=0.24
+pytest-mock>=3.12
+freezegun>=1.4
 
 # Performance Monitoring
-pytest-benchmark==4.0.0
-memory-profiler==0.61.0
+pytest-benchmark>=4.0
+memory-profiler>=0.61
 
 # Test Reporting
-pytest-html==4.1.1
-allure-pytest==2.13.2
-coverage[toml]==7.3.3
+pytest-html>=4.1
+allure-pytest>=2.13
+coverage[toml]>=7.3
 
 # Contract Testing Alternatives
-pact-python==2.1.1
-tavern==2.9.2
+pact-python>=2.1
+tavern>=2.9
 
 # WebSocket Testing
-websocket-client==1.7.0
-# pytest-websocket does not exist on PyPI — use websocket-client directly
+websocket-client>=1.7
 
 # Authentication Testing
-PyJWT==2.8.0
+PyJWT>=2.8
 
 # Development
-black==23.12.0
-flake8==6.1.0
-mypy==1.7.1
+black>=23.12
+flake8>=6.1
+mypy>=1.7
