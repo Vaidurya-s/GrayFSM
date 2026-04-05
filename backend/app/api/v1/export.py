@@ -1,7 +1,7 @@
 """
 Export endpoints for HDL generation
 """
-from typing import Dict, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,15 +20,28 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+class ExportOptions(BaseModel):
+    """Typed options for FSM export, replacing raw Dict to prevent injection"""
+    module_name: Optional[str] = None
+    include_comments: bool = True
+    include_synthesis_pragmas: bool = True
+    target_tool: Optional[str] = Field(None, pattern="^(vivado|quartus|generic)$")
+    clock_period: int = Field(10, ge=1, le=1000)
+    include_waveform: bool = True
+    separator: str = Field(",", max_length=1)
+    include_headers: bool = True
+    style: Optional[str] = Field(None, pattern="^(standard|compact|verbose)$")
+
+
 class ExportRequest(BaseModel):
     """Request schema for FSM export"""
     format: str = Field(
         ..., pattern="^(verilog|vhdl|json|csv|testbench)$",
         description="Export format"
     )
-    options: Optional[Dict] = Field(
-        default={},
-        description="Format-specific options (module_name, include_comments, style)"
+    options: ExportOptions = Field(
+        default_factory=ExportOptions,
+        description="Format-specific options"
     )
 
 
@@ -68,7 +81,7 @@ async def export_fsm(
         result = await service.export_fsm(
             fsm_id=fsm_id,
             format_name=request.format,
-            options=request.options or {},
+            options=request.options.model_dump(exclude_none=True),
         )
         return ExportResponse(**result)
     except FSMNotFoundException as e:
