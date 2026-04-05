@@ -4,6 +4,7 @@ export const ROUTES = {
   EDITOR_NEW: '/editor/new',
   EDITOR_EDIT: '/editor/:id',
   OPTIMIZE: '/optimize/:id',
+  EXPORT: '/export/:id',
   GALLERY: '/gallery',
   EXAMPLES: '/examples',
   EXAMPLE_DETAIL: '/examples/:id',
