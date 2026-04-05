@@ -6,6 +6,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+from app.config import settings
 from app.utils.exceptions import GrayFSMException
 from app.utils.logger import get_logger
 
@@ -39,6 +40,20 @@ async def error_handler_middleware(request: Request, call_next):
         )
     except RequestValidationError as e:
         logger.error(f"Validation error: {str(e)}")
+
+        # In production, sanitize error details to avoid information disclosure
+        if settings.environment == "production":
+            sanitized_errors = [
+                {
+                    "field": err.get("loc", ["unknown"])[-1],
+                    "message": err.get("msg", "Validation error")
+                }
+                for err in e.errors()
+            ]
+            details = sanitized_errors
+        else:
+            details = e.errors()
+
         return JSONResponse(
             status_code=422,
             content={
@@ -46,7 +61,7 @@ async def error_handler_middleware(request: Request, call_next):
                 "error": {
                     "code": "VALIDATION_ERROR",
                     "message": "Request validation failed",
-                    "details": e.errors(),
+                    "details": details,
                     "request_id": getattr(request.state, 'request_id', None)
                 }
             }
