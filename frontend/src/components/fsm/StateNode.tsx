@@ -8,9 +8,12 @@ interface StateNodeData {
   isInitial?: boolean;
   isDummy?: boolean;
   isSelected?: boolean;
+  fsmType?: 'moore' | 'mealy';
 }
 
 function StateNode({ data, selected }: NodeProps<StateNodeData>) {
+  const isMoore = data.fsmType === 'moore';
+
   return (
     <div
       data-testid={`state-node-${data.label}`}
@@ -41,9 +44,9 @@ function StateNode({ data, selected }: NodeProps<StateNodeData>) {
 
       <div className="text-center px-1">
         <div className="font-semibold text-sm truncate max-w-[80px]">{data.label}</div>
-        {data.output && (
+        {isMoore && data.output && (
           <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[80px]">
-            /{data.output}
+            out: {data.output}
           </div>
         )}
         {data.isDummy && (
