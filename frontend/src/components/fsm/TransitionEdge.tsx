@@ -11,6 +11,7 @@ interface TransitionEdgeData {
   input?: string;
   output?: string;
   label?: string;
+  fsmType?: 'moore' | 'mealy';
 }
 
 function TransitionEdge({
@@ -34,7 +35,23 @@ function TransitionEdge({
     targetPosition,
   });
 
+  const isMealy = data?.fsmType === 'mealy';
   const label = data?.label || (data?.input ? `${data.input}${data.output ? `/${data.output}` : ''}` : '');
+
+  // For Mealy FSMs, render input and output with different colors
+  const renderMealyLabel = () => {
+    if (!isMealy || !data?.input || !data?.output) {
+      return label;
+    }
+
+    return (
+      <span>
+        <span className="text-gray-700">{data.input}</span>
+        <span className="text-gray-500"> / </span>
+        <span className="text-blue-600">{data.output}</span>
+      </span>
+    );
+  };
 
   return (
     <>
@@ -59,10 +76,10 @@ function TransitionEdge({
             className={cn(
               'px-2 py-0.5 rounded text-xs font-medium',
               'bg-white border shadow-sm cursor-pointer',
-              selected ? 'border-blue-500 text-blue-700' : 'border-gray-300 text-gray-700'
+              selected ? 'border-blue-500' : 'border-gray-300'
             )}
           >
-            {label}
+            {isMealy ? renderMealyLabel() : label}
           </div>
         </EdgeLabelRenderer>
       )}
