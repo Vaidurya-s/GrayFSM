@@ -10,6 +10,8 @@ from typing import Dict, Type, Any
 from app.core.exporters.verilog import VerilogExporter
 from app.core.exporters.vhdl import VHDLExporter
 from app.core.exporters.json_exporter import JSONExporter
+from app.core.exporters.csv_exporter import CSVExporter
+from app.core.exporters.testbench import TestbenchExporter
 from app.utils.exceptions import ExportException
 
 
@@ -18,6 +20,8 @@ EXPORTER_REGISTRY: Dict[str, Any] = {
     "verilog": VerilogExporter,
     "vhdl": VHDLExporter,
     "json": JSONExporter,
+    "csv": CSVExporter,
+    "testbench": TestbenchExporter,
 }
 
 # File extension mapping
@@ -25,6 +29,8 @@ FORMAT_EXTENSIONS: Dict[str, str] = {
     "verilog": ".v",
     "vhdl": ".vhd",
     "json": ".json",
+    "csv": ".csv",
+    "testbench": ".v",
 }
 
 # Export format metadata
@@ -43,6 +49,16 @@ FORMAT_INFO = {
         "name": "JSON",
         "extension": ".json",
         "description": "Portable JSON format for FSM interchange",
+    },
+    "csv": {
+        "name": "CSV",
+        "extension": ".csv",
+        "description": "Comma-separated values format for FSM states and transitions",
+    },
+    "testbench": {
+        "name": "Verilog Testbench",
+        "extension": ".v",
+        "description": "Verilog testbench with clock, reset, stimulus, and waveform generation",
     },
 }
 

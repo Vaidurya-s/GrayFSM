@@ -38,6 +38,8 @@ class VHDLExporter:
         options = options or {}
         entity_name = options.get("module_name", self._sanitize_name(name))
         include_comments = options.get("include_comments", True)
+        include_synthesis_pragmas = options.get("include_synthesis_pragmas", True)
+        target_tool = options.get("target_tool", "generic")
 
         states = definition.get("states", [])
         transitions = definition.get("transitions", [])
@@ -107,6 +109,16 @@ class VHDLExporter:
             f"    signal current_state, next_state : state_type;"
         )
         lines.append("")
+
+        # Synthesis pragmas for FSM encoding
+        if include_synthesis_pragmas:
+            lines.append("    attribute fsm_encoding : string;")
+            lines.append('    attribute fsm_encoding of current_state : signal is "gray";')
+            if target_tool == "vivado":
+                lines.append("    attribute fsm_safe_state : string;")
+                lines.append('    attribute fsm_safe_state of current_state : signal is "default_state";')
+            lines.append("")
+
         lines.append("begin")
         lines.append("")
 

@@ -37,6 +37,8 @@ class VerilogExporter:
         options = options or {}
         module_name = options.get("module_name", self._sanitize_name(name))
         include_comments = options.get("include_comments", True)
+        include_synthesis_pragmas = options.get("include_synthesis_pragmas", True)
+        target_tool = options.get("target_tool", "generic")
 
         states = definition.get("states", [])
         transitions = definition.get("transitions", [])
@@ -101,6 +103,10 @@ class VerilogExporter:
         lines.append("")
 
         # State registers
+        if include_synthesis_pragmas:
+            lines.append("    (* fsm_encoding = \"gray\" *)")
+            if target_tool == "vivado":
+                lines.append("    (* fsm_safe_state = \"default_state\" *)")
         lines.append(f"    reg [{state_bits - 1}:0] current_state, next_state;")
         lines.append("")
 
@@ -121,6 +127,10 @@ class VerilogExporter:
             lines.append("    // Combinational: next state logic")
         lines.append("    always @(*) begin")
         lines.append("        next_state = current_state; // default: hold")
+        if include_synthesis_pragmas and target_tool == "quartus":
+            lines.append("        /* synthesis full_case parallel_case */")
+        elif include_synthesis_pragmas:
+            lines.append("        // synopsys full_case parallel_case")
         lines.append("        case (current_state)")
         self._generate_next_state_logic(lines, states, transitions, encodings, state_bits)
         lines.append("        endcase")
@@ -135,6 +145,10 @@ class VerilogExporter:
                 lines.append("    // Mealy output logic (depends on state and input)")
         lines.append("    always @(*) begin")
         if fsm_type == "moore":
+            if include_synthesis_pragmas and target_tool == "quartus":
+                lines.append("        /* synthesis full_case parallel_case */")
+            elif include_synthesis_pragmas:
+                lines.append("        // synopsys full_case parallel_case")
             lines.append("        case (current_state)")
             for state in states:
                 sanitized = self._sanitize_name(state)
@@ -147,6 +161,10 @@ class VerilogExporter:
         else:
             # Mealy: output depends on state + input
             lines.append(f"        out = {output_bits}'b{'0' * output_bits}; // default")
+            if include_synthesis_pragmas and target_tool == "quartus":
+                lines.append("        /* synthesis full_case parallel_case */")
+            elif include_synthesis_pragmas:
+                lines.append("        // synopsys full_case parallel_case")
             lines.append("        case (current_state)")
             self._generate_mealy_output_logic(
                 lines, states, transitions, output_bits
