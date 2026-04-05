@@ -125,6 +125,12 @@ app = FastAPI(
 # GZip Compression (innermost of the class-based group)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# CORS safety checks
+if settings.cors_origins == ["*"] and settings.cors_allow_credentials:
+    raise RuntimeError("CORS: Cannot use wildcard origins with allow_credentials=True")
+if settings.cors_origins == ["*"] and settings.environment != "development":
+    logger.warning("CORS: Wildcard origins in non-development environment")
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
