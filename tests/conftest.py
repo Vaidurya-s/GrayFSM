@@ -79,13 +79,34 @@ async def db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture
 async def client() -> AsyncGenerator[httpx.AsyncClient, None]:
-    """Create an async HTTP client for testing."""
+    """Create an async HTTP client for testing (unauthenticated)."""
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport,
         base_url="http://testserver/api/v1",
         timeout=30.0
     ) as client:
+        yield client
+
+
+@pytest.fixture
+async def auth_client() -> AsyncGenerator[httpx.AsyncClient, None]:
+    """Create an authenticated HTTP client for testing."""
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(
+        transport=transport,
+        base_url="http://testserver/api/v1",
+        timeout=30.0
+    ) as client:
+        # Register a test user and get token
+        test_email = f"test_{uuid4().hex[:8]}@example.com"
+        register_resp = await client.post("/auth/register", json={
+            "email": test_email,
+            "password": "TestPass123!"
+        })
+        if register_resp.status_code in (200, 201):
+            token = register_resp.json().get("access_token", "")
+            client.headers["Authorization"] = f"Bearer {token}"
         yield client
 
 
@@ -235,19 +256,19 @@ def export_request_vhdl() -> Dict:
 
 
 @pytest.fixture
-async def created_fsm(client, sample_fsm_moore) -> Dict:
-    """Create an FSM and return its data."""
-    response = await client.post("/fsms", json=sample_fsm_moore)
+async def created_fsm(auth_client, sample_fsm_moore) -> Dict:
+    """Create an FSM and return its data (requires auth)."""
+    response = await auth_client.post("/fsms", json=sample_fsm_moore)
     assert response.status_code == 201
     data = response.json()
     return data["data"]
 
 
 @pytest.fixture
-async def optimized_fsm(client, created_fsm, optimization_request_greedy) -> Dict:
-    """Create and optimize an FSM."""
+async def optimized_fsm(auth_client, created_fsm, optimization_request_greedy) -> Dict:
+    """Create and optimize an FSM (requires auth)."""
     fsm_id = created_fsm["id"]
-    response = await client.post(
+    response = await auth_client.post(
         f"/fsms/{fsm_id}/optimize",
         json=optimization_request_greedy
     )
