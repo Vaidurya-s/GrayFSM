@@ -10,6 +10,7 @@ from alembic import context
 # Import your Base and models
 from app.db.base import Base
 from app.models import fsm  # Import models to ensure they're registered
+from app.models import user  # User model for auth
 
 # this is the Alembic Config object
 config = context.config
