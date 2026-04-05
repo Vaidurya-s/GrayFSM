@@ -34,14 +34,14 @@ interface SummaryCardProps {
 
 function SummaryCard({ value, label, sub, accent = 'default' }: SummaryCardProps) {
   const accentMap: Record<NonNullable<SummaryCardProps['accent']>, string> = {
-    green: 'bg-green-50 border-green-200 text-green-700',
+    green: 'bg-teal-50 border-teal-200 text-teal-700',
     orange: 'bg-orange-50 border-orange-200 text-orange-700',
     blue: 'bg-blue-50 border-blue-200 text-blue-700',
     purple: 'bg-purple-50 border-purple-200 text-purple-700',
     default: 'bg-gray-50 border-gray-200 text-gray-700',
   };
   const subMap: Record<NonNullable<SummaryCardProps['accent']>, string> = {
-    green: 'text-green-600',
+    green: 'text-teal-600',
     orange: 'text-orange-600',
     blue: 'text-blue-600',
     purple: 'text-purple-600',
@@ -207,8 +207,8 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: 12 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Before" fill="#ef4444" name="Before" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="After" fill="#22c55e" name="After" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Before" fill="#E69F00" name="Before" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="After" fill="#0072B2" name="After" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -360,10 +360,11 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                         isDiag || maxHammingPossible === 0
                           ? 0
                           : dist / maxHammingPossible;
-                      // Map intensity to a color: 0 = white, 1 = deep red
-                      const r = Math.round(255);
-                      const g = Math.round(255 - intensity * 200);
-                      const b = Math.round(255 - intensity * 200);
+                      // Map intensity to a color: 0 = white, 1 = deep orange (Okabe-Ito vermillion)
+                      // Interpolate white (#ffffff) → vermillion (#D55E00)
+                      const r = Math.round(255 - intensity * (255 - 213));
+                      const g = Math.round(255 - intensity * (255 - 94));
+                      const b = Math.round(255 - intensity * 255);
                       const bgStyle = isDiag
                         ? { backgroundColor: '#f3f4f6' }
                         : { backgroundColor: `rgb(${r},${g},${b})` };
@@ -378,7 +379,8 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                             <span className="text-gray-300">—</span>
                           ) : (
                             <span
-                              className={dist === 1 ? 'text-green-700 font-semibold' : 'text-gray-700'}
+                              className={dist === 1 ? 'font-semibold' : 'text-gray-700'}
+                            style={dist === 1 ? { color: '#009E73' } : undefined}
                             >
                               {dist}
                             </span>
@@ -392,11 +394,11 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
             </table>
             <div className="flex items-center gap-4 px-4 py-2.5 border-t border-gray-100 text-xs text-gray-500">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-green-100 border border-green-300 inline-block" />
+                <span className="w-3 h-3 rounded inline-block" style={{ backgroundColor: '#009E73', border: '1px solid #007a59' }} />
                 Distance = 1 (ideal Gray transition)
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" />
+                <span className="w-3 h-3 rounded inline-block" style={{ backgroundColor: '#f5c49a', border: '1px solid #D55E00' }} />
                 Higher distance
               </span>
             </div>
