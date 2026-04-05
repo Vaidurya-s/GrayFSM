@@ -53,14 +53,14 @@ interface AnimParticle {
 // ---------------------------------------------------------------------------
 
 const COLORS = {
-  vertex: '#6b7280',        // gray-500
-  vertexHighlight: '#22c55e', // green-500
-  vertexActive: '#f59e0b',  // amber-400
-  edge: '#374151',           // gray-700
-  edgeHighlight: '#16a34a', // green-700
-  particle: '#f97316',      // orange-500
-  label: '#e5e7eb',         // gray-200
-  grid: '#1f2937',          // gray-800
+  vertex: '#6b7280',          // gray-500
+  vertexHighlight: '#009E73', // Okabe-Ito teal
+  vertexActive: '#f59e0b',    // amber-400
+  edge: '#374151',            // gray-700
+  edgeHighlight: '#007a59',   // teal-700 (darker teal for edges)
+  particle: '#E69F00',        // Okabe-Ito orange
+  label: '#e5e7eb',           // gray-200
+  grid: '#1f2937',            // gray-800
 };
 
 // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ function VertexSphere({
         <Text
           position={[0, radius + 0.18, 0]}
           fontSize={0.15}
-          color={highlighted ? '#86efac' : COLORS.label}
+          color={highlighted ? '#5de0b8' : COLORS.label}
           anchorX="center"
           anchorY="bottom"
           outlineWidth={0.02}
@@ -411,7 +411,7 @@ function ControlsPanel({
       <div className="space-y-1">
         <div className="flex justify-between items-center">
           <label className="text-xs text-gray-300">Bits</label>
-          <span className="text-xs font-mono text-green-400 bg-gray-800 px-2 py-0.5 rounded">
+          <span className="text-xs font-mono bg-gray-800 px-2 py-0.5 rounded" style={{ color: '#009E73' }}>
             {numBits}D &mdash; {1 << numBits} states
           </span>
         </div>
@@ -422,7 +422,7 @@ function ControlsPanel({
           step={1}
           value={numBits}
           onChange={(e) => onNumBitsChange(Number(e.target.value))}
-          className="w-full accent-green-500"
+          className="w-full accent-teal-500"
         />
         <div className="flex justify-between text-[10px] text-gray-500">
           <span>2</span><span>3</span><span>4</span><span>5</span>
@@ -471,7 +471,7 @@ function Toggle({
     >
       <div
         className={`relative w-8 h-4 rounded-full transition-colors ${
-          checked ? 'bg-green-500' : 'bg-gray-600'
+          checked ? 'bg-teal-500' : 'bg-gray-600'
         }`}
       >
         <div
@@ -524,7 +524,7 @@ function StatRow({ label, value, accent }: { label: string; value: number; accen
   return (
     <div className="flex items-center gap-3 justify-between">
       <span className="text-[10px] text-gray-400">{label}</span>
-      <span className={`text-xs font-mono font-semibold ${accent ? 'text-green-400' : 'text-gray-200'}`}>
+      <span className={`text-xs font-mono font-semibold ${accent ? 'text-teal-400' : 'text-gray-200'}`}>
         {value}
       </span>
     </div>
