@@ -1,0 +1,145 @@
+"""
+Authentication API endpoints
+"""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_db
+from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserResponse
+from app.services.auth_service import AuthService
+from app.middleware.auth import get_required_current_user, create_access_token, UserToken
+from app.utils.exceptions import (
+    UserAlreadyExistsException,
+    UserNotFoundException,
+    InvalidCredentialsException,
+)
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+router = APIRouter()
+
+
+@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+async def register(
+    request: RegisterRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AuthResponse:
+    """
+    Register a new user.
+
+    Args:
+        request: Registration request with email and password
+        db: Database session
+
+    Returns:
+        AuthResponse with access token
+
+    Raises:
+        HTTP 409: User already exists
+        HTTP 422: Invalid email or password
+    """
+    service = AuthService(db)
+
+    try:
+        user = await service.register(email=request.email, password=request.password)
+    except UserAlreadyExistsException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=exc.message,
+        ) from exc
+
+    # Create access token
+    token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "email": user.email,
+            "roles": [],
+        }
+    )
+
+    return AuthResponse(access_token=token, token_type="bearer")
+
+
+@router.post("/login", response_model=AuthResponse)
+async def login(
+    request: LoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AuthResponse:
+    """
+    Login user with email and password.
+
+    Args:
+        request: Login request with email and password
+        db: Database session
+
+    Returns:
+        AuthResponse with access token
+
+    Raises:
+        HTTP 401: Invalid credentials
+        HTTP 404: User not found
+    """
+    service = AuthService(db)
+
+    try:
+        user = await service.login(email=request.email, password=request.password)
+    except UserNotFoundException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    except InvalidCredentialsException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=exc.message,
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    # Create access token
+    token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "email": user.email,
+            "roles": [],
+        }
+    )
+
+    return AuthResponse(access_token=token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user(
+    current_user: UserToken = Depends(get_required_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    """
+    Get current authenticated user information.
+
+    Args:
+        current_user: Current user from token
+        db: Database session
+
+    Returns:
+        UserResponse with user data
+
+    Raises:
+        HTTP 401: Authentication required
+    """
+    service = AuthService(db)
+    user = await service.get_user_by_id(user_id=current_user["user_id"])
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        is_active=user.is_active,
+        created_at=user.created_at,
+    )

@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import fsm, algorithm, export, category, example, health
+from app.api.v1 import fsm, algorithm, export, category, example, health, auth
 from app.config import settings, LOGGING_CONFIG
 from app.db.session import engine, create_db_and_tables
 from app.middleware.error_handler import error_handler_middleware
@@ -182,6 +182,12 @@ app.include_router(
     example.router,
     prefix=f"{API_PREFIX}/examples",
     tags=["Examples"]
+)
+
+app.include_router(
+    auth.router,
+    prefix=f"{API_PREFIX}/auth",
+    tags=["Authentication"]
 )
 
 

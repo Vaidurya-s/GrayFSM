@@ -44,3 +44,21 @@ class RateLimitException(GrayFSMException):
             message=f"Rate limit exceeded: {limit} requests per {window} seconds",
             code="RATE_LIMIT_EXCEEDED"
         )
+
+
+class UserAlreadyExistsException(GrayFSMException):
+    """Raised when attempting to register with an existing email"""
+    def __init__(self, message: str):
+        super().__init__(message=message, code="USER_ALREADY_EXISTS")
+
+
+class UserNotFoundException(GrayFSMException):
+    """Raised when user is not found"""
+    def __init__(self, message: str):
+        super().__init__(message=message, code="USER_NOT_FOUND")
+
+
+class InvalidCredentialsException(GrayFSMException):
+    """Raised when authentication credentials are invalid"""
+    def __init__(self, message: str):
+        super().__init__(message=message, code="INVALID_CREDENTIALS")

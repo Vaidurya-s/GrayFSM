@@ -58,8 +58,8 @@ class FSM(Base):
     category_id = Column(UUID(as_uuid=True), ForeignKey('categories.id'))
     tags = Column(ARRAY(String))
     
-    # Ownership (User model not implemented yet)
-    created_by = Column(UUID(as_uuid=True), nullable=True)  # TODO: Add ForeignKey('users.id') when User model exists
+    # Ownership
+    created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
     visibility = Column(
         SQLEnum('private', 'public', 'unlisted', 'example', name='fsm_visibility'),
         default='private'
