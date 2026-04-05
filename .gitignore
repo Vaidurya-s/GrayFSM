@@ -19,6 +19,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+backend/.env
+backend/.env.local
 
 # OS files
 .DS_Store
