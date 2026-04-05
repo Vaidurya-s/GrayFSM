@@ -284,9 +284,13 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
         to_state: idMap[t.to_state],
       }));
 
+    // Select the first pasted state so the user can move it immediately
+    const firstNewId = newStates.length > 0 ? newStates[0].id : null;
     set((prev) => ({
       draftStates: [...prev.draftStates, ...newStates],
       draftTransitions: [...prev.draftTransitions, ...newTransitions],
+      selectedNode: firstNewId,
+      selectedEdge: null,
     }));
     get().pushSnapshot();
   },
