@@ -169,17 +169,10 @@ LOGGING_CONFIG = {
             "formatter": "default" if not settings.is_production else "json",
             "stream": "ext://sys.stdout",
         },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "json",
-            "filename": "logs/app.log",
-            "maxBytes": 10485760,  # 10MB
-            "backupCount": 5,
-        },
     },
     "loggers": {
         "": {  # root logger
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": settings.log_level,
             "propagate": True,
         },
