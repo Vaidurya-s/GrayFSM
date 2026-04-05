@@ -4,7 +4,7 @@ SQLAlchemy ORM Model for User entity
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, DateTime, Index
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -19,6 +19,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
+    failed_login_count = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime(timezone=False), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

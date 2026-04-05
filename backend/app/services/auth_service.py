@@ -1,6 +1,7 @@
 """
 Authentication Service - Business logic for user authentication
 """
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -103,18 +104,33 @@ class AuthService:
         """
         user = await self._get_user_by_email(email)
         if not user:
-            logger.warning(f"Login attempted with non-existent email: {email}")
+            logger.warning(f"Login attempted with non-existent email: {email[:3]}***")
             raise UserNotFoundException(f"User with email {email} not found")
 
+        # Check account lockout
+        if user.locked_until and user.locked_until > datetime.utcnow():
+            logger.warning(f"Login attempted for locked account: {email[:3]}***")
+            raise InvalidCredentialsException("Invalid email or password")
+
         if not verify_password(password, user.hashed_password):
-            logger.warning(f"Failed login attempt for user: {email}")
-            raise InvalidCredentialsException("Invalid credentials")
+            user.failed_login_count = (user.failed_login_count or 0) + 1
+            if user.failed_login_count >= 5:
+                user.locked_until = datetime.utcnow() + timedelta(minutes=15)
+                logger.warning(f"Account locked after failed attempts: {email[:3]}***")
+            await self.db.commit()
+            logger.warning(f"Failed login attempt for: {email[:3]}***")
+            raise InvalidCredentialsException("Invalid email or password")
 
         if not user.is_active:
-            logger.warning(f"Login attempted for inactive user: {email}")
+            logger.warning(f"Login attempted for inactive user: {email[:3]}***")
             raise InvalidCredentialsException("User account is inactive")
 
-        logger.info(f"User logged in: {email}")
+        # Reset lockout state on successful login
+        user.failed_login_count = 0
+        user.locked_until = None
+        await self.db.commit()
+
+        logger.info(f"User logged in: {email[:3]}***")
         return user
 
     async def get_user_by_id(self, user_id: UUID) -> Optional[User]:
