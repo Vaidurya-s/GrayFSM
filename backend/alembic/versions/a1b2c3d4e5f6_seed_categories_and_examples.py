@@ -208,7 +208,7 @@ def upgrade() -> None:
         sa.column('id', sa.UUID),
         sa.column('name', sa.String),
         sa.column('description', sa.Text),
-        sa.column('fsm_type', sa.String),
+        sa.column('fsm_type', sa.Enum('moore', 'mealy', name='fsm_type')),
         sa.column('definition', sa.JSON),
         sa.column('state_count', sa.Integer),
         sa.column('transition_count', sa.Integer),
