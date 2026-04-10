@@ -16,7 +16,7 @@ except AttributeError:
         schema = schemathesis.from_url("http://localhost:8000/openapi.json")
     except AttributeError:
         # schemathesis 4.x uses a different API — skip contract tests
-        pytest.skip("schemathesis version not compatible — skipping contract tests")
+        pytest.skip("schemathesis version not compatible — skipping contract tests", allow_module_level=True)
 
 
 @pytest.mark.contract
