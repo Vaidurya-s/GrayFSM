@@ -30,6 +30,7 @@ class ExportOptions(BaseModel):
     include_waveform: bool = True
     separator: str = Field(",", max_length=1)
     include_headers: bool = True
+    include_section_labels: bool = False
     style: Optional[str] = Field(None, pattern="^(standard|compact|verbose)$")
 
 
@@ -45,14 +46,7 @@ class ExportRequest(BaseModel):
     )
 
 
-class ExportResponse(BaseModel):
-    """Response schema for FSM export"""
-    format: str
-    content: str
-    file_name: str
-
-
-@router.post("/{fsm_id}/export", response_model=ExportResponse)
+@router.post("/{fsm_id}/export")
 async def export_fsm(
     fsm_id: UUID,
     request: ExportRequest,
@@ -69,7 +63,7 @@ async def export_fsm(
         request: Export parameters (format, options)
 
     Returns:
-        ExportResponse with format, generated content, and suggested file_name
+        Wrapped response with format, generated content, file_name, and file_size_bytes
 
     Raises:
         404: FSM not found
@@ -83,7 +77,14 @@ async def export_fsm(
             format_name=request.format,
             options=request.options.model_dump(exclude_none=True),
         )
-        return ExportResponse(**result)
+        content = result.get("content", "")
+        return {
+            "success": True,
+            "data": {
+                **result,
+                "file_size_bytes": len(content.encode("utf-8")),
+            },
+        }
     except FSMNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ExportException as e:
