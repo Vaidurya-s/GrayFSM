@@ -105,7 +105,7 @@ class OptimizationService:
                 fsm_type=fsm_type,
             )
         except Exception as e:
-            execution_time_ms = int((time.perf_counter() - start_time) * 1000)
+            execution_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
             # Record failed attempt
             await self._record_failure(
                 original_fsm_id=fsm_id,
@@ -118,7 +118,7 @@ class OptimizationService:
                 f"Algorithm '{request.algorithm}' failed: {str(e)}"
             )
 
-        execution_time_ms = int((time.perf_counter() - start_time) * 1000)
+        execution_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
         # Build optimized state list and encodings
         optimized_states_list = list(states_list)

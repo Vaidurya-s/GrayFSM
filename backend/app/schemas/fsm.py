@@ -52,11 +52,25 @@ class FSMResponse(BaseModel):
     is_optimized: bool
     dummy_state_count: int
     view_count: int
+    states: List[str] = []
     created_at: datetime
     updated_at: Optional[datetime]
-    
+
     class Config:
         from_attributes = True
+
+
+class FSMUpdate(BaseModel):
+    """Schema for updating an existing FSM"""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    visibility: Optional[str] = Field(None, pattern="^(private|public|unlisted)$")
+
+
+class FSMFork(BaseModel):
+    """Schema for forking an existing FSM"""
+    name: str = Field(..., min_length=1, max_length=255)
 
 
 class OptimizationRequest(BaseModel):

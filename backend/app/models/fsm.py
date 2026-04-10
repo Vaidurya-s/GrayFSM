@@ -79,9 +79,16 @@ class FSM(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     category = relationship("Category", back_populates="fsms")
+
+    @property
+    def states(self):
+        """Convenience accessor for state list stored in definition JSONB."""
+        if self.definition and isinstance(self.definition, dict):
+            return self.definition.get("states", [])
+        return []
     algorithm_results = relationship(
         "AlgorithmResult",
         back_populates="original_fsm",
