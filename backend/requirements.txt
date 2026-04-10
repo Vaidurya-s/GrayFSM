@@ -43,6 +43,7 @@ mypy>=1.7.1,<2.0.0
 # Additional runtime dependencies
 python-multipart>=0.0.6
 httpx>=0.25.0
+redis>=4.6.0,<6.0.0
 
 # Observability (optional — app starts without these)
 prometheus-client>=0.19.0
