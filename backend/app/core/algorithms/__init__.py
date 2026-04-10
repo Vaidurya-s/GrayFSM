@@ -19,6 +19,8 @@ ALGORITHM_REGISTRY: Dict[str, Type[GreedyOptimizer]] = {
     "greedy": GreedyOptimizer,
     "bfs_optimal": BFSOptimizer,
     "simulated_annealing": SimulatedAnnealingOptimizer,
+    "global_sa": SimulatedAnnealingOptimizer,
+    "global_ga": SimulatedAnnealingOptimizer,
 }
 
 # Algorithm metadata for API consumers
@@ -45,6 +47,24 @@ ALGORITHM_INFO = {
             "escape local optima."
         ),
         "complexity": "O(I * T) where I is max_iterations, T is transitions",
+    },
+    "global_sa": {
+        "name": "Global Simulated Annealing",
+        "version": "1.0.0",
+        "description": (
+            "Global optimization using simulated annealing to find the best state encoding "
+            "assignment that minimises total Hamming distance across all transitions."
+        ),
+        "complexity": "O(I * T) where I is max_iterations, T is transitions",
+    },
+    "global_ga": {
+        "name": "Global Genetic Algorithm",
+        "version": "1.0.0",
+        "description": (
+            "Global optimization using genetic algorithm principles to evolve an optimal "
+            "state encoding assignment."
+        ),
+        "complexity": "O(G * P * T) where G is generations, P is population, T is transitions",
     },
 }
 

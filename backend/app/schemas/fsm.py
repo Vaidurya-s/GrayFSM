@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TransitionBase(BaseModel):
@@ -75,9 +75,11 @@ class FSMFork(BaseModel):
 
 class OptimizationRequest(BaseModel):
     """Request schema for FSM optimization"""
+    model_config = ConfigDict(populate_by_name=True)
+
     algorithm: str = Field(..., pattern="^(greedy|bfs_optimal|global_sa|global_ga)$")
     options: Optional[Dict[str, Any]] = {}
-    async_mode: bool = False
+    async_mode: bool = Field(default=False, alias="async")
 
 
 class OptimizationMetrics(BaseModel):

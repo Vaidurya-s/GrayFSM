@@ -17,7 +17,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
-from app.api.v1 import fsm, algorithm, export, category, example, health, auth
+from app.api.v1 import fsm, algorithm, export, category, example, health, auth, tasks
 from app.config import settings, LOGGING_CONFIG
 from app.db.session import engine, create_db_and_tables
 from app.middleware.error_handler import error_handler_middleware
@@ -196,6 +196,12 @@ app.include_router(
     auth.router,
     prefix=f"{API_PREFIX}/auth",
     tags=["Authentication"]
+)
+
+app.include_router(
+    tasks.router,
+    prefix=f"{API_PREFIX}/tasks",
+    tags=["Tasks"]
 )
 
 
