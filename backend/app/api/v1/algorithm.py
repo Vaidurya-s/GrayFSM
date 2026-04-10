@@ -87,6 +87,7 @@ async def optimize_fsm(
             request.options or {},
         )
         return JSONResponse(status_code=202, content={
+            "success": True,
             "task_id": task_id,
             "status": "pending",
             "websocket_url": f"/api/v1/tasks/{task_id}/ws",
