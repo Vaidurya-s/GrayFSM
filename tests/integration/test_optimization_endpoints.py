@@ -6,6 +6,7 @@ Tests FSM optimization algorithms and related endpoints.
 
 import pytest
 import asyncio
+from uuid import uuid4
 
 
 @pytest.mark.integration
