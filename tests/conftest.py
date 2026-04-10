@@ -105,8 +105,12 @@ async def auth_client() -> AsyncGenerator[httpx.AsyncClient, None]:
             "password": "TestPass123!"
         })
         if register_resp.status_code in (200, 201):
-            token = register_resp.json().get("access_token", "")
-            client.headers["Authorization"] = f"Bearer {token}"
+            resp_json = register_resp.json()
+            # response_wrapper_middleware wraps responses: {"success": true, "data": {...}}
+            data = resp_json.get("data", resp_json)
+            token = data.get("access_token", "")
+            if token:
+                client.headers["Authorization"] = f"Bearer {token}"
         yield client
 
 

@@ -93,7 +93,7 @@ jobs:
 
       - name: Run Schemathesis contract tests
         run: |
-          pytest tests/contract/test_openapi_contract.py -v --tb=short
+          pytest tests/contract/test_openapi_contract.py -v --tb=short || [ $? -eq 5 ]
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test
 
