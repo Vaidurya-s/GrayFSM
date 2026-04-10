@@ -14,10 +14,10 @@ import re
 class TestExportEndpoints:
     """Test suite for FSM export operations."""
 
-    async def test_export_verilog(self, client, created_fsm, export_request_verilog):
+    async def test_export_verilog(self, auth_client, created_fsm, export_request_verilog):
         """Test exporting FSM to Verilog."""
         fsm_id = created_fsm["id"]
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request_verilog
         )
@@ -37,10 +37,10 @@ class TestExportEndpoints:
         assert "always" in content or "assign" in content
         assert "input" in content or "output" in content
 
-    async def test_export_vhdl(self, client, created_fsm, export_request_vhdl):
+    async def test_export_vhdl(self, auth_client, created_fsm, export_request_vhdl):
         """Test exporting FSM to VHDL."""
         fsm_id = created_fsm["id"]
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request_vhdl
         )
@@ -57,7 +57,7 @@ class TestExportEndpoints:
         assert "architecture" in content.lower()
         assert "process" in content.lower() or "signal" in content.lower()
 
-    async def test_export_json(self, client, created_fsm):
+    async def test_export_json(self, auth_client, created_fsm):
         """Test exporting FSM to JSON."""
         fsm_id = created_fsm["id"]
         export_request = {
@@ -65,7 +65,7 @@ class TestExportEndpoints:
             "options": {}
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
@@ -82,7 +82,7 @@ class TestExportEndpoints:
         assert "states" in exported_fsm
         assert "transitions" in exported_fsm
 
-    async def test_export_csv(self, client, created_fsm):
+    async def test_export_csv(self, auth_client, created_fsm):
         """Test exporting FSM to CSV."""
         fsm_id = created_fsm["id"]
         export_request = {
@@ -90,7 +90,7 @@ class TestExportEndpoints:
             "options": {}
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
@@ -107,7 +107,7 @@ class TestExportEndpoints:
         assert len(lines) > 1  # At least header + 1 row
         assert ',' in lines[0]  # CSV delimiter
 
-    async def test_export_testbench(self, client, optimized_fsm):
+    async def test_export_testbench(self, auth_client, optimized_fsm):
         """Test generating testbench for optimized FSM."""
         fsm_id = optimized_fsm["optimized_fsm_id"]
         export_request = {
@@ -118,7 +118,7 @@ class TestExportEndpoints:
             }
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
@@ -131,7 +131,7 @@ class TestExportEndpoints:
         assert "testbench" in content.lower() or "tb_" in content.lower()
         assert "initial" in content or "process" in content.lower()
 
-    async def test_export_with_custom_module_name(self, client, created_fsm):
+    async def test_export_with_custom_module_name(self, auth_client, created_fsm):
         """Test export with custom module name."""
         fsm_id = created_fsm["id"]
         export_request = {
@@ -142,7 +142,7 @@ class TestExportEndpoints:
             }
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
@@ -151,7 +151,7 @@ class TestExportEndpoints:
         content = response.json()["data"]["content"]
         assert "custom_fsm_module" in content
 
-    async def test_export_without_comments(self, client, created_fsm):
+    async def test_export_without_comments(self, auth_client, created_fsm):
         """Test export without comments."""
         fsm_id = created_fsm["id"]
         export_request = {
@@ -161,7 +161,7 @@ class TestExportEndpoints:
             }
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
@@ -173,7 +173,7 @@ class TestExportEndpoints:
         comment_lines = [line for line in content.split('\n') if line.strip().startswith('//')]
         assert len(comment_lines) < 5  # Few to no comments
 
-    async def test_export_different_styles(self, client, created_fsm):
+    async def test_export_different_styles(self, auth_client, created_fsm):
         """Test different export styles."""
         fsm_id = created_fsm["id"]
 
@@ -183,7 +183,7 @@ class TestExportEndpoints:
                 "options": {"style": style}
             }
 
-            response = await client.post(
+            response = await auth_client.post(
                 f"/fsms/{fsm_id}/export",
                 json=export_request
             )
@@ -191,7 +191,7 @@ class TestExportEndpoints:
             assert response.status_code == 200
             assert response.json()["success"] is True
 
-    async def test_export_invalid_format(self, client, created_fsm):
+    async def test_export_invalid_format(self, auth_client, created_fsm):
         """Test export with invalid format."""
         fsm_id = created_fsm["id"]
         export_request = {
@@ -199,34 +199,34 @@ class TestExportEndpoints:
             "options": {}
         }
 
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request
         )
 
         assert response.status_code == 422
 
-    async def test_get_cached_export(self, client, created_fsm, export_request_verilog):
+    async def test_get_cached_export(self, auth_client, created_fsm, export_request_verilog):
         """Test retrieving cached export."""
         fsm_id = created_fsm["id"]
 
         # Generate export
-        create_response = await client.post(
+        create_response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request_verilog
         )
         assert create_response.status_code == 200
 
         # Retrieve cached export
-        get_response = await client.get(f"/fsms/{fsm_id}/export/verilog")
+        get_response = await auth_client.get(f"/fsms/{fsm_id}/export/verilog")
 
         assert get_response.status_code == 200
         assert get_response.headers["content-type"] == "text/plain; charset=utf-8"
 
-    async def test_export_file_size(self, client, created_fsm, export_request_verilog):
+    async def test_export_file_size(self, auth_client, created_fsm, export_request_verilog):
         """Test that export includes file size metadata."""
         fsm_id = created_fsm["id"]
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request_verilog
         )
@@ -238,10 +238,10 @@ class TestExportEndpoints:
         assert data["data"]["file_size_bytes"] > 0
         assert data["data"]["file_size_bytes"] == len(data["data"]["content"])
 
-    async def test_verilog_syntax_validity(self, client, created_fsm, export_request_verilog):
+    async def test_verilog_syntax_validity(self, auth_client, created_fsm, export_request_verilog):
         """Test that generated Verilog has valid syntax."""
         fsm_id = created_fsm["id"]
-        response = await client.post(
+        response = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json=export_request_verilog
         )
@@ -257,7 +257,7 @@ class TestExportEndpoints:
         assert re.search(r"input\s+(wire|reg|\w+)", content) or "input" in content
         assert re.search(r"output\s+(wire|reg|\w+)", content) or "output" in content
 
-    async def test_concurrent_exports(self, client, created_fsm):
+    async def test_concurrent_exports(self, auth_client, created_fsm):
         """Test concurrent export requests."""
         import asyncio
 
@@ -265,7 +265,7 @@ class TestExportEndpoints:
 
         async def export_format(format_type):
             export_request = {"format": format_type, "options": {}}
-            return await client.post(f"/fsms/{fsm_id}/export", json=export_request)
+            return await auth_client.post(f"/fsms/{fsm_id}/export", json=export_request)
 
         # Export multiple formats concurrently
         tasks = [
@@ -281,25 +281,25 @@ class TestExportEndpoints:
         for response in responses:
             assert response.status_code == 200
 
-    async def test_export_optimized_vs_original(self, client, created_fsm, optimization_request_greedy):
+    async def test_export_optimized_vs_original(self, auth_client, created_fsm, optimization_request_greedy):
         """Test that optimized FSM exports include dummy states."""
         fsm_id = created_fsm["id"]
 
         # Export original
-        original_export = await client.post(
+        original_export = await auth_client.post(
             f"/fsms/{fsm_id}/export",
             json={"format": "json", "options": {}}
         )
 
         # Optimize FSM
-        opt_response = await client.post(
+        opt_response = await auth_client.post(
             f"/fsms/{fsm_id}/optimize",
             json=optimization_request_greedy
         )
         optimized_fsm_id = opt_response.json()["data"]["optimized_fsm_id"]
 
         # Export optimized
-        optimized_export = await client.post(
+        optimized_export = await auth_client.post(
             f"/fsms/{optimized_fsm_id}/export",
             json={"format": "json", "options": {}}
         )

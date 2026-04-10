@@ -14,9 +14,9 @@ from uuid import uuid4
 class TestFSMEndpoints:
     """Test suite for FSM CRUD operations."""
 
-    async def test_create_fsm_moore(self, client, sample_fsm_moore):
+    async def test_create_fsm_moore(self, auth_client, sample_fsm_moore):
         """Test creating a Moore FSM."""
-        response = await client.post("/fsms", json=sample_fsm_moore)
+        response = await auth_client.post("/fsms", json=sample_fsm_moore)
 
         assert response.status_code == 201
         data = response.json()
@@ -30,9 +30,9 @@ class TestFSMEndpoints:
         assert "id" in data["data"]
         assert "created_at" in data["data"]
 
-    async def test_create_fsm_mealy(self, client, sample_fsm_mealy):
+    async def test_create_fsm_mealy(self, auth_client, sample_fsm_mealy):
         """Test creating a Mealy FSM."""
-        response = await client.post("/fsms", json=sample_fsm_mealy)
+        response = await auth_client.post("/fsms", json=sample_fsm_mealy)
 
         assert response.status_code == 201
         data = response.json()
@@ -40,7 +40,7 @@ class TestFSMEndpoints:
         assert data["success"] is True
         assert data["data"]["fsm_type"] == "mealy"
 
-    async def test_create_fsm_invalid_data(self, client):
+    async def test_create_fsm_invalid_data(self, auth_client):
         """Test creating FSM with invalid data."""
         invalid_fsm = {
             "name": "Invalid FSM",
@@ -50,27 +50,27 @@ class TestFSMEndpoints:
             "transitions": []
         }
 
-        response = await client.post("/fsms", json=invalid_fsm)
+        response = await auth_client.post("/fsms", json=invalid_fsm)
 
         assert response.status_code == 422
         data = response.json()
         assert data["success"] is False
         assert "error" in data
 
-    async def test_create_fsm_missing_fields(self, client):
+    async def test_create_fsm_missing_fields(self, auth_client):
         """Test creating FSM with missing required fields."""
         incomplete_fsm = {
             "name": "Incomplete FSM"
         }
 
-        response = await client.post("/fsms", json=incomplete_fsm)
+        response = await auth_client.post("/fsms", json=incomplete_fsm)
 
         assert response.status_code == 422
 
-    async def test_get_fsm_by_id(self, client, created_fsm):
+    async def test_get_fsm_by_id(self, auth_client, created_fsm):
         """Test retrieving an FSM by ID."""
         fsm_id = created_fsm["id"]
-        response = await client.get(f"/fsms/{fsm_id}")
+        response = await auth_client.get(f"/fsms/{fsm_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -79,18 +79,18 @@ class TestFSMEndpoints:
         assert data["data"]["id"] == fsm_id
         assert data["data"]["name"] == created_fsm["name"]
 
-    async def test_get_fsm_not_found(self, client):
+    async def test_get_fsm_not_found(self, auth_client):
         """Test retrieving non-existent FSM."""
         fake_id = str(uuid4())
-        response = await client.get(f"/fsms/{fake_id}")
+        response = await auth_client.get(f"/fsms/{fake_id}")
 
         assert response.status_code == 404
         data = response.json()
         assert data["success"] is False
 
-    async def test_list_fsms(self, client, created_fsm):
+    async def test_list_fsms(self, auth_client, created_fsm):
         """Test listing FSMs with pagination."""
-        response = await client.get("/fsms", params={"page": 1, "page_size": 20})
+        response = await auth_client.get("/fsms", params={"page": 1, "page_size": 20})
 
         assert response.status_code == 200
         data = response.json()
@@ -101,21 +101,21 @@ class TestFSMEndpoints:
         assert "pagination" in data
         assert data["pagination"]["page"] == 1
 
-    async def test_list_fsms_with_filters(self, client, created_fsm):
+    async def test_list_fsms_with_filters(self, auth_client, created_fsm):
         """Test listing FSMs with various filters."""
         # Filter by FSM type
-        response = await client.get("/fsms", params={"fsm_type": "moore"})
+        response = await auth_client.get("/fsms", params={"fsm_type": "moore"})
         assert response.status_code == 200
 
         # Filter by visibility
-        response = await client.get("/fsms", params={"visibility": "public"})
+        response = await auth_client.get("/fsms", params={"visibility": "public"})
         assert response.status_code == 200
 
         # Search by name
-        response = await client.get("/fsms", params={"search": "Traffic"})
+        response = await auth_client.get("/fsms", params={"search": "Traffic"})
         assert response.status_code == 200
 
-    async def test_update_fsm(self, client, created_fsm):
+    async def test_update_fsm(self, auth_client, created_fsm):
         """Test updating an FSM."""
         fsm_id = created_fsm["id"]
         update_data = {
@@ -124,7 +124,7 @@ class TestFSMEndpoints:
             "tags": ["updated", "test"]
         }
 
-        response = await client.put(f"/fsms/{fsm_id}", json=update_data)
+        response = await auth_client.put(f"/fsms/{fsm_id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -133,26 +133,26 @@ class TestFSMEndpoints:
         assert data["data"]["name"] == update_data["name"]
         assert data["data"]["description"] == update_data["description"]
 
-    async def test_delete_fsm(self, client, sample_fsm_moore):
+    async def test_delete_fsm(self, auth_client, sample_fsm_moore):
         """Test deleting an FSM."""
         # Create FSM to delete
-        create_response = await client.post("/fsms", json=sample_fsm_moore)
+        create_response = await auth_client.post("/fsms", json=sample_fsm_moore)
         fsm_id = create_response.json()["data"]["id"]
 
         # Delete FSM
-        response = await client.delete(f"/fsms/{fsm_id}")
+        response = await auth_client.delete(f"/fsms/{fsm_id}")
         assert response.status_code == 204
 
         # Verify deletion
-        get_response = await client.get(f"/fsms/{fsm_id}")
+        get_response = await auth_client.get(f"/fsms/{fsm_id}")
         assert get_response.status_code == 404
 
-    async def test_fork_fsm(self, client, created_fsm):
+    async def test_fork_fsm(self, auth_client, created_fsm):
         """Test forking an FSM."""
         fsm_id = created_fsm["id"]
         fork_data = {"name": "Forked Traffic Light"}
 
-        response = await client.post(f"/fsms/{fsm_id}/fork", json=fork_data)
+        response = await auth_client.post(f"/fsms/{fsm_id}/fork", json=fork_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -162,14 +162,14 @@ class TestFSMEndpoints:
         assert data["data"]["id"] != fsm_id
         assert data["data"]["states"] == created_fsm["states"]
 
-    async def test_pagination_consistency(self, client):
+    async def test_pagination_consistency(self, auth_client):
         """Test pagination consistency across multiple requests."""
         # Get first page
-        response1 = await client.get("/fsms", params={"page": 1, "page_size": 10})
+        response1 = await auth_client.get("/fsms", params={"page": 1, "page_size": 10})
         data1 = response1.json()
 
         # Get second page
-        response2 = await client.get("/fsms", params={"page": 2, "page_size": 10})
+        response2 = await auth_client.get("/fsms", params={"page": 2, "page_size": 10})
         data2 = response2.json()
 
         # Verify pagination metadata
@@ -181,30 +181,30 @@ class TestFSMEndpoints:
         ids2 = {item["id"] for item in data2["data"]}
         assert ids1.isdisjoint(ids2)
 
-    async def test_sorting(self, client):
+    async def test_sorting(self, auth_client):
         """Test different sorting options."""
         # Sort by created_at descending
-        response = await client.get(
+        response = await auth_client.get(
             "/fsms",
             params={"sort_by": "created_at", "sort_order": "desc"}
         )
         assert response.status_code == 200
 
         # Sort by name ascending
-        response = await client.get(
+        response = await auth_client.get(
             "/fsms",
             params={"sort_by": "name", "sort_order": "asc"}
         )
         assert response.status_code == 200
 
-    async def test_concurrent_fsm_creation(self, client, sample_fsm_moore):
+    async def test_concurrent_fsm_creation(self, auth_client, sample_fsm_moore):
         """Test creating multiple FSMs concurrently."""
         import asyncio
 
         async def create_fsm(name):
             fsm_data = sample_fsm_moore.copy()
             fsm_data["name"] = name
-            return await client.post("/fsms", json=fsm_data)
+            return await auth_client.post("/fsms", json=fsm_data)
 
         # Create 10 FSMs concurrently
         tasks = [create_fsm(f"FSM {i}") for i in range(10)]
