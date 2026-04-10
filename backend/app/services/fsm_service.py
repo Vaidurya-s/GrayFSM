@@ -99,7 +99,8 @@ class FSMService:
         # Increment view count
         fsm.view_count += 1
         await self.db.commit()
-        
+        await self.db.refresh(fsm)
+
         return fsm
     
     async def list_fsms(

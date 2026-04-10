@@ -5,6 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -85,6 +86,48 @@ async def export_fsm(
                 "file_size_bytes": len(content.encode("utf-8")),
             },
         }
+    except FSMNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ExportException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/{fsm_id}/export/{format_name}")
+async def get_cached_export(
+    fsm_id: UUID,
+    format_name: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserToken = Depends(get_required_current_user),
+):
+    """
+    Retrieve a previously generated (cached) export for an FSM.
+
+    Returns the export content as plain text if cached, or regenerates it.
+
+    Args:
+        fsm_id: UUID of the FSM
+        format_name: Export format (verilog, vhdl, json, csv, testbench)
+
+    Returns:
+        Plain text content with appropriate content-type
+
+    Raises:
+        404: FSM not found
+        400: Export error
+    """
+    valid_formats = {"verilog", "vhdl", "json", "csv", "testbench"}
+    if format_name not in valid_formats:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format_name}")
+
+    service = ExportService(db)
+
+    try:
+        result = await service.export_fsm(
+            fsm_id=fsm_id,
+            format_name=format_name,
+            options={},
+        )
+        return PlainTextResponse(content=result.get("content", ""))
     except FSMNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ExportException as e:

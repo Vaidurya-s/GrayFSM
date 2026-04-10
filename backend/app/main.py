@@ -10,10 +10,12 @@ import logging.config
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
 
 from app.api.v1 import fsm, algorithm, export, category, example, health, auth
 from app.config import settings, LOGGING_CONFIG
@@ -195,6 +197,37 @@ app.include_router(
     prefix=f"{API_PREFIX}/auth",
     tags=["Authentication"]
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Override FastAPI's default HTTPException handler to use consistent response format."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": str(exc.status_code),
+                "message": exc.detail,
+            },
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Override FastAPI's default validation error handler to use consistent response format."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed",
+                "details": exc.errors(),
+            },
+        },
+    )
 
 
 @app.get("/")
