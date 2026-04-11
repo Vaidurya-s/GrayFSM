@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import PropertyPanel from '../components/fsm/PropertyPanel';
 import FSMCreateForm from '../components/forms/FSMCreateForm';
@@ -270,9 +270,11 @@ export default function EditorPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {id ? draftName || 'Edit FSM' : 'New FSM'}
-            </h1>
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mb-0.5">
+              <Link to={ROUTES.HOME} className="hover:text-gray-600 dark:hover:text-gray-300">Home</Link>
+              <span>/</span>
+              <span className="text-gray-700 dark:text-gray-200">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {draftStates.length} states, {draftTransitions.length} transitions
             </p>

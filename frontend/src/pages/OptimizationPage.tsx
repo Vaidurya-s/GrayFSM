@@ -281,8 +281,8 @@ export default function OptimizationPage() {
                 improvementPct={result.improvement_percentage}
               />
 
-              {/* Export button */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              {/* Export + Back to Editor buttons */}
+              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                 <Link
                   to={`/export/${id}?optimized=true`}
                   data-testid="optimization-export-link"
@@ -291,6 +291,14 @@ export default function OptimizationPage() {
                     className="w-full bg-green-600 hover:bg-green-700 focus:ring-green-500"
                   >
                     Export Optimized FSM
+                  </Button>
+                </Link>
+                <Link
+                  to={generateRoute(ROUTES.EDITOR_EDIT, { id: id! })}
+                  data-testid="optimization-back-to-editor"
+                >
+                  <Button variant="secondary" className="w-full">
+                    Back to Editor
                   </Button>
                 </Link>
               </div>

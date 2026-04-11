@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Zap, ChevronRight, Layers, ArrowRight } from 'lucide-react';
 import { examplesAPI } from '../api/endpoints/examples';
@@ -288,6 +288,13 @@ export default function ExamplesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="examples-page">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        <Link to={ROUTES.HOME} className="hover:text-gray-700 dark:hover:text-gray-300">Home</Link>
+        <span>/</span>
+        <span className="text-gray-900 dark:text-white font-medium">Examples</span>
+      </nav>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
