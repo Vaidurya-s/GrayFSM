@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useToast } from '../components/ui/Toast';
 import { useFSM } from '../hooks/useFSM';
 import { useExportFSM } from '../hooks/useExport';
 import { ROUTES, generateRoute } from '../config/routes';
@@ -225,6 +226,7 @@ export default function ExportPage() {
 
   const { data: fsmData, isLoading, error } = useFSM(id);
   const exportMutation = useExportFSM();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const [activeFormat, setActiveFormat] = useState<FormatId>('verilog');
   const [options, setOptions] = useState<FormatOptions>({
@@ -270,8 +272,9 @@ export default function ExportPage() {
       const result: ExportResponse =
         axiosResp.data?.data ?? (response as unknown as ExportResponse);
       setExportResult(result);
+      toastSuccess('Export generated successfully');
     } catch {
-      // Error rendered via exportMutation.isError
+      toastError('Export failed');
     }
   };
 
@@ -281,8 +284,9 @@ export default function ExportPage() {
       await navigator.clipboard.writeText(exportResult.content);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
+      toastSuccess('Copied to clipboard');
     } catch {
-      // Fallback: select all text in the pre element
+      toastError('Failed to copy to clipboard');
     }
   };
 
@@ -299,6 +303,7 @@ export default function ExportPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toastSuccess('File downloaded');
   };
 
   // ----------------------------------------------------------------

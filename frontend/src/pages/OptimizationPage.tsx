@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useToast } from '../components/ui/Toast';
 import { useFSM } from '../hooks/useFSM';
 import { useOptimize } from '../hooks/useOptimization';
 import { useFSMStore } from '../store/fsmStore';
@@ -29,6 +30,7 @@ export default function OptimizationPage() {
   const { data: fsmResponse, isLoading, error } = useFSM(id);
   const optimizeMutation = useOptimize();
   const { loadFSMIntoDraft } = useFSMStore();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const [result, setResult] = useState<OptimizationResponse | null>(null);
   const [originalFSM, setOriginalFSM] = useState<FSM | null>(null);
@@ -78,8 +80,9 @@ export default function OptimizationPage() {
 
       // Default to the comparison tab when results arrive
       setActiveTab('comparison');
+      toastSuccess('Optimization complete');
     } catch {
-      // Error handled by React Query
+      toastError('Optimization failed');
     }
   };
 

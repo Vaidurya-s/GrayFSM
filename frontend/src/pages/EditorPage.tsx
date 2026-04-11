@@ -6,6 +6,7 @@ import FSMCreateForm from '../components/forms/FSMCreateForm';
 import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
 import { useFSM, useUpdateFSM } from '../hooks/useFSM';
+import { useToast } from '../components/ui/Toast';
 import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -46,6 +47,7 @@ export default function EditorPage() {
   } = useFSMStore();
 
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // Load FSM into editor when data arrives
   useEffect(() => {
@@ -82,11 +84,16 @@ export default function EditorPage() {
 
   const handleSave = useCallback(async () => {
     if (id) {
-      await updateMutation.mutateAsync({ id, data: { name: draftName } });
+      try {
+        await updateMutation.mutateAsync({ id, data: { name: draftName } });
+        toastSuccess('FSM saved successfully');
+      } catch {
+        toastError('Failed to save FSM');
+      }
       return;
     }
     setShowCreateForm(true);
-  }, [id, updateMutation, draftName]);
+  }, [id, updateMutation, draftName, toastSuccess, toastError]);
 
   const handleCreateSuccess = useCallback(
     (fsmId: string) => {
@@ -99,9 +106,10 @@ export default function EditorPage() {
   const handleImportSuccess = useCallback(
     (fsmId: string) => {
       setShowImportModal(false);
+      toastSuccess('FSM imported successfully');
       navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
     },
-    [navigate]
+    [navigate, toastSuccess]
   );
 
   const handleOptimize = useCallback(() => {
