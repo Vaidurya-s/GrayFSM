@@ -18,6 +18,13 @@ export default function PropertyPanel() {
   const [pendingDeleteState, setPendingDeleteState] = useState<string | null>(null);
   const [pendingDeleteTransition, setPendingDeleteTransition] = useState<number | null>(null);
 
+  const validateStateName = (name: string, currentId: string): string | null => {
+    if (!name.trim()) return 'Name cannot be empty';
+    if (/[^a-zA-Z0-9_]/.test(name)) return 'Only letters, numbers, and underscores allowed';
+    if (draftStates.some((s) => s.id !== currentId && s.name === name)) return 'Name already exists';
+    return null;
+  };
+
   const selectedStateData = selectedNode
     ? draftStates.find((s) => s.id === selectedNode)
     : null;
@@ -61,11 +68,21 @@ export default function PropertyPanel() {
               type="text"
               data-testid="property-state-name"
               value={selectedStateData.name}
-              onChange={(e) =>
-                updateState(selectedStateData.id, { name: e.target.value })
-              }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => {
+                const err = validateStateName(e.target.value, selectedStateData.id);
+                if (!err) updateState(selectedStateData.id, { name: e.target.value });
+              }}
+              className={`w-full px-3 py-1.5 text-sm border rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
+                validateStateName(selectedStateData.name, selectedStateData.id)
+                  ? 'border-red-400 dark:border-red-500'
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}
             />
+            {validateStateName(selectedStateData.name, selectedStateData.id) && (
+              <p className="text-xs text-red-600 mt-1" data-testid="property-state-name-error">
+                {validateStateName(selectedStateData.name, selectedStateData.id)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">

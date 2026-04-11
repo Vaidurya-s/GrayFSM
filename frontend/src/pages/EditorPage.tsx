@@ -72,12 +72,18 @@ export default function EditorPage() {
 
   const handleAddState = useCallback(() => {
     const stateNumber = draftStates.length;
+    // Circular layout: states arranged on a circle, radius scales with count
+    const total = stateNumber + 1;
+    const cx = 400;
+    const cy = 300;
+    const radius = Math.max(120, 80 * Math.min(total, 8));
+    const angle = (2 * Math.PI * stateNumber) / Math.max(total, 1);
     const newState = {
       id: `S${stateNumber}`,
       name: `S${stateNumber}`,
       position: {
-        x: 150 + (stateNumber % 4) * 220,
-        y: 100 + Math.floor(stateNumber / 4) * 180,
+        x: Math.round(cx + radius * Math.cos(angle - Math.PI / 2)),
+        y: Math.round(cy + radius * Math.sin(angle - Math.PI / 2)),
       },
     };
     addState(newState);
@@ -344,7 +350,7 @@ export default function EditorPage() {
           >
             {id ? 'Save' : 'Create'}
           </button>
-          {id && (
+          {id ? (
             <button
               onClick={handleOptimize}
               data-testid="editor-optimize"
@@ -352,7 +358,16 @@ export default function EditorPage() {
             >
               Optimize
             </button>
-          )}
+          ) : draftStates.length > 0 ? (
+            <button
+              disabled
+              data-testid="editor-optimize-disabled"
+              title="Save first to enable optimization"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+            >
+              Optimize
+            </button>
+          ) : null}
         </div>
       </div>
 
