@@ -5,7 +5,7 @@ import PropertyPanel from '../components/fsm/PropertyPanel';
 import FSMCreateForm from '../components/forms/FSMCreateForm';
 import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
-import { useFSM } from '../hooks/useFSM';
+import { useFSM, useUpdateFSM } from '../hooks/useFSM';
 import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -21,6 +21,7 @@ export default function EditorPage() {
   const [showImportModal, setShowImportModal] = useState(false);
 
   const { data: fsmResponse, isLoading, error } = useFSM(id);
+  const updateMutation = useUpdateFSM();
 
   const {
     draftStates,
@@ -81,11 +82,11 @@ export default function EditorPage() {
 
   const handleSave = useCallback(async () => {
     if (id) {
-      // TODO: Use update mutation
+      await updateMutation.mutateAsync({ id, data: { name: draftName } });
       return;
     }
     setShowCreateForm(true);
-  }, [id]);
+  }, [id, updateMutation, draftName]);
 
   const handleCreateSuccess = useCallback(
     (fsmId: string) => {

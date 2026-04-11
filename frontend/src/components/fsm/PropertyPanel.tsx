@@ -20,7 +20,7 @@ export default function PropertyPanel() {
 
   const selectedTransitionIndex = selectedEdge
     ? draftTransitions.findIndex(
-        (t) => `${t.from_state}-${t.to_state}-${t.input || ''}` === selectedEdge
+        (t, i) => (t.id || `e-${t.from_state}-${t.to_state}-${i}`) === selectedEdge
       )
     : -1;
 

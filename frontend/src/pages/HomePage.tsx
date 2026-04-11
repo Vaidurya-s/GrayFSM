@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { api } from '../api'
 import type { FSM } from '../types/fsm'
 import { Button, Card, Badge } from '../components/ui'
@@ -35,7 +36,7 @@ export default function HomePage() {
             glitches and race conditions in hardware implementations.
           </p>
           <div className="mt-6 flex items-center gap-3">
-            <a href="/editor/new">
+            <Link to="/editor/new">
               <Button
                 variant="secondary"
                 size="lg"
@@ -43,8 +44,8 @@ export default function HomePage() {
               >
                 Create New FSM
               </Button>
-            </a>
-            <a href="/examples">
+            </Link>
+            <Link to="/examples">
               <Button
                 variant="outline"
                 size="lg"
@@ -52,7 +53,7 @@ export default function HomePage() {
               >
                 View Examples
               </Button>
-            </a>
+            </Link>
             {healthData && (
               <span className="ml-auto flex items-center gap-2 text-sm text-blue-200">
                 <Badge

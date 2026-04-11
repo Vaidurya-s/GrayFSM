@@ -26,9 +26,10 @@ import {
   Keyboard,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { ROUTES } from '../../config/routes';
+import { ROUTES, generateRoute } from '../../config/routes';
 import { useTheme } from '../providers/ThemeProvider';
 import { useUIStore } from '../../store/uiStore';
+import { useFSMStore } from '../../store/fsmStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -151,6 +152,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { isDark, setTheme } = useTheme();
   const openModal = useUIStore((s) => s.openModal);
+  const currentFSM = useFSMStore((s) => s.currentFSM);
 
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -245,7 +247,13 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         name: 'Run Optimization',
         category: 'Actions',
         icon: <Zap className="w-4 h-4" />,
-        action: () => navigate(ROUTES.GALLERY),
+        action: () => {
+          if (currentFSM?.id) {
+            navigate(generateRoute(ROUTES.OPTIMIZE, { id: currentFSM.id }));
+          } else {
+            navigate(ROUTES.GALLERY);
+          }
+        },
         keywords: ['optimize', 'minimize', 'reduce', 'run'],
       },
       {
@@ -290,7 +298,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         keywords: ['keyboard', 'shortcuts', 'hotkeys', 'bindings'],
       },
     ],
-    [navigate, openModal, isDark, setTheme]
+    [navigate, openModal, isDark, setTheme, currentFSM]
   );
 
   // ─── Filtered + scored results ────────────────────────────────────────────
