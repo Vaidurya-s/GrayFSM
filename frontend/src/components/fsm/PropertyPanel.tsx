@@ -34,11 +34,11 @@ export default function PropertyPanel() {
   if (!selectedStateData && !selectedTransitionData) {
     return (
       <div
-        className="bg-white rounded-lg shadow p-4 border border-gray-200"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700"
         data-testid="property-panel"
       >
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">Properties</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Properties</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Select a state or transition to edit its properties.
         </p>
       </div>
@@ -48,13 +48,13 @@ export default function PropertyPanel() {
   if (selectedStateData) {
     return (
       <div
-        className="bg-white rounded-lg shadow p-4 border border-gray-200"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700"
         data-testid="property-panel-state"
       >
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">State Properties</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">State Properties</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Name
             </label>
             <input
@@ -64,11 +64,11 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateState(selectedStateData.id, { name: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Output
             </label>
             <input
@@ -78,7 +78,7 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateState(selectedStateData.id, { output: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g. 00, 01, 10"
             />
           </div>
@@ -134,15 +134,15 @@ export default function PropertyPanel() {
   if (selectedTransitionData && selectedTransitionIndex >= 0) {
     return (
       <div
-        className="bg-white rounded-lg shadow p-4 border border-gray-200"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700"
         data-testid="property-panel-transition"
       >
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
           Transition Properties
         </h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               From
             </label>
             <select
@@ -153,7 +153,7 @@ export default function PropertyPanel() {
                   from_state: e.target.value,
                 })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               {draftStates.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -163,7 +163,7 @@ export default function PropertyPanel() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               To
             </label>
             <select
@@ -174,7 +174,7 @@ export default function PropertyPanel() {
                   to_state: e.target.value,
                 })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               {draftStates.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -184,7 +184,7 @@ export default function PropertyPanel() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Input
             </label>
             <input
@@ -194,12 +194,12 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateTransition(selectedTransitionIndex, { input: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g. 0, 1, a"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Output
             </label>
             <input
@@ -209,7 +209,7 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateTransition(selectedTransitionIndex, { output: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g. 0, 1"
             />
           </div>

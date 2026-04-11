@@ -251,12 +251,12 @@ export default function EditorPage() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
       {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
             data-testid="editor-toggle-sidebar"
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             title="Toggle sidebar"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,10 +264,10 @@ export default function EditorPage() {
             </svg>
           </button>
           <div>
-            <h1 className="text-sm font-semibold text-gray-900">
+            <h1 className="text-sm font-semibold text-gray-900 dark:text-white">
               {id ? draftName || 'Edit FSM' : 'New FSM'}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {draftStates.length} states, {draftTransitions.length} transitions
             </p>
           </div>
@@ -361,7 +361,7 @@ export default function EditorPage() {
         {/* Canvas */}
         <div className="flex-1 relative">
           {draftStates.length === 0 ? (
-            <div className="flex items-center justify-center h-full bg-gray-50">
+            <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900">
               <div className="text-center max-w-md">
                 <svg
                   className="mx-auto h-16 w-16 text-gray-300"
@@ -376,10 +376,10 @@ export default function EditorPage() {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
                   No states yet
                 </h3>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   Click &quot;Add State&quot; to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
@@ -412,7 +412,7 @@ export default function EditorPage() {
         {sidebarOpen && (
           <div
             className={cn(
-              'w-72 border-l border-gray-200 bg-white overflow-y-auto',
+              'w-72 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto',
               'flex flex-col gap-4 p-4'
             )}
             data-testid="editor-sidebar"
@@ -420,8 +420,8 @@ export default function EditorPage() {
             <PropertyPanel />
 
             {/* State list */}
-            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">States</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">States</h3>
               {draftStates.length === 0 ? (
                 <p className="text-xs text-gray-500">No states added yet.</p>
               ) : (
@@ -456,8 +456,8 @@ export default function EditorPage() {
             </div>
 
             {/* Transition list */}
-            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Transitions
               </h3>
               {draftTransitions.length === 0 ? (

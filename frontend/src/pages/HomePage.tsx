@@ -26,7 +26,7 @@ export default function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Hero */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -109,12 +109,12 @@ export default function HomePage() {
                       onClick={() => setSelectedFSM(fsm)}
                       className={`w-full text-left p-3 rounded border-2 transition-colors ${
                         selectedFSM?.id === fsm.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-white dark:bg-gray-800'
                       }`}
                     >
-                      <div className="font-medium text-gray-900">{fsm.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="font-medium text-gray-900 dark:text-white">{fsm.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {fsm.state_count} states • {fsm.transition_count} transitions
                       </div>
                       <div className="flex items-center gap-2 mt-2">
@@ -163,20 +163,20 @@ export default function HomePage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gray-50 rounded p-4">
-                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.state_count}</div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{selectedFSM.state_count}</div>
                       <div className="text-sm text-gray-600">States</div>
                     </div>
-                    <div className="bg-gray-50 rounded p-4">
-                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.transition_count}</div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{selectedFSM.transition_count}</div>
                       <div className="text-sm text-gray-600">Transitions</div>
                     </div>
-                    <div className="bg-gray-50 rounded p-4">
-                      <div className="text-2xl font-bold text-gray-900">{selectedFSM.bit_width}</div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{selectedFSM.bit_width}</div>
                       <div className="text-sm text-gray-600">Bit Width</div>
                     </div>
-                    <div className="bg-gray-50 rounded p-4">
-                      <div className="text-2xl font-bold text-gray-900">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {selectedFSM.is_optimized ? selectedFSM.dummy_state_count : 'N/A'}
                       </div>
                       <div className="text-sm text-gray-600">Dummy States</div>

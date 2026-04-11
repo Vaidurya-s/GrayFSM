@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Controls,
   MiniMap,
@@ -82,8 +82,12 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
     [draftTransitions, draftFsmType]
   );
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Re-sync when the store changes (useNodesState only reads initial value once)
+  useEffect(() => { setNodes(initialNodes); }, [initialNodes, setNodes]);
+  useEffect(() => { setEdges(initialEdges); }, [initialEdges, setEdges]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
