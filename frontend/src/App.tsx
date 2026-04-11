@@ -12,6 +12,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import { ToastProvider } from './components/ui/Toast'
 import { ThemeProvider } from './components/providers/ThemeProvider'
 import { CommandPalette, useCommandPalette } from './components/ui/CommandPalette'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import type { ReactNode } from 'react'
 
 function AppWithCommandPalette({ children }: { children: ReactNode }) {
@@ -30,6 +31,7 @@ function App() {
     <ToastProvider>
     <BrowserRouter>
       <AppWithCommandPalette>
+      <ErrorBoundary>
       <Routes>
         {/* Home */}
         <Route
@@ -152,6 +154,7 @@ function App() {
         />
         <Route path={ROUTES.NOT_FOUND} element={<Navigate to="/404" replace />} />
       </Routes>
+      </ErrorBoundary>
       </AppWithCommandPalette>
     </BrowserRouter>
     </ToastProvider>

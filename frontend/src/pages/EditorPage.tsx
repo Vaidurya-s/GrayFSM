@@ -7,6 +7,7 @@ import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
 import { useFSM, useUpdateFSM } from '../hooks/useFSM';
 import { useToast } from '../components/ui/Toast';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -401,7 +402,9 @@ export default function EditorPage() {
               </div>
             </div>
           ) : (
-            <FSMCanvas />
+            <ErrorBoundary>
+              <FSMCanvas />
+            </ErrorBoundary>
           )}
         </div>
 

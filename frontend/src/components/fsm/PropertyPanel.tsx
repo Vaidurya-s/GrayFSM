@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useFSMStore } from '../../store/fsmStore';
 
 export default function PropertyPanel() {
@@ -13,6 +14,9 @@ export default function PropertyPanel() {
     draftInitialState,
     setDraftInitialState,
   } = useFSMStore();
+
+  const [pendingDeleteState, setPendingDeleteState] = useState<string | null>(null);
+  const [pendingDeleteTransition, setPendingDeleteTransition] = useState<number | null>(null);
 
   const selectedStateData = selectedNode
     ? draftStates.find((s) => s.id === selectedNode)
@@ -93,13 +97,35 @@ export default function PropertyPanel() {
               Initial State
             </label>
           </div>
-          <button
-            data-testid="property-state-delete"
-            onClick={() => removeState(selectedStateData.id)}
-            className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
-          >
-            Delete State
-          </button>
+          {pendingDeleteState === selectedStateData.id ? (
+            <div className="space-y-2">
+              <p className="text-xs text-red-700">Delete this state?</p>
+              <div className="flex gap-2">
+                <button
+                  data-testid="property-state-delete-confirm"
+                  onClick={() => { removeState(selectedStateData.id); setPendingDeleteState(null); }}
+                  className="flex-1 px-3 py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  data-testid="property-state-delete-cancel"
+                  onClick={() => setPendingDeleteState(null)}
+                  className="flex-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              data-testid="property-state-delete"
+              onClick={() => setPendingDeleteState(selectedStateData.id)}
+              className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+            >
+              Delete State
+            </button>
+          )}
         </div>
       </div>
     );
@@ -187,13 +213,35 @@ export default function PropertyPanel() {
               placeholder="e.g. 0, 1"
             />
           </div>
-          <button
-            data-testid="property-transition-delete"
-            onClick={() => removeTransition(selectedTransitionIndex)}
-            className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
-          >
-            Delete Transition
-          </button>
+          {pendingDeleteTransition === selectedTransitionIndex ? (
+            <div className="space-y-2">
+              <p className="text-xs text-red-700">Delete this transition?</p>
+              <div className="flex gap-2">
+                <button
+                  data-testid="property-transition-delete-confirm"
+                  onClick={() => { removeTransition(selectedTransitionIndex); setPendingDeleteTransition(null); }}
+                  className="flex-1 px-3 py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  data-testid="property-transition-delete-cancel"
+                  onClick={() => setPendingDeleteTransition(null)}
+                  className="flex-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              data-testid="property-transition-delete"
+              onClick={() => setPendingDeleteTransition(selectedTransitionIndex)}
+              className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+            >
+              Delete Transition
+            </button>
+          )}
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useToast } from '../components/ui/Toast';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSM } from '../hooks/useFSM';
 import { useOptimize } from '../hooks/useOptimization';
 import { useFSMStore } from '../store/fsmStore';
@@ -181,11 +182,13 @@ export default function OptimizationPage() {
                 {activeTab === 'comparison' && (
                   <div className="h-[560px] p-4">
                     {originalFSM && optimizedFSM ? (
-                      <ComparisonView
-                        originalFSM={originalFSM}
-                        optimizedFSM={optimizedFSM}
-                        metrics={result}
-                      />
+                      <ErrorBoundary>
+                        <ComparisonView
+                          originalFSM={originalFSM}
+                          optimizedFSM={optimizedFSM}
+                          metrics={result}
+                        />
+                      </ErrorBoundary>
                     ) : (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center text-gray-400">
@@ -200,22 +203,26 @@ export default function OptimizationPage() {
                 {/* Metrics tab */}
                 {activeTab === 'metrics' && (
                   <div className="p-6 overflow-y-auto max-h-[560px]">
-                    <MetricsDashboard metrics={result} />
+                    <ErrorBoundary>
+                      <MetricsDashboard metrics={result} />
+                    </ErrorBoundary>
                   </div>
                 )}
 
                 {/* Hypercube tab */}
                 {activeTab === 'hypercube' && (
                   <div className="h-[560px] p-4">
-                    <Hypercube3D
-                      numBits={computeNumBits(result.total_states)}
-                      highlightedStates={
-                        result.encoding_map
-                          ? Object.values(result.encoding_map)
-                          : (originalFSM?.states ?? [])
-                      }
-                      transitions={originalFSM?.transitions ?? []}
-                    />
+                    <ErrorBoundary>
+                      <Hypercube3D
+                        numBits={computeNumBits(result.total_states)}
+                        highlightedStates={
+                          result.encoding_map
+                            ? Object.values(result.encoding_map)
+                            : (originalFSM?.states ?? [])
+                        }
+                        transitions={originalFSM?.transitions ?? []}
+                      />
+                    </ErrorBoundary>
                   </div>
                 )}
               </div>
