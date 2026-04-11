@@ -14,7 +14,7 @@ from app.db.session import get_db
 from app.middleware.auth import UserToken, get_optional_current_user, get_required_current_user
 from app.schemas.fsm import FSMCreate, FSMFork, FSMResponse, FSMUpdate
 from app.services.fsm_service import FSMService
-from app.utils.exceptions import FSMNotFoundException, FSMValidationException
+from app.utils.exceptions import FSMNotFoundException, FSMPermissionException, FSMValidationException
 
 router = APIRouter()
 
@@ -28,7 +28,8 @@ async def create_fsm(
     """Create a new FSM."""
     service = FSMService(db)
     try:
-        fsm = await service.create_fsm(fsm_data)
+        user_id = UUID(current_user["user_id"]) if current_user else None
+        fsm = await service.create_fsm(fsm_data, user_id=user_id)
         return fsm
     except FSMValidationException as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -59,10 +60,13 @@ async def update_fsm(
     """Update an existing FSM."""
     service = FSMService(db)
     try:
-        fsm = await service.update_fsm(fsm_id, update_data)
+        user_id = UUID(current_user["user_id"]) if current_user else None
+        fsm = await service.update_fsm(fsm_id, update_data, user_id=user_id)
         return fsm
     except FSMNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except FSMPermissionException as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 
 @router.post("/{fsm_id}/fork", response_model=FSMResponse, status_code=201)
@@ -131,6 +135,9 @@ async def delete_fsm(
     """Delete FSM by ID."""
     service = FSMService(db)
     try:
-        await service.delete_fsm(fsm_id)
+        user_id = UUID(current_user["user_id"]) if current_user else None
+        await service.delete_fsm(fsm_id, user_id=user_id)
     except FSMNotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except FSMPermissionException as e:
+        raise HTTPException(status_code=403, detail=str(e))

@@ -62,3 +62,12 @@ class InvalidCredentialsException(GrayFSMException):
     """Raised when authentication credentials are invalid"""
     def __init__(self, message: str):
         super().__init__(message=message, code="INVALID_CREDENTIALS")
+
+
+class FSMPermissionException(GrayFSMException):
+    """Raised when a user lacks permission to modify an FSM"""
+    def __init__(self, fsm_id: str):
+        super().__init__(
+            message=f"You do not have permission to modify FSM '{fsm_id}'",
+            code="FSM_PERMISSION_DENIED"
+        )

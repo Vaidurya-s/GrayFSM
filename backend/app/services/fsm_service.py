@@ -11,7 +11,7 @@ from sqlalchemy import select, func
 from app.models.fsm import FSM
 from app.schemas.fsm import FSMCreate, FSMUpdate
 from app.core.fsm_model import FSMValidator, FSMType
-from app.utils.exceptions import FSMNotFoundException, FSMValidationException
+from app.utils.exceptions import FSMNotFoundException, FSMPermissionException, FSMValidationException
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,7 +23,7 @@ class FSMService:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def create_fsm(self, fsm_data: FSMCreate) -> FSM:
+    async def create_fsm(self, fsm_data: FSMCreate, user_id: Optional[UUID] = None) -> FSM:
         """
         Create new FSM with validation.
         
@@ -65,7 +65,8 @@ class FSMService:
             bit_width=bit_width,
             category_id=fsm_data.category_id,
             tags=fsm_data.tags,
-            visibility=fsm_data.visibility
+            visibility=fsm_data.visibility,
+            created_by=user_id,
         )
         
         self.db.add(fsm)
@@ -148,14 +149,29 @@ class FSMService:
         total = count_result.scalar_one()
         return list(result.scalars().all()), total
 
-    async def update_fsm(self, fsm_id: UUID, update_data: FSMUpdate) -> FSM:
+    def _check_ownership(self, fsm: FSM, user_id: Optional[UUID]) -> None:
+        """Raise FSMPermissionException if user_id doesn't own the FSM.
+
+        FSMs with no owner (created_by=None) are legacy records and are
+        always allowed through so existing data isn't locked out.
+        """
+        if fsm.created_by is None:
+            return
+        if user_id is None or fsm.created_by != user_id:
+            raise FSMPermissionException(str(fsm.id))
+
+    async def update_fsm(
+        self, fsm_id: UUID, update_data: FSMUpdate, user_id: Optional[UUID] = None
+    ) -> FSM:
         """
         Update an existing FSM's metadata.
 
         Raises:
             FSMNotFoundException: If the FSM does not exist
+            FSMPermissionException: If the user does not own the FSM
         """
         fsm = await self.get_fsm_raw(fsm_id)
+        self._check_ownership(fsm, user_id)
 
         if update_data.name is not None:
             fsm.name = update_data.name
@@ -206,9 +222,15 @@ class FSMService:
             raise FSMNotFoundException(str(fsm_id))
         return fsm
     
-    async def delete_fsm(self, fsm_id: UUID) -> None:
-        """Delete FSM by ID"""
-        fsm = await self.get_fsm(fsm_id)
+    async def delete_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> None:
+        """Delete FSM by ID.
+
+        Raises:
+            FSMNotFoundException: If FSM not found
+            FSMPermissionException: If the user does not own the FSM
+        """
+        fsm = await self.get_fsm_raw(fsm_id)
+        self._check_ownership(fsm, user_id)
         await self.db.delete(fsm)
         await self.db.commit()
         logger.info(f"Deleted FSM: {fsm_id}")
