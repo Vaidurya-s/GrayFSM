@@ -81,12 +81,17 @@ export default function GalleryPage() {
   const [search, setSearch] = useState('');
   const [sortValue, setSortValue] = useState<string>('created_at-desc');
   const [fsmType, setFsmType] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 24;
 
   // Debounce search input — wait 300ms after typing stops before querying
   useEffect(() => {
-    const timer = setTimeout(() => setSearch(searchInput), 300);
+    const timer = setTimeout(() => { setSearch(searchInput); setPage(1); }, 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [sortValue, fsmType]);
 
   const [sortBy, sortOrder] = sortValue.split('-') as [
     FSMListParams['sort_by'],
@@ -99,7 +104,8 @@ export default function GalleryPage() {
     sort_by: sortBy,
     sort_order: sortOrder,
     fsm_type: fsmType ? (fsmType as 'moore' | 'mealy') : undefined,
-    page_size: 24,
+    page_size: PAGE_SIZE,
+    page,
   });
 
   const fsms: GalleryFSM[] = (() => {
@@ -111,6 +117,11 @@ export default function GalleryPage() {
   })();
 
   const hasFilters = !!(searchInput || fsmType);
+
+  // Extract pagination from response envelope
+  const pagination = (response as unknown as { pagination?: { pages: number; page: number; total: number } })?.pagination;
+  const totalPages = pagination?.pages ?? 1;
+  const totalItems = pagination?.total ?? fsms.length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="gallery-page">
@@ -230,6 +241,7 @@ export default function GalleryPage() {
             <Button
               variant="outline"
               onClick={() => {
+                setSearchInput('');
                 setSearch('');
                 setFsmType('');
               }}
@@ -251,6 +263,7 @@ export default function GalleryPage() {
           <p className="text-xs text-gray-400 mb-4">
             Showing {fsms.length} FSM{fsms.length !== 1 ? 's' : ''}
             {hasFilters ? ' matching your filters' : ''}
+            {totalItems > PAGE_SIZE && ` (${totalItems} total)`}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {fsms.map((fsm) => (
@@ -345,6 +358,33 @@ export default function GalleryPage() {
               </Link>
             ))}
           </div>
+
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                data-testid="gallery-prev"
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                data-testid="gallery-next"
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>
