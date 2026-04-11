@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, LayoutGrid, SlidersHorizontal, Plus, Eye, GitFork, CheckCircle2 } from 'lucide-react';
 import { useFSMs } from '../hooks/useFSM';
@@ -77,9 +77,16 @@ function SkeletonCard() {
 
 export default function GalleryPage() {
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sortValue, setSortValue] = useState<string>('created_at-desc');
   const [fsmType, setFsmType] = useState<string>('');
+
+  // Debounce search input — wait 300ms after typing stops before querying
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const [sortBy, sortOrder] = sortValue.split('-') as [
     FSMListParams['sort_by'],
@@ -103,7 +110,7 @@ export default function GalleryPage() {
     return [];
   })();
 
-  const hasFilters = !!(search || fsmType);
+  const hasFilters = !!(searchInput || fsmType);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="gallery-page">
@@ -138,8 +145,8 @@ export default function GalleryPage() {
           <div className="sm:col-span-6">
             <Input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search FSMs by name..."
               data-testid="gallery-search"
               leftIcon={<Search className="h-4 w-4" />}

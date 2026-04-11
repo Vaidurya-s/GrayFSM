@@ -264,6 +264,7 @@ export default function EditorPage() {
             data-testid="editor-toggle-sidebar"
             className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             title="Toggle sidebar"
+            aria-label="Toggle sidebar"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -341,6 +342,7 @@ export default function EditorPage() {
           <button
             onClick={handleAddState}
             data-testid="editor-add-state"
+            aria-label="Add new state"
             className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             + Add State
@@ -425,12 +427,13 @@ export default function EditorPage() {
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — full height, overlay on mobile, inline on lg+ */}
         {sidebarOpen && (
           <div
             className={cn(
-              'w-72 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto',
-              'flex flex-col gap-4 p-4'
+              'border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto',
+              'flex flex-col gap-4 p-4',
+              'absolute inset-y-0 right-0 z-40 w-72 lg:relative lg:z-auto'
             )}
             data-testid="editor-sidebar"
           >
@@ -446,8 +449,14 @@ export default function EditorPage() {
                   {draftStates.map((s) => (
                     <li
                       key={s.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedNode(s.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedNode(s.id); }}
+                      aria-label={`Select state ${s.name}`}
                       className={cn(
                         'text-xs px-2 py-1.5 rounded cursor-pointer flex items-center gap-2',
+                        'focus:outline-none focus:ring-2 focus:ring-blue-500',
                         s.id === draftInitialState && 'bg-green-50 text-green-700',
                         s.is_dummy && 'bg-orange-50 text-orange-700',
                         !s.is_dummy &&
