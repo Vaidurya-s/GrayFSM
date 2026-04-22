@@ -7,9 +7,12 @@ Optimized connection pool configuration based on:
 """
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import event
+from sqlalchemy import event, select, func as sa_func
 from app.config import settings
 from app.db.base import Base
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Create async engine with optimized pool settings
 engine = create_async_engine(
@@ -65,6 +68,51 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def create_db_and_tables() -> None:
-    """Create all database tables"""
+    """Create all database tables, then seed examples on an empty DB."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await _seed_examples_if_empty()
+
+
+async def _seed_examples_if_empty() -> None:
+    """Insert example FSMs as public 'example' entries when the fsms table is empty.
+
+    Idempotent: skips silently if any FSM already exists.
+    """
+    from app.models.fsm import FSM
+    from app.services.example_service import ExampleService
+
+    async with AsyncSessionLocal() as session:
+        count = await session.scalar(select(sa_func.count()).select_from(FSM))
+        if count and count > 0:
+            return
+
+        service = ExampleService()
+        examples = await service.list_examples()
+        if not examples:
+            logger.warning("No example FSMs found on disk; skipping seed")
+            return
+
+        for example in examples:
+            definition = {
+                "states": example["states"],
+                "transitions": example["transitions"],
+                "outputs": example.get("outputs", {}),
+            }
+            fsm = FSM(
+                name=example["name"],
+                description=example.get("description"),
+                fsm_type=example.get("fsm_type", "moore"),
+                definition=definition,
+                state_count=example["state_count"],
+                transition_count=example["transition_count"],
+                initial_state=example["initial_state"],
+                bit_width=example["bit_width"],
+                visibility="example",
+                is_optimized=False,
+                dummy_state_count=0,
+            )
+            session.add(fsm)
+
+        await session.commit()
+        logger.info("Seeded example FSMs", count=len(examples))

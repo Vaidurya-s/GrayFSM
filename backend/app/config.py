@@ -60,11 +60,7 @@ class Settings(BaseSettings):
     rate_limit_anonymous: int = 100  # requests per window
     rate_limit_authenticated: int = 1000
     rate_limit_window: int = 3600  # seconds (1 hour)
-    
-    # Celery
-    celery_broker_url: str = "redis://localhost:6379/1"
-    celery_result_backend: str = "redis://localhost:6379/2"
-    
+
     # Algorithm Defaults
     default_algorithm: str = "greedy"
     algorithm_timeout_ms: int = 30000

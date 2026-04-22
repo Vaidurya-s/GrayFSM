@@ -41,24 +41,98 @@ UserToken = Dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
-# Token blacklist (in-memory, for distributed systems use Redis)
+# Token blacklist — Redis-backed, with in-memory fallback
 # ---------------------------------------------------------------------------
+#
+# Blacklist entries live in Redis under the key `jwt:bl:<sha256-prefix>` with
+# TTL equal to the token's remaining lifetime, so expired revocations clean
+# themselves up. If Redis is unavailable we degrade to an in-process set so
+# single-worker dev setups and tests still work.
+
+import hashlib
 
 _token_blacklist: set = set()
+_sync_redis_client = None
+_redis_probe_done = False
+
+
+def _get_sync_redis():
+    """Return a lazily-connected sync Redis client, or None if unavailable."""
+    global _sync_redis_client, _redis_probe_done
+    if _redis_probe_done:
+        return _sync_redis_client
+    _redis_probe_done = True
+    try:
+        import redis  # noqa: WPS433  (lazy)
+        client = redis.from_url(
+            settings.redis_url,
+            decode_responses=True,
+            socket_connect_timeout=0.5,
+            socket_timeout=0.5,
+        )
+        client.ping()
+        _sync_redis_client = client
+        logger.info("JWT blacklist: connected to Redis")
+    except Exception as exc:
+        logger.warning(
+            "JWT blacklist: Redis unavailable, falling back to in-memory set",
+            extra={"error": str(exc)},
+        )
+        _sync_redis_client = None
+    return _sync_redis_client
+
+
+def _blacklist_key(token: str) -> str:
+    """Hash the token so keys stay short and don't leak the raw token."""
+    digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return f"jwt:bl:{digest[:32]}"
+
+
+def _remaining_ttl_seconds(token: str) -> int:
+    """Read the `exp` claim without verification and return seconds-until-exp.
+
+    Falls back to the configured access-token lifetime if the claim is missing
+    or unparseable. Never negative.
+    """
+    try:
+        from jose import jwt  # noqa: WPS433
+        payload = jwt.get_unverified_claims(token)
+        exp = int(payload.get("exp", 0))
+        if exp:
+            remaining = exp - int(datetime.utcnow().timestamp())
+            if remaining > 0:
+                return remaining
+    except Exception:
+        pass
+    return settings.access_token_expire_minutes * 60
 
 
 def blacklist_token(token: str) -> None:
-    """
-    Add a token to the blacklist (e.g., for logout).
-
-    In production, consider using Redis or a database for distributed systems.
-    """
+    """Add a token to the blacklist (e.g., on logout)."""
+    client = _get_sync_redis()
+    if client is not None:
+        try:
+            client.setex(_blacklist_key(token), _remaining_ttl_seconds(token), "1")
+            return
+        except Exception as exc:
+            logger.warning(
+                "JWT blacklist: Redis write failed, adding to in-memory set",
+                extra={"error": str(exc)},
+            )
     _token_blacklist.add(token)
 
 
 def is_token_blacklisted(token: str) -> bool:
-    """Check if a token has been blacklisted."""
-    return token in _token_blacklist
+    """Return True if the token has been revoked."""
+    if token in _token_blacklist:
+        return True
+    client = _get_sync_redis()
+    if client is None:
+        return False
+    try:
+        return bool(client.exists(_blacklist_key(token)))
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------

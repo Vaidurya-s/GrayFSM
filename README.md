@@ -40,7 +40,7 @@ GrayFSM is a full-stack web application that optimizes hardware Finite State Mac
 - **HDL Export** — Generate synthesizable Verilog, VHDL, testbenches, JSON, and CSV output
 - **Example Library** — Pre-built FSMs: Traffic Light, Elevator Controller, Sequence Detector, Vending Machine
 - **Optimization Metrics** — Hamming distance analysis, improvement percentages, execution time tracking
-- **Async Processing** — Celery + Redis for background optimization of large FSMs
+- **Background Execution** — FastAPI background tasks with in-memory status polling for long-running optimizations
 - **Full Observability** — Prometheus metrics, Grafana dashboards, Jaeger distributed tracing
 
 ---
@@ -92,11 +92,11 @@ GrayFSM solves a fundamental hardware design problem: when an FSM transitions be
 ┌──────────────────────▼──────────────────────────┐
 │                   Backend                        │
 │  FastAPI · SQLAlchemy (async) · NetworkX         │
-│  Celery · Pydantic · Alembic                     │
-├──────────┬───────────┬──────────────────────────┤
-│ PostgreSQL│   Redis   │     Celery Workers       │
-│  (storage)│  (cache)  │  (async optimization)    │
-└──────────┴───────────┴──────────────────────────┘
+│  Pydantic · Alembic · BackgroundTasks            │
+├──────────────────────┬──────────────────────────┤
+│      PostgreSQL      │           Redis           │
+│       (storage)      │          (cache)          │
+└──────────────────────┴──────────────────────────┘
 ```
 
 ---
@@ -161,7 +161,6 @@ grayFSM/
 │   │   ├── schemas/         # Pydantic request/response models
 │   │   ├── services/        # Business logic layer
 │   │   ├── middleware/      # Logging, rate limiting, error handling
-│   │   ├── tasks/           # Celery background tasks
 │   │   └── main.py          # Application entry point
 │   ├── examples/            # Example FSM JSON files
 │   └── tests/               # Unit + integration tests
@@ -187,7 +186,7 @@ grayFSM/
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React 18, TypeScript 5, Tailwind CSS 3, ReactFlow, Zustand, React Query, Recharts, Three.js, Framer Motion |
-| **Backend** | FastAPI, Python 3.10+, SQLAlchemy (async), NetworkX, Celery, Pydantic |
+| **Backend** | FastAPI, Python 3.10+, SQLAlchemy (async), NetworkX, Pydantic |
 | **Database** | PostgreSQL 15, Redis 7 |
 | **Infrastructure** | Docker Compose, Kubernetes, GitHub Actions CI/CD |
 | **Observability** | Prometheus, Grafana, Jaeger |

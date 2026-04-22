@@ -45,6 +45,7 @@ htmlcov/
 .tox/
 coverage.xml
 *.cover
+.hypothesis/
 
 # Logs
 *.log

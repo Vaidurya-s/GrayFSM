@@ -90,7 +90,7 @@ async def optimize_fsm(
             "success": True,
             "task_id": task_id,
             "status": "pending",
-            "websocket_url": f"/api/v1/tasks/{task_id}/ws",
+            "status_url": f"/api/v1/tasks/{task_id}",
         })
 
     service = OptimizationService(db)
