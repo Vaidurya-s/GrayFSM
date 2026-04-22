@@ -102,11 +102,19 @@ class ExampleService:
 
         slug = file_path.stem  # e.g., "elevator", "traffic_light"
 
+        # Read difficulty from JSON; fall back to deriving from state count
+        difficulty = raw.get("difficulty") or (
+            "beginner" if state_count <= 4
+            else "intermediate" if state_count <= 8
+            else "advanced"
+        )
+
         return {
             "slug": slug,
             "name": name,
             "description": description,
             "fsm_type": fsm_type,
+            "difficulty": difficulty,
             "states": states,
             "initial_state": initial_state,
             "transitions": transitions,

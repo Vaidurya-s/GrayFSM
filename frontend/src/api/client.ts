@@ -4,7 +4,7 @@ import { API_BASE_URL } from '@/config/constants';
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  withCredentials: true, // Send httpOnly auth cookie automatically
+  withCredentials: false,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,9 +23,9 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor — unwrap the backend's {success, data} envelope
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error: AxiosError) => {
     // Handle errors globally
     if (error.response?.status === 401) {

@@ -11,8 +11,8 @@ export default function HomePage() {
   const { data: fsms, isLoading, error } = useQuery({
     queryKey: ['fsms'],
     queryFn: async () => {
-      const response = await api.get<FSM[]>('/fsms?limit=10')
-      return response.data
+      const response = await api.get<{ success: boolean; data: FSM[]; pagination: unknown }>('/fsms?limit=10')
+      return (response as any).data ?? response
     },
     retry: 1,
   })
@@ -21,7 +21,7 @@ export default function HomePage() {
     queryKey: ['health'],
     queryFn: async () => {
       const response = await api.get<{ status: string; message: string }>('/health')
-      return response.data
+      return (response as any).data ?? response
     },
   })
 

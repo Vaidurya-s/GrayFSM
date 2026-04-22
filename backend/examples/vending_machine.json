@@ -1,21 +1,51 @@
 {
   "name": "Vending Machine",
-  "description": "Accepts 5¢ and 10¢ coins, dispenses item at 15¢",
+  "description": "Accepts 5\u00a2 and 10\u00a2 coins, dispenses item at 15\u00a2",
   "type": "moore",
-  "states": ["S0_0c", "S1_5c", "S2_10c", "S3_15c"],
+  "states": [
+    "S0_0c",
+    "S1_5c",
+    "S2_10c",
+    "S3_15c"
+  ],
   "initial_state": "S0_0c",
   "transitions": [
-    {"from_state": "S0_0c", "to_state": "S1_5c", "input": "nickel"},
-    {"from_state": "S0_0c", "to_state": "S2_10c", "input": "dime"},
-    {"from_state": "S1_5c", "to_state": "S2_10c", "input": "nickel"},
-    {"from_state": "S1_5c", "to_state": "S3_15c", "input": "dime"},
-    {"from_state": "S2_10c", "to_state": "S3_15c", "input": "nickel"},
-    {"from_state": "S3_15c", "to_state": "S0_0c", "input": "dispense"}
+    {
+      "from_state": "S0_0c",
+      "to_state": "S1_5c",
+      "input": "nickel"
+    },
+    {
+      "from_state": "S0_0c",
+      "to_state": "S2_10c",
+      "input": "dime"
+    },
+    {
+      "from_state": "S1_5c",
+      "to_state": "S2_10c",
+      "input": "nickel"
+    },
+    {
+      "from_state": "S1_5c",
+      "to_state": "S3_15c",
+      "input": "dime"
+    },
+    {
+      "from_state": "S2_10c",
+      "to_state": "S3_15c",
+      "input": "nickel"
+    },
+    {
+      "from_state": "S3_15c",
+      "to_state": "S0_0c",
+      "input": "dispense"
+    }
   ],
   "outputs": {
     "S0_0c": "00",
     "S1_5c": "00",
     "S2_10c": "00",
     "S3_15c": "01"
-  }
+  },
+  "difficulty": "intermediate"
 }

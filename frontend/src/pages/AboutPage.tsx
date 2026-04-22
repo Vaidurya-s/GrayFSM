@@ -165,22 +165,22 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white" data-testid="about-page">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900" data-testid="about-page">
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
             <span className="text-white font-bold text-3xl">G</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-3">
             {APP_NAME}
           </h1>
-          <p className="text-xl text-gray-600 mb-2">{APP_DESCRIPTION}</p>
-          <span className="inline-block text-sm text-gray-400">v{APP_VERSION}</span>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">{APP_DESCRIPTION}</p>
+          <span className="inline-block text-sm text-gray-400 dark:text-gray-500">v{APP_VERSION}</span>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-gray-900/50 overflow-hidden">
           <Tabs
             tabs={[
               { value: 'about', label: 'About' },
@@ -198,8 +198,8 @@ export default function AboutPage() {
               <div className="space-y-10">
                 {/* Project Description */}
                 <section>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">What is GrayFSM?</h2>
-                  <div className="space-y-3 text-gray-600">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What is GrayFSM?</h2>
+                  <div className="space-y-3 text-gray-600 dark:text-gray-400">
                     <p>
                       GrayFSM is a full-stack web application for optimizing Finite State Machines
                       using Gray code encoding. It minimizes glitches and race conditions in hardware
@@ -216,7 +216,7 @@ export default function AboutPage() {
 
                 {/* Features Grid */}
                 <section>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Core Features</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Core Features</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {features.map((feature) => (
                       <Card
@@ -227,10 +227,10 @@ export default function AboutPage() {
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 mt-1">{feature.icon}</div>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 text-sm">
+                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
                               {feature.title}
                             </h4>
-                            <p className="text-gray-600 text-sm mt-1">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                               {feature.description}
                             </p>
                           </div>
@@ -241,12 +241,12 @@ export default function AboutPage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 border border-blue-200">
+                <section className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 rounded-lg p-8 border border-blue-200 dark:border-blue-800">
                   <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                       Ready to optimize your FSMs?
                     </h3>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
                       Start by creating a new FSM or explore the gallery for inspiration.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -270,15 +270,15 @@ export default function AboutPage() {
             <TabPanel value="tech" activeValue={activeTab}>
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Technology Stack</h2>
-                  <p className="text-gray-600 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Technology Stack</h2>
+                  <p className="text-gray-600 dark:text-gray-400 mb-8">
                     GrayFSM is built with modern, production-grade technologies across the full stack.
                   </p>
                 </div>
 
                 {techStack.map((category) => (
                   <section key={category.category}>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       {category.category}
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -291,12 +291,12 @@ export default function AboutPage() {
                   </section>
                 ))}
 
-                <Card variant="bordered" className="bg-gray-50">
+                <Card variant="bordered" className="bg-gray-50 dark:bg-gray-800">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div>
-                      <h4 className="font-semibold text-gray-900">Want to learn more?</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Want to learn more?</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Check out the full documentation and architecture guide.
                       </p>
                     </div>
@@ -309,8 +309,8 @@ export default function AboutPage() {
             <TabPanel value="how" activeValue={activeTab}>
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Workflow Overview</h2>
-                  <p className="text-gray-600">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Workflow Overview</h2>
+                  <p className="text-gray-600 dark:text-gray-400">
                     GrayFSM simplifies FSM optimization into four intuitive steps.
                   </p>
                 </div>
@@ -321,15 +321,15 @@ export default function AboutPage() {
                     <Card key={step.number} variant="bordered">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0">
-                          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100 text-blue-700 font-bold">
+                          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold">
                             {step.number}
                           </div>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 text-sm">
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
                             {step.title}
                           </h4>
-                          <p className="text-gray-600 text-sm mt-2">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
                             {step.description}
                           </p>
                         </div>
@@ -339,12 +339,12 @@ export default function AboutPage() {
                 </div>
 
                 {/* Gray Code Explanation */}
-                <Card variant="bordered" className="bg-blue-50 border-blue-200">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Card variant="bordered" className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                     <Zap className="w-5 h-5 text-yellow-600" />
                     Understanding Gray Code Optimization
                   </h3>
-                  <div className="text-sm text-gray-700 space-y-2">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
                     <p>
                       Gray code is a binary numeral system where two successive values differ in only
                       one bit. In FSM design, this property is crucial because:
@@ -364,21 +364,24 @@ export default function AboutPage() {
             <TabPanel value="api" activeValue={activeTab}>
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">REST API</h2>
-                  <p className="text-gray-600">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">REST API</h2>
+                  <p className="text-gray-600 dark:text-gray-400">
                     GrayFSM provides a comprehensive REST API for programmatic access to all features.
                   </p>
                 </div>
 
                 {/* API Info Card */}
-                <Card variant="bordered" className="bg-gray-50">
+                <Card variant="bordered" className="bg-gray-50 dark:bg-gray-800">
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-700">
-                      <strong>Base URL:</strong> <code className="bg-white px-2 py-1 rounded text-xs">/api/v1</code>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <strong>Base URL:</strong>{' '}
+                      <code className="bg-white dark:bg-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs">
+                        /api/v1
+                      </code>
                     </p>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
                       <strong>Interactive Docs:</strong>{' '}
-                      <a href="/docs" className="text-blue-600 hover:text-blue-700 underline">
+                      <a href="/docs" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline">
                         Swagger UI
                       </a>
                     </p>
@@ -387,25 +390,25 @@ export default function AboutPage() {
 
                 {/* Endpoints Table */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Endpoints</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Key Endpoints</h3>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
-                      <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                             Method
                           </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                             Path
                           </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
                             Description
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                         {apiEndpoints.map((endpoint, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50">
+                          <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <td className="px-4 py-3 text-sm">
                               <Badge
                                 variant={
@@ -422,10 +425,10 @@ export default function AboutPage() {
                                 {endpoint.method}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-sm font-mono text-gray-700">
+                            <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
                               {endpoint.path}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                               {endpoint.description}
                             </td>
                           </tr>
@@ -436,14 +439,14 @@ export default function AboutPage() {
                 </div>
 
                 {/* Documentation Card */}
-                <Card variant="bordered" className="bg-blue-50 border-blue-200">
+                <Card variant="bordered" className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-3">
                     <Globe className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div>
-                      <h4 className="font-semibold text-gray-900 text-sm">Full API Documentation</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Full API Documentation</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Visit{' '}
-                        <a href="/docs" className="text-blue-600 hover:text-blue-700 underline font-medium">
+                        <a href="/docs" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium">
                           /docs
                         </a>
                         {' '}for interactive Swagger UI with request/response examples and schema definitions.
