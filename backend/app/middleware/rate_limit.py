@@ -220,12 +220,18 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
-# Path-specific rate limits for sensitive auth endpoints
-# Format: path -> (limit, window_seconds)
-_AUTH_RATE_LIMITS = {
-    "/api/v1/auth/login": (5, 60),    # 5 requests per 60 seconds
-    "/api/v1/auth/register": (3, 60),  # 3 requests per 60 seconds
-}
+# Path-specific rate limits for sensitive auth endpoints. Built lazily
+# (via the function below) so changes to `settings.rate_limit_*` at
+# import time pick up the latest config — the middleware caches the
+# returned dict per request, not per process.
+def _auth_rate_limits() -> dict[str, tuple[int, int]]:
+    return {
+        "/api/v1/auth/login": (settings.rate_limit_login, settings.rate_limit_login_window),
+        "/api/v1/auth/register": (
+            settings.rate_limit_register,
+            settings.rate_limit_register_window,
+        ),
+    }
 
 
 # Paths that should never be rate-limited
@@ -270,8 +276,9 @@ async def rate_limit_middleware(request: Request, call_next):
     path = request.url.path
 
     # Check for path-specific (auth) rate limits — stricter than the global limit
-    if path in _AUTH_RATE_LIMITS:
-        auth_limit, auth_window = _AUTH_RATE_LIMITS[path]
+    auth_limits = _auth_rate_limits()
+    if path in auth_limits:
+        auth_limit, auth_window = auth_limits[path]
         auth_key = f"rl:auth:{client_ip}:{path}"
 
         auth_allowed = True
