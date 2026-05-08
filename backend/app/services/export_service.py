@@ -139,9 +139,10 @@ class ExportService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
-        if fsm.created_by is not None:
-            if user_id is None or fsm.created_by != user_id:
-                raise FSMNotFoundException(str(fsm_id))
+        # Strict-ownership: legacy NULL-created_by rows are no longer
+        # reachable via export (was allowed-through; see DRIFT.md).
+        if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
+            raise FSMNotFoundException(str(fsm_id))
 
         if not fsm.definition:
             # No `cause` here — this isn't wrapping an inner exception.

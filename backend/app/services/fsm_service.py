@@ -98,8 +98,11 @@ class FSMService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
-        if fsm.visibility != "public" and fsm.created_by is not None:
-            if user_id is None or fsm.created_by != user_id:
+        # Strict-ownership: legacy NULL-created_by FSMs are no longer
+        # readable to all callers. Public FSMs remain visible to anyone;
+        # everything else needs the matching owner.
+        if fsm.visibility != "public":
+            if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
                 raise FSMNotFoundException(str(fsm_id))
 
         # Increment view count
@@ -154,14 +157,21 @@ class FSMService:
         return list(result.scalars().all()), total
 
     def _check_ownership(self, fsm: FSM, user_id: Optional[UUID]) -> None:
-        """Raise FSMPermissionException if user_id doesn't own the FSM.
+        """Raise FSMPermissionException unless user_id is the FSM's owner.
 
-        FSMs with no owner (created_by=None) are legacy records and are
-        always allowed through so existing data isn't locked out.
+        Strict-ownership policy. The previous behaviour treated FSMs with
+        ``created_by=None`` as "ownerless" and let any authenticated user
+        access them — that was the legacy bypass flagged by the audit.
+        It is gone now: a NULL ``created_by`` row is unreachable until an
+        admin backfills the column.
+
+        New deployments don't have NULL rows because ``create_fsm`` has
+        required a ``user_id`` since the ownership commit (78fb9bb). If
+        you have legacy data with ``created_by IS NULL``, run a backfill
+        migration (see ``backend/alembic/DRIFT.md`` for the recommended
+        approach) before deploying this change.
         """
-        if fsm.created_by is None:
-            return
-        if user_id is None or fsm.created_by != user_id:
+        if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
             raise FSMPermissionException(str(fsm.id))
 
     async def update_fsm(
@@ -205,8 +215,10 @@ class FSMService:
         """
         original = await self.get_fsm_raw(fsm_id)
 
-        if original.visibility != "public" and original.created_by is not None:
-            if user_id is None or original.created_by != user_id:
+        # Strict-ownership (matches get_fsm above): public FSMs may be
+        # forked by anyone, otherwise only the owner can.
+        if original.visibility != "public":
+            if original.created_by is None or user_id is None or original.created_by != user_id:
                 raise FSMNotFoundException(str(fsm_id))
 
         forked = FSM(
