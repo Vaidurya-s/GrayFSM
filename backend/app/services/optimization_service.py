@@ -180,6 +180,11 @@ class OptimizationService:
             category_id=original_fsm.category_id,
             tags=original_fsm.tags,
             visibility=original_fsm.visibility,
+            # Inherit ownership from the source — falling back to the
+            # caller's user_id if the source somehow had none. Without
+            # this, derived FSMs are created with created_by=NULL and
+            # become unreachable under strict-ownership.
+            created_by=original_fsm.created_by or user_id,
             is_optimized=True,
             optimization_algorithm=request.algorithm,
             dummy_state_count=len(dummy_states),
