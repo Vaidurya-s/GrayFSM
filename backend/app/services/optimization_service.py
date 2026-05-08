@@ -243,6 +243,20 @@ class OptimizationService:
 
         return response
 
+    async def verify_ownership(
+        self, fsm_id: UUID, user_id: Optional[UUID]
+    ) -> None:
+        """Verify the caller owns this FSM, without loading the full record.
+
+        Used by the async-task path in api/v1/algorithm.py to give the
+        caller an immediate 404 on unowned FSMs, rather than letting the
+        ownership check slip into the background task and surface as a
+        late "task failed". Raises FSMNotFoundException on mismatch — the
+        same exception used for "doesn't exist" — so the API can't be used
+        to enumerate FSM IDs.
+        """
+        await self._load_fsm(fsm_id, user_id=user_id)
+
     async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
         """
         Load an FSM from the database by ID, enforcing ownership.

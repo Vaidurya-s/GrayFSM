@@ -92,7 +92,7 @@ async def optimize_fsm(
         # Verify ownership synchronously so the user gets immediate 404 on
         # someone else's FSM, instead of a task that fails async.
         try:
-            await OptimizationService(db)._load_fsm(fsm_id, user_id=user_id)
+            await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
         except FSMNotFoundException:
             raise HTTPException(status_code=404, detail="FSM not found")
 
@@ -145,7 +145,7 @@ async def get_optimization_results(
     user_id = UUID(current_user["user_id"])
     # Verify FSM exists and is owned by this user before exposing results.
     try:
-        await OptimizationService(db)._load_fsm(fsm_id, user_id=user_id)
+        await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
     except FSMNotFoundException:
         raise HTTPException(status_code=404, detail="FSM not found")
 
