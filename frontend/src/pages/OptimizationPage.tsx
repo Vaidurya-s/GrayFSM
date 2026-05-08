@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSM } from '../hooks/useFSM';
 import { useOptimize } from '../hooks/useOptimization';

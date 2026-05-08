@@ -3,7 +3,7 @@ import { Sun, Moon, Monitor } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
 import { APP_NAME } from '../../config/constants';
 import { useUIStore } from '../../store/uiStore';
-import { useTheme, Theme } from '../providers/ThemeProvider';
+import { useTheme, type Theme } from '../providers/theme-context';
 import { cn } from '../../utils/cn';
 
 const navLinks = [

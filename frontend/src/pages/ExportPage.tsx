@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../components/ui';
 import { useFSM } from '../hooks/useFSM';
 import { useExportFSM } from '../hooks/useExport';
 import { ROUTES, generateRoute } from '../config/routes';
