@@ -237,10 +237,12 @@ export default function ExportPage() {
   const [exportResult, setExportResult] = useState<ExportResponse | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Sync module name from FSM name once loaded
-  const fsm = fsmData as any;
-  const fsmName: string =
-    (fsm?.data?.name ?? fsm?.name ?? '') as string;
+  // Sync module name from FSM name once loaded. The query may resolve
+  // to either the bare FSM or a {data: FSM} envelope depending on which
+  // client method ran — narrow both shapes here to avoid an `as any`.
+  type FsmFragment = { name?: string; fsm_type?: string };
+  const fsm = fsmData as (FsmFragment & { data?: FsmFragment }) | undefined;
+  const fsmName: string = fsm?.data?.name ?? fsm?.name ?? '';
 
   // If moduleName still blank and we now have a name, fill it in
   const resolvedModuleName = options.moduleName || defaultModuleName(fsmName);

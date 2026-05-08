@@ -19,8 +19,7 @@ Adapted from security/fixes/01_authentication_middleware.py
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Any, Dict, Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -53,7 +52,6 @@ from app.middleware.token_blacklist import (  # noqa: E402, F401 — re-export
     is_token_blacklisted,
 )
 
-
 # ---------------------------------------------------------------------------
 # Bearer scheme (auto_error=False so missing header => None, not 403)
 # ---------------------------------------------------------------------------
@@ -64,6 +62,7 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 # ---------------------------------------------------------------------------
 # Token helpers
 # ---------------------------------------------------------------------------
+
 
 def _decode_token(token: str) -> Optional[UserToken]:
     """
@@ -133,15 +132,16 @@ def create_access_token(
 
     to_encode = data.copy()
     expire = datetime.utcnow() + (
-        expires_delta
-        or timedelta(minutes=settings.access_token_expire_minutes)
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "type": "access",
-        "aud": settings.jwt_audience,
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "access",
+            "aud": settings.jwt_audience,
+        }
+    )
 
     return jwt.encode(
         to_encode,
@@ -153,6 +153,7 @@ def create_access_token(
 # ---------------------------------------------------------------------------
 # FastAPI dependencies
 # ---------------------------------------------------------------------------
+
 
 async def get_optional_current_user(
     request: Request,

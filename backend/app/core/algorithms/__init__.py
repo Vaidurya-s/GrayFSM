@@ -6,13 +6,13 @@ All algorithms share the same interface:
     __init__(bit_width: int)
     optimize_fsm(states, transitions, outputs, fsm_type) -> (dummy_states, new_transitions)
 """
+
 from typing import Dict, Type
 
-from app.core.algorithms.greedy import GreedyOptimizer
 from app.core.algorithms.bfs_optimal import BFSOptimizer
+from app.core.algorithms.greedy import GreedyOptimizer
 from app.core.algorithms.simulated_annealing import SimulatedAnnealingOptimizer
 from app.utils.exceptions import AlgorithmException
-
 
 # Registry mapping algorithm name -> optimizer class
 ALGORITHM_REGISTRY: Dict[str, Type[GreedyOptimizer]] = {
@@ -84,9 +84,7 @@ def get_algorithm(name: str) -> Type[GreedyOptimizer]:
     """
     if name not in ALGORITHM_REGISTRY:
         available = ", ".join(ALGORITHM_REGISTRY.keys())
-        raise AlgorithmException(
-            f"Unknown algorithm: '{name}'. Available algorithms: {available}"
-        )
+        raise AlgorithmException(f"Unknown algorithm: '{name}'. Available algorithms: {available}")
     return ALGORITHM_REGISTRY[name]
 
 
@@ -115,7 +113,4 @@ def list_algorithms() -> list:
     Returns:
         List of dictionaries with algorithm info
     """
-    return [
-        {"id": name, **info}
-        for name, info in ALGORITHM_INFO.items()
-    ]
+    return [{"id": name, **info} for name, info in ALGORITHM_INFO.items()]

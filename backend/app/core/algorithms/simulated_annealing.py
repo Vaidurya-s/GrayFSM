@@ -21,8 +21,8 @@ import math
 import random
 from typing import Dict, List, Optional, Tuple
 
-from app.core.gray_code import generate_gray_codes, hamming_distance
-from app.core.algorithms.greedy import GreedyOptimizer, DummyState
+from app.core.algorithms.greedy import DummyState, GreedyOptimizer
+from app.core.gray_code import hamming_distance
 
 
 class SimulatedAnnealingOptimizer(GreedyOptimizer):
@@ -59,18 +59,10 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         super().__init__(bit_width)
 
         opts = options or {}
-        self.initial_temp: float = float(
-            opts.get("initial_temp", self.DEFAULT_INITIAL_TEMP)
-        )
-        self.cooling_rate: float = float(
-            opts.get("cooling_rate", self.DEFAULT_COOLING_RATE)
-        )
-        self.min_temp: float = float(
-            opts.get("min_temp", self.DEFAULT_MIN_TEMP)
-        )
-        self.max_iterations: int = int(
-            opts.get("max_iterations", self.DEFAULT_MAX_ITERATIONS)
-        )
+        self.initial_temp: float = float(opts.get("initial_temp", self.DEFAULT_INITIAL_TEMP))
+        self.cooling_rate: float = float(opts.get("cooling_rate", self.DEFAULT_COOLING_RATE))
+        self.min_temp: float = float(opts.get("min_temp", self.DEFAULT_MIN_TEMP))
+        self.max_iterations: int = int(opts.get("max_iterations", self.DEFAULT_MAX_ITERATIONS))
         seed = opts.get("seed")
         self._rng = random.Random(seed)
 
@@ -88,7 +80,7 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
     def optimize_fsm(
         self,
-        states: Dict[str, str],   # state_id -> gray_encoding
+        states: Dict[str, str],  # state_id -> gray_encoding
         transitions: List[Dict],
         outputs: Dict[str, str],
         fsm_type: str,
@@ -229,9 +221,7 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         self.iterations_run = iteration
         self.final_cost = best_cost
         self.improvement_ratio = (
-            (self.initial_cost - best_cost) / self.initial_cost
-            if self.initial_cost > 0
-            else 0.0
+            (self.initial_cost - best_cost) / self.initial_cost if self.initial_cost > 0 else 0.0
         )
 
         return best

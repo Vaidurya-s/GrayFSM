@@ -1,6 +1,7 @@
 """
 Category endpoints
 """
+
 from typing import Optional
 from uuid import UUID
 
@@ -80,7 +81,9 @@ async def get_category(
         "name": category.name,
         "slug": category.slug,
         "description": category.description,
-        "parent_category_id": str(category.parent_category_id) if category.parent_category_id else None,
+        "parent_category_id": str(category.parent_category_id)
+        if category.parent_category_id
+        else None,
         "level": category.level,
         "display_order": category.display_order,
         "fsm_count": category.fsm_count,

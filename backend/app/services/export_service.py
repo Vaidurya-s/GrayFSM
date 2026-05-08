@@ -1,11 +1,12 @@
 """
 Export Service - Orchestrates FSM export to various formats (Verilog, VHDL, JSON)
 """
+
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exporters import get_exporter, get_file_extension, list_formats
 from app.models.fsm import FSM
@@ -48,6 +49,7 @@ class ExportService:
         fsm = await self._load_fsm(fsm_id, user_id=user_id)
 
         from app.cache import cache_get, cache_set
+
         cache_key = f"export:{fsm_id}:{format_name}"
         cached = await cache_get(cache_key)
         if cached:
@@ -131,9 +133,7 @@ class ExportService:
                 by the caller.
             ExportException: If the FSM exists but has no definition.
         """
-        result = await self.db.execute(
-            select(FSM).where(FSM.id == fsm_id)
-        )
+        result = await self.db.execute(select(FSM).where(FSM.id == fsm_id))
         fsm = result.scalar_one_or_none()
 
         if not fsm:

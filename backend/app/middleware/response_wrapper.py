@@ -11,11 +11,11 @@ Skipped for:
 - Non-JSON content types
 - Bodies that already contain a "success" key (avoid double-wrapping)
 """
+
 import json
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-
 
 # Paths that should never be wrapped
 _SKIP_PATHS = frozenset({"/", "/docs", "/redoc", "/openapi.json"})

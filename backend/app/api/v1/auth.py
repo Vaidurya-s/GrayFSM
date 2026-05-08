@@ -1,19 +1,25 @@
 """
 Authentication API endpoints
 """
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.session import get_db
-from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserResponse
+from app.middleware.auth import (
+    UserToken,
+    blacklist_token,
+    create_access_token,
+    get_required_current_user,
+)
+from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest, UserResponse
 from app.services.auth_service import AuthService
-from app.middleware.auth import get_required_current_user, create_access_token, blacklist_token, UserToken
 from app.utils.exceptions import (
+    InvalidCredentialsException,
     UserAlreadyExistsException,
     UserNotFoundException,
-    InvalidCredentialsException,
 )
 from app.utils.logger import get_logger
 

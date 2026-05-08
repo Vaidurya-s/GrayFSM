@@ -1,17 +1,21 @@
 """
 FSM Service - Business logic for FSM operations
 """
+
 import math
 from typing import List, Optional, Tuple
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
+from app.core.fsm_model import FSMType, FSMValidator
 from app.models.fsm import FSM
 from app.schemas.fsm import FSMCreate, FSMUpdate
-from app.core.fsm_model import FSMValidator, FSMType
-from app.utils.exceptions import FSMNotFoundException, FSMPermissionException, FSMValidationException
+from app.utils.exceptions import (
+    FSMNotFoundException,
+    FSMPermissionException,
+)
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,20 +23,20 @@ logger = get_logger(__name__)
 
 class FSMService:
     """Service for FSM CRUD operations"""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def create_fsm(self, fsm_data: FSMCreate, user_id: Optional[UUID] = None) -> FSM:
         """
         Create new FSM with validation.
-        
+
         Args:
             fsm_data: FSM creation data
-            
+
         Returns:
             Created FSM instance
-            
+
         Raises:
             FSMValidationException: If validation fails
         """
@@ -42,12 +46,12 @@ class FSMService:
             states=fsm_data.states,
             initial_state=fsm_data.initial_state,
             transitions=fsm_data.transitions,
-            outputs=fsm_data.outputs
+            outputs=fsm_data.outputs,
         )
-        
+
         # Calculate bit width
         bit_width = math.ceil(math.log2(len(fsm_data.states)))
-        
+
         # Create FSM instance
         fsm = FSM(
             name=fsm_data.name,
@@ -57,7 +61,7 @@ class FSMService:
                 "states": fsm_data.states,
                 "initial_state": fsm_data.initial_state,
                 "transitions": fsm_data.transitions,
-                "outputs": fsm_data.outputs or {}
+                "outputs": fsm_data.outputs or {},
             },
             state_count=len(fsm_data.states),
             transition_count=len(fsm_data.transitions),
@@ -68,15 +72,15 @@ class FSMService:
             visibility=fsm_data.visibility,
             created_by=user_id,
         )
-        
+
         self.db.add(fsm)
         await self.db.commit()
         await self.db.refresh(fsm)
-        
+
         logger.info(f"Created FSM: {fsm.id}", extra={"fsm_id": str(fsm.id)})
-        
+
         return fsm
-    
+
     async def get_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
         """
         Get FSM by ID with visibility-aware access control.
@@ -90,9 +94,7 @@ class FSMService:
                 requested by a non-owner. The two cases are deliberately
                 indistinguishable to prevent enumeration of private IDs.
         """
-        result = await self.db.execute(
-            select(FSM).where(FSM.id == fsm_id)
-        )
+        result = await self.db.execute(select(FSM).where(FSM.id == fsm_id))
         fsm = result.scalar_one_or_none()
 
         if not fsm:
@@ -111,7 +113,7 @@ class FSMService:
         await self.db.refresh(fsm)
 
         return fsm
-    
+
     async def list_fsms(
         self,
         skip: int = 0,
@@ -200,9 +202,7 @@ class FSMService:
         await self.db.refresh(fsm)
         return fsm
 
-    async def fork_fsm(
-        self, fsm_id: UUID, new_name: str, user_id: Optional[UUID] = None
-    ) -> FSM:
+    async def fork_fsm(self, fsm_id: UUID, new_name: str, user_id: Optional[UUID] = None) -> FSM:
         """
         Fork an existing FSM into a new copy.
 
@@ -248,7 +248,7 @@ class FSMService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
         return fsm
-    
+
     async def delete_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> None:
         """Delete FSM by ID.
 

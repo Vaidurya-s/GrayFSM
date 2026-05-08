@@ -1,11 +1,11 @@
 """
 Example Service - Loads example FSMs from JSON files on disk
 """
+
 import json
 import math
-import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from app.utils.exceptions import FSMNotFoundException
 from app.utils.logger import get_logger
@@ -104,9 +104,7 @@ class ExampleService:
 
         # Read difficulty from JSON; fall back to deriving from state count
         difficulty = raw.get("difficulty") or (
-            "beginner" if state_count <= 4
-            else "intermediate" if state_count <= 8
-            else "advanced"
+            "beginner" if state_count <= 4 else "intermediate" if state_count <= 8 else "advanced"
         )
 
         return {

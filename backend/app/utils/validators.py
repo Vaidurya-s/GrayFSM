@@ -45,6 +45,7 @@ _SQL_PATTERNS = re.compile(
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def sanitize_string(value: str) -> str:
     """
     Strip dangerous characters and HTML-encode a plain-text string.
@@ -175,16 +176,41 @@ def validate_state_name(name: str) -> str:
 
     _reserved = {
         # Verilog
-        "module", "endmodule", "input", "output", "wire", "reg",
-        "always", "begin", "end", "if", "else", "case", "endcase",
+        "module",
+        "endmodule",
+        "input",
+        "output",
+        "wire",
+        "reg",
+        "always",
+        "begin",
+        "end",
+        "if",
+        "else",
+        "case",
+        "endcase",
         "default",
         # VHDL
-        "entity", "architecture", "process", "signal", "port", "map",
+        "entity",
+        "architecture",
+        "process",
+        "signal",
+        "port",
+        "map",
         # SQL
-        "select", "insert", "update", "delete", "drop", "table",
-        "from", "where",
+        "select",
+        "insert",
+        "update",
+        "delete",
+        "drop",
+        "table",
+        "from",
+        "where",
         # Common attack vectors
-        "exec", "eval", "system", "call",
+        "exec",
+        "eval",
+        "system",
+        "call",
     }
 
     if name.lower() in _reserved:

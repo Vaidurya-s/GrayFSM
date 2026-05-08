@@ -14,7 +14,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class MetricNames(str, Enum):
 
 _PROMETHEUS_AVAILABLE = False
 try:
-    from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+    from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
     _PROMETHEUS_AVAILABLE = True
 except ImportError:
@@ -237,10 +237,9 @@ def setup_metrics(app: Any) -> None:
     text message indicating that metrics are unavailable.
     """
     from fastapi import Response
-    from fastapi.routing import APIRoute
 
     # Ensure the singleton is created
-    metrics_obj = get_metrics()
+    get_metrics()
 
     if _PROMETHEUS_AVAILABLE:
 
@@ -262,6 +261,4 @@ def setup_metrics(app: Any) -> None:
                 media_type="text/plain",
             )
 
-        logger.info(
-            "prometheus_client not installed — /metrics returns placeholder"
-        )
+        logger.info("prometheus_client not installed — /metrics returns placeholder")

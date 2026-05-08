@@ -5,16 +5,16 @@ Maps export format names to their exporter classes.
 All exporters share the same interface:
     export(definition, fsm_type, name, options) -> str
 """
-from typing import Dict, Type, Any
 
+from typing import Any, Dict
+
+from app.core.exporters.csv_exporter import CSVExporter
+from app.core.exporters.json_exporter import JSONExporter
+from app.core.exporters.sva_exporter import SVAExporter
+from app.core.exporters.testbench import TestbenchExporter
 from app.core.exporters.verilog import VerilogExporter
 from app.core.exporters.vhdl import VHDLExporter
-from app.core.exporters.json_exporter import JSONExporter
-from app.core.exporters.csv_exporter import CSVExporter
-from app.core.exporters.testbench import TestbenchExporter
-from app.core.exporters.sva_exporter import SVAExporter
 from app.utils.exceptions import ExportException
-
 
 # Registry mapping format name -> exporter class
 EXPORTER_REGISTRY: Dict[str, Any] = {
@@ -87,8 +87,7 @@ def get_exporter(format_name: str):
     if format_name not in EXPORTER_REGISTRY:
         available = ", ".join(EXPORTER_REGISTRY.keys())
         raise ExportException(
-            f"Unsupported export format: '{format_name}'. "
-            f"Available formats: {available}"
+            f"Unsupported export format: '{format_name}'. Available formats: {available}"
         )
     return EXPORTER_REGISTRY[format_name]()
 
@@ -113,7 +112,4 @@ def list_formats() -> list:
     Returns:
         List of dictionaries with format info
     """
-    return [
-        {"id": name, **info}
-        for name, info in FORMAT_INFO.items()
-    ]
+    return [{"id": name, **info} for name, info in FORMAT_INFO.items()]

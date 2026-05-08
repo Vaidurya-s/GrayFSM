@@ -1,21 +1,21 @@
 """
 Authentication Service - Business logic for user authentication
 """
+
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.user import User
-from app.middleware.auth import create_access_token
 from app.utils.exceptions import (
+    InvalidCredentialsException,
     UserAlreadyExistsException,
     UserNotFoundException,
-    InvalidCredentialsException,
 )
 from app.utils.logger import get_logger
 

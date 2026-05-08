@@ -15,6 +15,7 @@ from typing import Optional
 
 class GrayFSMException(Exception):
     """Base exception for all GrayFSM errors."""
+
     def __init__(
         self,
         message: str,
@@ -36,16 +37,15 @@ class FSMNotFoundException(GrayFSMException):
     included in the user-facing message — exposing it would let unauthenticated
     callers enumerate which IDs exist.
     """
+
     def __init__(self, fsm_id: str):
         self.fsm_id = fsm_id
-        super().__init__(
-            message="FSM not found",
-            code="FSM_NOT_FOUND"
-        )
+        super().__init__(message="FSM not found", code="FSM_NOT_FOUND")
 
 
 class FSMValidationException(GrayFSMException):
     """Raised when FSM validation fails"""
+
     def __init__(self, message: str):
         super().__init__(message=message, code="FSM_VALIDATION_ERROR")
 
@@ -57,6 +57,7 @@ class AlgorithmException(GrayFSMException):
     language (e.g. "Algorithm execution failed"). Pass the underlying
     exception via `cause` for server-side logging.
     """
+
     def __init__(self, message: str, cause: Optional[BaseException] = None):
         super().__init__(message=message, code="ALGORITHM_ERROR", cause=cause)
 
@@ -68,33 +69,38 @@ class ExportException(GrayFSMException):
     must not concatenate `str(inner_exception)` — that's exactly what the
     `cause` parameter is for.
     """
+
     def __init__(self, message: str, cause: Optional[BaseException] = None):
         super().__init__(message=message, code="EXPORT_ERROR", cause=cause)
 
 
 class RateLimitException(GrayFSMException):
     """Raised when rate limit is exceeded"""
+
     def __init__(self, limit: int, window: int):
         super().__init__(
             message=f"Rate limit exceeded: {limit} requests per {window} seconds",
-            code="RATE_LIMIT_EXCEEDED"
+            code="RATE_LIMIT_EXCEEDED",
         )
 
 
 class UserAlreadyExistsException(GrayFSMException):
     """Raised when attempting to register with an existing email"""
+
     def __init__(self, message: str):
         super().__init__(message=message, code="USER_ALREADY_EXISTS")
 
 
 class UserNotFoundException(GrayFSMException):
     """Raised when user is not found"""
+
     def __init__(self, message: str):
         super().__init__(message=message, code="USER_NOT_FOUND")
 
 
 class InvalidCredentialsException(GrayFSMException):
     """Raised when authentication credentials are invalid"""
+
     def __init__(self, message: str):
         super().__init__(message=message, code="INVALID_CREDENTIALS")
 
@@ -105,9 +111,7 @@ class FSMPermissionException(GrayFSMException):
     Routes should typically translate this to a 404 (not a 403) so callers
     cannot distinguish "exists but forbidden" from "does not exist".
     """
+
     def __init__(self, fsm_id: str):
         self.fsm_id = fsm_id
-        super().__init__(
-            message="Not found",
-            code="FSM_PERMISSION_DENIED"
-        )
+        super().__init__(message="Not found", code="FSM_PERMISSION_DENIED")

@@ -11,7 +11,7 @@ can start without the opentelemetry packages installed.
 from __future__ import annotations
 
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,10 @@ def setup_telemetry(app: Any) -> None:
 
     try:
         from opentelemetry import trace
+        from opentelemetry.propagate import set_global_textmap
+        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-        from opentelemetry.propagate import set_global_textmap
         from opentelemetry.sdk.trace.propagation.tracecontext import (
             TraceContextPropagator,
         )

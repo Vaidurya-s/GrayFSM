@@ -170,15 +170,21 @@ function StaticExampleCard({ example }: { example: StaticExample }) {
 function ApiExampleCard({ example }: { example: Example }) {
   const navigate = useNavigate();
 
+  // fsm_data is intentionally typed loose (Record<string, unknown>) on
+  // the API boundary, so narrow at use-site instead of fighting the type.
+  const fsmData = example.fsm_data as
+    | { states?: unknown[]; state_count?: number; transitions?: unknown[]; transition_count?: number }
+    | undefined;
+
   const stateCount: number =
-    Array.isArray(example.fsm_data?.states)
-      ? example.fsm_data.states.length
-      : example.fsm_data?.state_count ?? 0;
+    Array.isArray(fsmData?.states)
+      ? fsmData.states.length
+      : fsmData?.state_count ?? 0;
 
   const transitionCount: number =
-    Array.isArray(example.fsm_data?.transitions)
-      ? example.fsm_data.transitions.length
-      : example.fsm_data?.transition_count ?? 0;
+    Array.isArray(fsmData?.transitions)
+      ? fsmData.transitions.length
+      : fsmData?.transition_count ?? 0;
 
   return (
     <Card

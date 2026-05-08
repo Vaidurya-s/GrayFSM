@@ -1,7 +1,9 @@
 """
 Gray Code generation and manipulation utilities
 """
+
 from typing import List
+
 
 def int_to_gray(n: int, bit_width: int) -> str:
     """
@@ -19,7 +21,7 @@ def int_to_gray(n: int, bit_width: int) -> str:
         '0111'
     """
     gray = n ^ (n >> 1)
-    return format(gray, f'0{bit_width}b')
+    return format(gray, f"0{bit_width}b")
 
 
 def gray_to_int(gray: str) -> int:
@@ -54,7 +56,7 @@ def generate_gray_codes(bit_width: int) -> List[str]:
         >>> generate_gray_codes(2)
         ['00', '01', '11', '10']
     """
-    count = 2 ** bit_width
+    count = 2**bit_width
     return [int_to_gray(i, bit_width) for i in range(count)]
 
 
@@ -72,7 +74,7 @@ def hamming_distance(code1: str, code2: str) -> int:
     if len(code1) != len(code2):
         raise ValueError("Codes must have same length")
 
-    return sum(b1 != b2 for b1, b2 in zip(code1, code2))
+    return sum(b1 != b2 for b1, b2 in zip(code1, code2, strict=False))
 
 
 def get_bit_flip_position(code1: str, code2: str) -> int:
@@ -89,7 +91,7 @@ def get_bit_flip_position(code1: str, code2: str) -> int:
     if hamming_distance(code1, code2) != 1:
         return -1
 
-    for i, (b1, b2) in enumerate(zip(code1, code2)):
+    for i, (b1, b2) in enumerate(zip(code1, code2, strict=False)):
         if b1 != b2:
             return i
     return -1

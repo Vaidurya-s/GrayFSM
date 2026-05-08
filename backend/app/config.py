@@ -7,6 +7,7 @@ Configuration is loaded from environment variables with validation.
 
 import logging
 from typing import List, Optional
+
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -15,20 +16,20 @@ _config_logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
-    
+
     # Application
     app_name: str = "GrayFSM API"
     app_version: str = "1.0.0"
     environment: str = "development"
     debug: bool = False
     log_level: str = "INFO"
-    
+
     # Server
     host: str = "0.0.0.0"
     port: int = 8000
     workers: int = 4
     reload: bool = True
-    
+
     # Database. The defaults are obvious placeholders, NOT real connection
     # strings — they exist only so module imports don't fail when the env
     # isn't set yet (e.g. test collection time, `python -c "import app"`).
@@ -71,7 +72,7 @@ class Settings(BaseSettings):
     cors_allow_credentials: bool = False
     cors_allow_methods: List[str] = ["*"]
     cors_allow_headers: List[str] = ["*"]
-    
+
     # Rate Limiting
     rate_limit_enabled: bool = True
     rate_limit_anonymous: int = 100  # requests per window
@@ -80,9 +81,9 @@ class Settings(BaseSettings):
     # Auth-endpoint rate limits (per-IP, narrower window than the
     # anonymous-tier limit above). Tightening these is a brute-force
     # mitigation; loosening them in dev is fine.
-    rate_limit_login: int = 5         # requests per `rate_limit_login_window`
+    rate_limit_login: int = 5  # requests per `rate_limit_login_window`
     rate_limit_login_window: int = 60
-    rate_limit_register: int = 3      # requests per `rate_limit_register_window`
+    rate_limit_register: int = 3  # requests per `rate_limit_register_window`
     rate_limit_register_window: int = 60
 
     # Algorithm Defaults
@@ -90,27 +91,24 @@ class Settings(BaseSettings):
     algorithm_timeout_ms: int = 30000
     max_fsm_states: int = 256
     max_optimization_time_ms: int = 300000
-    
+
     # Export
     export_cache_enabled: bool = True
     export_cache_ttl_days: int = 7
     export_max_file_size_mb: int = 10
-    
+
     # Monitoring
     sentry_dsn: Optional[str] = None
     metrics_enabled: bool = True
-    
+
     # File Upload
     max_upload_size_mb: int = 5
     allowed_upload_formats: List[str] = ["json", "csv"]
-    
+
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
-    
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -119,7 +117,7 @@ class Settings(BaseSettings):
         if v.upper() not in allowed:
             raise ValueError(f"Log level must be one of {allowed}")
         return v.upper()
-    
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | List[str]) -> List[str]:
@@ -155,14 +153,11 @@ class Settings(BaseSettings):
             )
 
         if len(self.secret_key) < 32:
-            raise ValueError(
-                "SECRET_KEY must be at least 32 bytes in production."
-            )
+            raise ValueError("SECRET_KEY must be at least 32 bytes in production.")
 
         if self.debug:
             raise ValueError(
-                "DEBUG must be False in production. "
-                "Set the DEBUG environment variable to 'false'."
+                "DEBUG must be False in production. Set the DEBUG environment variable to 'false'."
             )
 
         # Reject the dev-default DB credentials — easy to ship by accident.
@@ -184,7 +179,7 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production environment"""
         return self.environment.lower() == "production"
-    
+
     @property
     def export_cache_ttl_seconds(self) -> int:
         """Get export cache TTL in seconds"""

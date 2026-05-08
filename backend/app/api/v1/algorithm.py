@@ -1,6 +1,7 @@
 """
 Algorithm optimization endpoints
 """
+
 import uuid
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -53,7 +54,7 @@ async def _run_optimization_task(
             )
             result = await service.optimize_fsm(fsm_id, req, user_id=user_id)
             update_task(task_id, status="completed", result=result.model_dump(mode="json"))
-    except Exception as exc:
+    except Exception:
         # Don't echo arbitrary exception text to a user-visible task record.
         logger.exception("optimization_task_failed", extra={"task_id": task_id})
         update_task(task_id, status="failed", error="Optimization failed")
@@ -89,6 +90,7 @@ async def optimize_fsm(
 
     if request.async_mode:
         from app.api.v1.tasks import create_task
+
         # Verify ownership synchronously so the user gets immediate 404 on
         # someone else's FSM, instead of a task that fails async.
         try:
@@ -106,12 +108,15 @@ async def optimize_fsm(
             request.options or {},
             user_id,
         )
-        return JSONResponse(status_code=202, content={
-            "success": True,
-            "task_id": task_id,
-            "status": "pending",
-            "status_url": f"/api/v1/tasks/{task_id}",
-        })
+        return JSONResponse(
+            status_code=202,
+            content={
+                "success": True,
+                "task_id": task_id,
+                "status": "pending",
+                "status_url": f"/api/v1/tasks/{task_id}",
+            },
+        )
 
     service = OptimizationService(db)
 
@@ -122,7 +127,7 @@ async def optimize_fsm(
         raise HTTPException(status_code=404, detail="FSM not found")
     except FSMValidationException as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except AlgorithmException as e:
+    except AlgorithmException:
         # AlgorithmException messages can wrap arbitrary inner errors; log
         # the full chain and return a generic message.
         logger.exception("algorithm_failed", extra={"fsm_id": str(fsm_id)})
@@ -159,19 +164,27 @@ async def get_optimization_results(
 
     data = []
     for row in rows:
-        data.append({
-            "id": str(row.id),
-            "algorithm": row.algorithm,
-            "execution_time_ms": row.execution_time_ms,
-            "dummy_states_added": row.dummy_states_added,
-            "total_states_final": row.total_states_final,
-            "avg_hamming_before": float(row.avg_hamming_before) if row.avg_hamming_before is not None else None,
-            "avg_hamming_after": float(row.avg_hamming_after) if row.avg_hamming_after is not None else None,
-            "improvement_percentage": float(row.improvement_percentage) if row.improvement_percentage is not None else None,
-            "success": row.success,
-            "error_message": row.error_message,
-            "executed_at": row.executed_at.isoformat() if row.executed_at else None,
-        })
+        data.append(
+            {
+                "id": str(row.id),
+                "algorithm": row.algorithm,
+                "execution_time_ms": row.execution_time_ms,
+                "dummy_states_added": row.dummy_states_added,
+                "total_states_final": row.total_states_final,
+                "avg_hamming_before": float(row.avg_hamming_before)
+                if row.avg_hamming_before is not None
+                else None,
+                "avg_hamming_after": float(row.avg_hamming_after)
+                if row.avg_hamming_after is not None
+                else None,
+                "improvement_percentage": float(row.improvement_percentage)
+                if row.improvement_percentage is not None
+                else None,
+                "success": row.success,
+                "error_message": row.error_message,
+                "executed_at": row.executed_at.isoformat() if row.executed_at else None,
+            }
+        )
 
     return JSONResponse(content=jsonable_encoder({"success": True, "data": data}))
 
@@ -225,11 +238,13 @@ async def compare_algorithms(
                 "compare_algorithm_failed",
                 extra={"fsm_id": str(fsm_id), "algorithm": algo},
             )
-            results.append({
-                "algorithm": algo,
-                "error": "Algorithm execution failed",
-                "success": False,
-            })
+            results.append(
+                {
+                    "algorithm": algo,
+                    "error": "Algorithm execution failed",
+                    "success": False,
+                }
+            )
 
     return JSONResponse(content=jsonable_encoder({"success": True, "data": results}))
 
