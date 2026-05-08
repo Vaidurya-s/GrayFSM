@@ -17,9 +17,9 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Tuple
 
+from fastapi import status
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from fastapi import status
 
 from app.config import settings
 from app.utils.logger import get_logger
@@ -30,6 +30,7 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # In-memory sliding-window store
 # ---------------------------------------------------------------------------
+
 
 class InMemoryRateLimitStore:
     """
@@ -80,10 +81,7 @@ class InMemoryRateLimitStore:
         """Remove keys whose entries are all expired.  Called periodically."""
         now = time.time()
         window_start = now - window
-        expired_keys = [
-            k for k, ts in self._store.items()
-            if all(t <= window_start for t in ts)
-        ]
+        expired_keys = [k for k, ts in self._store.items() if all(t <= window_start for t in ts)]
         for k in expired_keys:
             del self._store[k]
 
@@ -91,6 +89,7 @@ class InMemoryRateLimitStore:
 # ---------------------------------------------------------------------------
 # Optional Redis store (best-effort)
 # ---------------------------------------------------------------------------
+
 
 class RedisRateLimitStore:
     """
@@ -108,6 +107,7 @@ class RedisRateLimitStore:
         """Try to connect to Redis.  Return ``True`` on success."""
         try:
             import redis.asyncio as aioredis  # noqa: WPS433
+
             self._redis = await aioredis.from_url(
                 self._redis_url,
                 encoding="utf-8",
@@ -211,6 +211,7 @@ async def _get_redis_store() -> Optional[RedisRateLimitStore]:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_client_ip(request: Request) -> str:
     """Extract the real client IP, respecting ``X-Forwarded-For``."""
     forwarded = request.headers.get("X-Forwarded-For")
@@ -222,13 +223,15 @@ def _get_client_ip(request: Request) -> str:
 
 
 # Paths that should never be rate-limited
-_EXEMPT_PATHS = frozenset({
-    "/health",
-    "/api/v1/health",
-    "/docs",
-    "/redoc",
-    "/openapi.json",
-})
+_EXEMPT_PATHS = frozenset(
+    {
+        "/health",
+        "/api/v1/health",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +248,7 @@ _EXEMPT_PATHS = frozenset({
 # enforce N hits per W seconds, keyed by F(request)". The middleware
 # evaluates rules in order; first match wins.
 
+
 @dataclass(frozen=True)
 class RateLimitRule:
     """One rate-limit policy.
@@ -254,6 +258,7 @@ class RateLimitRule:
     limit/window: late-bound via factories so settings reloads are picked up
     name:       short label for logs / X-RateLimit-* response headers
     """
+
     name: str
     matches: Callable[[Request], bool]
     key_for: Callable[[Request], str]
@@ -358,6 +363,7 @@ def _too_many(rule: RateLimitRule, info: Dict) -> JSONResponse:
 # ---------------------------------------------------------------------------
 # Middleware function
 # ---------------------------------------------------------------------------
+
 
 async def rate_limit_middleware(request: Request, call_next):
     """Per-IP sliding-window rate limiter.

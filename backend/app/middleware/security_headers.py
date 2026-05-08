@@ -91,8 +91,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def _build_csp_header(self) -> str:
         """Serialise the CSP directive map into a header value string."""
         return "; ".join(
-            f"{key} {value}" if value else key
-            for key, value in self.csp_config.items()
+            f"{key} {value}" if value else key for key, value in self.csp_config.items()
         )
 
     # ------------------------------------------------------------------
@@ -125,11 +124,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Permissions policy -- disable features we never use
         response.headers["Permissions-Policy"] = (
-            "geolocation=(), "
-            "microphone=(), "
-            "camera=(), "
-            "payment=(), "
-            "usb=()"
+            "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
         )
 
         # Remove server header to reduce information leakage

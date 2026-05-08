@@ -110,12 +110,18 @@ jobs:
       - name: Install HDL toolchains (iverilog + ghdl)
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends iverilog ghdl
 
-      - name: Run linting (flake8)
+      - name: Run linting (ruff)
+        # Replaces the previous dual flake8 invocation. Ruff is configured
+        # via backend/pyproject.toml — change rules there, not here.
         run: |
-          flake8 backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 backend/app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          cd backend
+          ruff check app
+          ruff format --check app
 
       - name: Run type checking (mypy)
+        # NOTE: `|| true` kept for now — making mypy strict surfaces ~50
+        # pre-existing type issues. Tracked for a dedicated mypy-cleanup
+        # PR; not part of the lint-tightening scope.
         run: mypy backend/app --ignore-missing-imports || true
 
       - name: Run unit tests with coverage
@@ -171,7 +177,11 @@ jobs:
         run: cd frontend && npm ci
 
       - name: Run linting
-        run: cd frontend && npx eslint src --ext .ts,.tsx --max-warnings 50
+        # --max-warnings 3 grandfathers the three react-refresh stylistic
+        # warnings in CommandPalette.tsx, Toast.tsx, ThemeProvider.tsx —
+        # each exports both a component and a hook/context. Splitting them
+        # is a small follow-up; failing on any new warning is the goal.
+        run: cd frontend && npx eslint src --ext .ts,.tsx --max-warnings 3
 
       - name: Run type checking
         run: cd frontend && npx tsc --noEmit

@@ -4,7 +4,7 @@ Verilog Testbench Exporter
 Generates a Verilog testbench for testing a synthesized FSM module.
 Includes clock generation, reset sequencing, stimulus generation, and waveform dumping.
 """
-import math
+
 from typing import Dict, List, Optional
 
 from app.utils.exceptions import ExportException
@@ -47,7 +47,7 @@ class TestbenchExporter:
         states = definition.get("states", [])
         transitions = definition.get("transitions", [])
         outputs = definition.get("outputs", {})
-        initial_state = definition.get("initial_state", "")
+        definition.get("initial_state", "")
 
         if not states:
             raise ExportException("FSM has no states to export")
@@ -78,10 +78,10 @@ class TestbenchExporter:
 
         # Clock period constants
         half_period = clock_period // 2
-        lines.append(f"    // Clock configuration")
+        lines.append("    // Clock configuration")
         lines.append(f"    localparam CLOCK_PERIOD = {clock_period};")
         lines.append(f"    localparam HALF_PERIOD = {half_period};")
-        lines.append(f"    localparam RESET_TIME = 20;")
+        lines.append("    localparam RESET_TIME = 20;")
         lines.append("")
 
         # Signal declarations
@@ -94,22 +94,22 @@ class TestbenchExporter:
         lines.append("")
 
         # DUT instantiation
-        lines.append(f"    // Device Under Test (DUT)")
+        lines.append("    // Device Under Test (DUT)")
         lines.append(f"    {dut_module_name} dut (")
-        lines.append(f"        .clk(clk),")
-        lines.append(f"        .rst_n(rst_n),")
+        lines.append("        .clk(clk),")
+        lines.append("        .rst_n(rst_n),")
         for inp in sorted(inputs):
             sanitized = self._sanitize_name(inp)
             lines.append(f"        .{sanitized}({sanitized}),")
-        lines.append(f"        .out(out)")
-        lines.append(f"    );")
+        lines.append("        .out(out)")
+        lines.append("    );")
         lines.append("")
 
         # Clock generation
         lines.append("    // Clock generation (10ns period: 5ns high, 5ns low)")
         lines.append("    initial begin")
         lines.append("        clk = 1'b0;")
-        lines.append(f"        forever #HALF_PERIOD clk = ~clk;")
+        lines.append("        forever #HALF_PERIOD clk = ~clk;")
         lines.append("    end")
         lines.append("")
 
@@ -117,7 +117,7 @@ class TestbenchExporter:
         lines.append("    // Reset and stimulus generation")
         lines.append("    initial begin")
         if include_waveform:
-            lines.append(f"        $dumpfile(\"{self._sanitize_name(name)}_tb.vcd\");")
+            lines.append(f'        $dumpfile("{self._sanitize_name(name)}_tb.vcd");')
             lines.append(f"        $dumpvars(0, {self._sanitize_name(name)}_tb);")
         lines.append("")
 
@@ -144,7 +144,7 @@ class TestbenchExporter:
                 if not state_trans:
                     continue
 
-                sanitized_state = self._sanitize_name(state)
+                self._sanitize_name(state)
                 for t in state_trans:
                     inp = t.get("input")
                     if inp:
@@ -153,12 +153,10 @@ class TestbenchExporter:
                             f"        @(posedge clk) {sanitized_inp} = 1'b1; "
                             f"// Transition from {state} on {inp}"
                         )
+                        lines.append(f"        @(posedge clk) {sanitized_inp} = 1'b0;")
                         lines.append(
-                            f"        @(posedge clk) {sanitized_inp} = 1'b0;"
-                        )
-                        lines.append(
-                            f"        $display(\"Time: %0d, State: %b, Output: %b\", "
-                            f"$time, dut.current_state, out);"
+                            '        $display("Time: %0d, State: %b, Output: %b", '
+                            "$time, dut.current_state, out);"
                         )
 
         lines.append("")

@@ -10,6 +10,7 @@ Section 1: States
 Section 2: Transitions
 - from_state, to_state, input, output
 """
+
 from typing import Dict, Optional
 
 from app.utils.exceptions import ExportException
@@ -59,7 +60,13 @@ class CSVExporter:
 
         # Build states section
         states_csv = self._export_states(
-            states, outputs, encodings, initial_state, separator, include_headers, include_section_labels
+            states,
+            outputs,
+            encodings,
+            initial_state,
+            separator,
+            include_headers,
+            include_section_labels,
         )
 
         # Build transitions section
@@ -95,13 +102,15 @@ class CSVExporter:
             output = outputs.get(state, "")
             encoding = encodings.get(state, "")
 
-            line = separator.join([
-                state,
-                output,
-                encoding,
-                is_initial,
-                is_dummy,
-            ])
+            line = separator.join(
+                [
+                    state,
+                    output,
+                    encoding,
+                    is_initial,
+                    is_dummy,
+                ]
+            )
             lines.append(line)
 
         return "\n".join(lines)
@@ -128,12 +137,14 @@ class CSVExporter:
             input_signal = trans.get("input", "")
             output_signal = trans.get("output", "")
 
-            line = separator.join([
-                from_state,
-                to_state,
-                input_signal,
-                output_signal,
-            ])
+            line = separator.join(
+                [
+                    from_state,
+                    to_state,
+                    input_signal,
+                    output_signal,
+                ]
+            )
             lines.append(line)
 
         return "\n".join(lines)

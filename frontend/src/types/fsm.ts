@@ -81,7 +81,10 @@ export interface DummyState {
 export interface OptimizedFSM extends FSM {
   dummy_states: DummyState[];
   algorithm_used: string;
-  metrics: Record<string, any>;
+  // Per-algorithm metrics. Common keys: avg_hamming_before/_after,
+  // max_hamming, improvement_percentage. Kept loose because each
+  // algorithm contributes its own keys.
+  metrics: Record<string, number | string | boolean>;
   optimization_time_ms: number;
 }
 

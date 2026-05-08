@@ -1,15 +1,17 @@
 """
 FSM validation and manipulation
 """
-from typing import List, Dict, Optional, Set
+
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional, Set
 
 from app.utils.exceptions import FSMValidationException
 
 
 class FSMType(str, Enum):
     """FSM machine type"""
+
     MOORE = "moore"
     MEALY = "mealy"
 
@@ -17,6 +19,7 @@ class FSMType(str, Enum):
 @dataclass
 class Transition:
     """FSM transition"""
+
     from_state: str
     to_state: str
     input_value: Optional[str] = None
@@ -27,6 +30,7 @@ class Transition:
 @dataclass
 class State:
     """FSM state"""
+
     id: str
     label: Optional[str] = None
     output: Optional[str] = None  # For Moore machines
@@ -43,7 +47,7 @@ class FSMValidator:
         states: List[str],
         initial_state: str,
         transitions: List[Dict],
-        outputs: Optional[Dict[str, str]] = None
+        outputs: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Validate complete FSM structure.
@@ -64,9 +68,7 @@ class FSMValidator:
 
         # Check initial state exists
         if initial_state not in states:
-            raise FSMValidationException(
-                f"Initial state '{initial_state}' not in states list"
-            )
+            raise FSMValidationException(f"Initial state '{initial_state}' not in states list")
 
         # Validate transitions
         FSMValidator.validate_transitions(states, transitions)
@@ -80,15 +82,10 @@ class FSMValidator:
 
             for state in states:
                 if state not in outputs:
-                    raise FSMValidationException(
-                        f"Missing output for state '{state}'"
-                    )
+                    raise FSMValidationException(f"Missing output for state '{state}'")
 
     @staticmethod
-    def validate_transitions(
-        states: List[str],
-        transitions: List[Dict]
-    ) -> None:
+    def validate_transitions(states: List[str], transitions: List[Dict]) -> None:
         """
         Validate all transitions reference valid states.
 
@@ -106,14 +103,10 @@ class FSMValidator:
             to_state = trans.get("to_state")
 
             if not from_state:
-                raise FSMValidationException(
-                    f"Transition {i} missing 'from_state'"
-                )
+                raise FSMValidationException(f"Transition {i} missing 'from_state'")
 
             if not to_state:
-                raise FSMValidationException(
-                    f"Transition {i} missing 'to_state'"
-                )
+                raise FSMValidationException(f"Transition {i} missing 'to_state'")
 
             if from_state not in state_set:
                 raise FSMValidationException(
@@ -127,9 +120,7 @@ class FSMValidator:
 
     @staticmethod
     def check_reachability(
-        states: List[str],
-        initial_state: str,
-        transitions: List[Dict]
+        states: List[str], initial_state: str, transitions: List[Dict]
     ) -> Set[str]:
         """
         Check which states are reachable from initial state.

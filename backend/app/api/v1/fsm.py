@@ -1,8 +1,9 @@
 """
 FSM CRUD API endpoints
 """
+
 import math
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,7 +15,11 @@ from app.db.session import get_db
 from app.middleware.auth import UserToken, get_optional_current_user, get_required_current_user
 from app.schemas.fsm import FSMCreate, FSMFork, FSMResponse, FSMUpdate
 from app.services.fsm_service import FSMService
-from app.utils.exceptions import FSMNotFoundException, FSMPermissionException, FSMValidationException
+from app.utils.exceptions import (
+    FSMNotFoundException,
+    FSMPermissionException,
+    FSMValidationException,
+)
 
 router = APIRouter()
 
@@ -117,16 +122,20 @@ async def list_fsms(
         sort_by=sort_by,
         sort_order=sort_order,
     )
-    return JSONResponse(content=jsonable_encoder({
-        "success": True,
-        "data": [FSMResponse.model_validate(f) for f in fsms],
-        "pagination": {
-            "page": page,
-            "page_size": page_size,
-            "total": total,
-            "pages": max(1, math.ceil(total / page_size)),
-        },
-    }))
+    return JSONResponse(
+        content=jsonable_encoder(
+            {
+                "success": True,
+                "data": [FSMResponse.model_validate(f) for f in fsms],
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total": total,
+                    "pages": max(1, math.ceil(total / page_size)),
+                },
+            }
+        )
+    )
 
 
 @router.delete("/{fsm_id}", status_code=204)

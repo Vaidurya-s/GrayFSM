@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -122,9 +122,7 @@ class OptimizationService:
         # 1. Pre-optimization encoding + metrics. Done up front so we can
         #    record `avg_hamming_before` even on algorithm failure.
         definition = original_fsm.definition
-        pre_encodings = self._assign_gray_encodings(
-            definition["states"], original_fsm.bit_width
-        )
+        pre_encodings = self._assign_gray_encodings(definition["states"], original_fsm.bit_width)
         pre_avg = self._calculate_avg_hamming(definition["transitions"], pre_encodings)
         pre_max = self._calculate_max_hamming(definition["transitions"], pre_encodings)
 
@@ -431,9 +429,7 @@ class OptimizationService:
         return total / count if count > 0 else 0.0
 
     @staticmethod
-    def _calculate_max_hamming(
-        transitions: List[Dict[str, Any]], encodings: Dict[str, str]
-    ) -> int:
+    def _calculate_max_hamming(transitions: List[Dict[str, Any]], encodings: Dict[str, str]) -> int:
         if not transitions:
             return 0
         distances: List[int] = []

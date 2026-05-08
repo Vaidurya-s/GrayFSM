@@ -31,7 +31,9 @@ export interface PaginatedResponse<T> extends APIResponse<T[]> {
 export interface APIError {
   code: string;
   message: string;
-  details?: any;
+  // Pydantic returns a list of validation errors; other backends may
+  // return strings or maps. `unknown` forces callers to narrow.
+  details?: unknown;
 }
 
 export interface ErrorResponse {
@@ -62,13 +64,18 @@ export interface Example {
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   tags: string[];
-  fsm_data: any;
+  // Inline FSM definition. Mirrors the backend's `definition` field;
+  // kept loose because example sources include encodings and other
+  // extension fields that aren't all typed.
+  fsm_data: Record<string, unknown>;
 }
 
 export interface TaskStatus {
   task_id: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
   progress: number;
-  result?: any;
+  // OptimizationResponse from the backend on success; loose because
+  // each algorithm contributes its own keys.
+  result?: Record<string, unknown>;
   error?: string;
 }

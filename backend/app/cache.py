@@ -1,4 +1,5 @@
 """Redis cache connection and helpers"""
+
 import json
 from typing import Optional
 

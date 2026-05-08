@@ -35,7 +35,9 @@ export const algorithmAPI = {
   compare: async (
     fsmId: string,
     algorithms: string[],
-    options?: Record<string, any>
+    // Per-algorithm tuning knobs (max_iterations, timeout_ms, etc.).
+    // Loose because the backend accepts any algorithm-specific shape.
+    options?: Record<string, unknown>
   ): Promise<APIResponse<AlgorithmResult[]>> => {
     return apiClient.post(`/fsms/${fsmId}/compare`, {
       algorithms,

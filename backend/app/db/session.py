@@ -5,9 +5,13 @@ Optimized connection pool configuration based on:
 - performance/database/03_connection_pool_config.py recommendations
 - Medium traffic workload profile (50-200 concurrent users)
 """
+
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import event, select, func as sa_func
+
+from sqlalchemy import func as sa_func
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from app.config import settings
 from app.db.base import Base
 from app.utils.logger import get_logger
@@ -50,7 +54,7 @@ AsyncSessionLocal = async_sessionmaker(
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency for getting async database session.
-    
+
     Usage:
         @app.get("/items")
         async def read_items(db: AsyncSession = Depends(get_db)):

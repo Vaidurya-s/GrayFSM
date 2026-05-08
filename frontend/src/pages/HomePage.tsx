@@ -8,21 +8,34 @@ import { Button, Card, Badge } from '../components/ui'
 export default function HomePage() {
   const [selectedFSM, setSelectedFSM] = useState<FSM | null>(null)
 
+  // The axios response interceptor in api/client.ts already unwraps
+  // `response.data` from the AxiosResponse envelope at runtime, but TS's
+  // axios typings still claim AxiosResponse<T>. These narrowing helpers
+  // accept either shape and return the actual payload.
+  const unwrapList = <T,>(r: unknown): T[] => {
+    if (Array.isArray(r)) return r as T[]
+    if (r && typeof r === 'object' && 'data' in r && Array.isArray((r as { data: unknown }).data)) {
+      return (r as { data: T[] }).data
+    }
+    return []
+  }
+  const unwrap = <T,>(r: unknown, fallback: T): T => {
+    if (r && typeof r === 'object' && 'data' in r) return (r as { data: T }).data
+    return (r as T) ?? fallback
+  }
+
   const { data: fsms, isLoading, error } = useQuery({
     queryKey: ['fsms'],
-    queryFn: async () => {
-      const response = await api.get<{ success: boolean; data: FSM[]; pagination: unknown }>('/fsms?limit=10')
-      return (response as any).data ?? response
-    },
+    queryFn: async () => unwrapList<FSM>(await api.get('/fsms?limit=10')),
     retry: 1,
   })
 
   const { data: healthData } = useQuery({
     queryKey: ['health'],
-    queryFn: async () => {
-      const response = await api.get<{ status: string; message: string }>('/health')
-      return (response as any).data ?? response
-    },
+    queryFn: async () => unwrap<{ status: string; message: string }>(
+      await api.get('/health'),
+      { status: 'unknown', message: '' },
+    ),
   })
 
   return (

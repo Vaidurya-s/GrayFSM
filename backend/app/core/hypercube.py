@@ -4,10 +4,12 @@ Hypercube graph operations using NetworkX
 Nodes are Gray code strings (e.g. "010"). Edges connect codes
 that differ by exactly one bit.
 """
-import networkx as nx
+
 from typing import List
 
-from app.core.gray_code import generate_gray_codes, hamming_distance
+import networkx as nx
+
+from app.core.gray_code import generate_gray_codes
 
 
 class HypercubeGraph:
@@ -47,8 +49,8 @@ class HypercubeGraph:
             bits = list(code)
             for pos in range(self.bit_width):
                 neighbor_bits = bits.copy()
-                neighbor_bits[pos] = '1' if bits[pos] == '0' else '0'
-                neighbor = ''.join(neighbor_bits)
+                neighbor_bits[pos] = "1" if bits[pos] == "0" else "0"
+                neighbor = "".join(neighbor_bits)
                 if neighbor in g and not g.has_edge(code, neighbor):
                     g.add_edge(code, neighbor)
 
@@ -68,8 +70,7 @@ class HypercubeGraph:
         """
         if len(start_code) != self.bit_width or len(end_code) != self.bit_width:
             raise ValueError(
-                f"Codes must be {self.bit_width} bits, "
-                f"got {len(start_code)} and {len(end_code)}"
+                f"Codes must be {self.bit_width} bits, got {len(start_code)} and {len(end_code)}"
             )
 
         if start_code == end_code:
@@ -83,11 +84,7 @@ class HypercubeGraph:
             # Should never happen in a hypercube, but handle gracefully
             return [start_code, end_code]
 
-    def find_intermediate_states(
-        self,
-        start_code: str,
-        end_code: str
-    ) -> List[str]:
+    def find_intermediate_states(self, start_code: str, end_code: str) -> List[str]:
         """
         Find intermediate Gray codes needed for single-bit transitions.
 
@@ -115,9 +112,7 @@ class HypercubeGraph:
             List of neighboring Gray code strings
         """
         if len(code) != self.bit_width:
-            raise ValueError(
-                f"Code must be {self.bit_width} bits, got {len(code)}"
-            )
+            raise ValueError(f"Code must be {self.bit_width} bits, got {len(code)}")
         if code not in self.graph:
             raise ValueError(f"Code '{code}' not found in hypercube")
         return list(self.graph.neighbors(code))

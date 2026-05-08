@@ -7,6 +7,7 @@ this prevents an attacker who guesses or scrapes a task UUID from reading
 another user's optimization output (which can include the original FSM
 definition).
 """
+
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException

@@ -1,11 +1,12 @@
 """
 Category Service - Business logic for FSM category operations
 """
+
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.fsm import Category
 from app.utils.logger import get_logger
@@ -60,9 +61,7 @@ class CategoryService:
         Returns:
             Category instance or None if not found
         """
-        result = await self.db.execute(
-            select(Category).where(Category.id == category_id)
-        )
+        result = await self.db.execute(select(Category).where(Category.id == category_id))
         return result.scalar_one_or_none()
 
     async def get_category_by_slug(self, slug: str) -> Optional[Category]:
@@ -75,7 +74,5 @@ class CategoryService:
         Returns:
             Category instance or None if not found
         """
-        result = await self.db.execute(
-            select(Category).where(Category.slug == slug)
-        )
+        result = await self.db.execute(select(Category).where(Category.slug == slug))
         return result.scalar_one_or_none()

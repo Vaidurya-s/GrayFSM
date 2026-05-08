@@ -1,14 +1,15 @@
 """
 Health check and system status endpoints
 """
+
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
 from app.config import settings
+from app.db.session import get_db
 
 router = APIRouter()
 
@@ -26,6 +27,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     # Test Redis connection
     try:
         from app.cache import get_redis
+
         redis_client = await get_redis()
         cache_status = "up" if redis_client else "down"
     except Exception:
@@ -39,7 +41,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         "services": {
             "database": db_status,
             "cache": cache_status,
-        }
+        },
     }
 
 
@@ -50,5 +52,5 @@ async def get_metrics():
         "request_count": 0,  # TODO: Implement metrics collection
         "avg_response_time_ms": 0,
         "optimization_count": 0,
-        "cache_hit_rate": 0.0
+        "cache_hit_rate": 0.0,
     }

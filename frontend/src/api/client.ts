@@ -64,7 +64,9 @@ export interface PaginatedResponse<T> extends APIResponse<T[]> {
 export interface APIError {
   code: string;
   message: string;
-  details?: any;
+  // Pydantic returns a list of validation errors; other paths may return
+  // a string. Consumers should narrow before reading.
+  details?: unknown;
 }
 
 export interface ErrorResponse {

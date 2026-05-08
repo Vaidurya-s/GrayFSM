@@ -102,14 +102,14 @@ export default function EditorPage() {
       return;
     }
     modals.openCreate();
-  }, [id, updateMutation, draftName, toastSuccess, toastError]);
+  }, [id, updateMutation, draftName, toastSuccess, toastError, modals]);
 
   const handleCreateSuccess = useCallback(
     (fsmId: string) => {
       modals.closeCreate();
       navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
     },
-    [navigate]
+    [navigate, modals]
   );
 
   const handleImportSuccess = useCallback(
@@ -118,7 +118,7 @@ export default function EditorPage() {
       toastSuccess('FSM imported successfully');
       navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
     },
-    [navigate, toastSuccess]
+    [navigate, toastSuccess, modals]
   );
 
   const handleOptimize = useCallback(() => {
@@ -217,7 +217,7 @@ export default function EditorPage() {
         description: 'Show keyboard shortcuts',
       },
     ],
-    [handleSave, handleDelete, handleDeselect, undo, redo, copySelected, pasteClipboard],
+    [handleSave, handleDelete, handleDeselect, undo, redo, copySelected, pasteClipboard, modals],
   );
 
   useKeyboardShortcuts(shortcuts);

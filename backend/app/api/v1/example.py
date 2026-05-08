@@ -1,6 +1,7 @@
 """
 Example FSM endpoints
 """
+
 from fastapi import APIRouter, HTTPException
 
 from app.services.example_service import ExampleService

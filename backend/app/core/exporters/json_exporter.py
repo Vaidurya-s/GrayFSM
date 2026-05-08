@@ -4,6 +4,7 @@ JSON Exporter
 Generates a clean, portable JSON export of an FSM definition.
 Strips internal metadata and produces a standardized format.
 """
+
 import json
 from typing import Dict, Optional
 

@@ -42,6 +42,50 @@ target-version = ['py310']
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+# Conservative starter set. Defaults (E, F) only catch a fraction of what
+# ruff knows about — these add the well-known stable rule packs that
+# don't require sweeping cleanup of the existing codebase.
+#
+# Deliberately NOT enabled here (each is a real improvement but worth
+# its own focused PR with proper triage):
+#   - "UP" (pyupgrade): flags ~290 typing.List / Optional[X] modernizations
+#   - "S"  (bandit):    mostly false positives in this codebase
+#   - "RUF002":         cosmetic en-dash flagging in docstrings
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # isort (import order)
+    "N",    # pep8-naming
+    "B",    # flake8-bugbear (real-bug catchers like mutable default args)
+]
+ignore = [
+    # FastAPI uses `= Depends(...)` in defaults — framework pattern,
+    # not a B008 mutable-default-argument bug.
+    "B008",
+    # B904 (raise ... from) is a real correctness improvement but the
+    # existing code has ~20 violations; tracked for a follow-up cleanup PR.
+    "B904",
+    # E501 (line too long) is enforced by `ruff format`, not `ruff check`,
+    # so disable the duplicate complaint.
+    "E501",
+    # GrayFSMException intentionally doesn't use the "Error" suffix —
+    # renaming it would touch every `except GrayFSMException:` site in
+    # the codebase. Tracked for a future renaming PR.
+    "N818",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "N802",  # test functions sometimes shadow class names by convention
+]
+"alembic/versions/**" = [
+    "E501",  # auto-generated migrations often exceed line length
+    "I",     # alembic generates its own import order
+    "UP",    # don't modernize generated migrations
+]
+
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true

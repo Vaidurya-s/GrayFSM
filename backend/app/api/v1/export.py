@@ -1,6 +1,7 @@
 """
 Export endpoints for HDL generation
 """
+
 from typing import Optional
 from uuid import UUID
 
@@ -23,6 +24,7 @@ router = APIRouter()
 
 class ExportOptions(BaseModel):
     """Typed options for FSM export, replacing raw Dict to prevent injection"""
+
     module_name: Optional[str] = None
     include_comments: bool = True
     include_synthesis_pragmas: bool = True
@@ -37,13 +39,12 @@ class ExportOptions(BaseModel):
 
 class ExportRequest(BaseModel):
     """Request schema for FSM export"""
+
     format: str = Field(
-        ..., pattern="^(verilog|vhdl|json|csv|testbench)$",
-        description="Export format"
+        ..., pattern="^(verilog|vhdl|json|csv|testbench)$", description="Export format"
     )
     options: ExportOptions = Field(
-        default_factory=ExportOptions,
-        description="Format-specific options"
+        default_factory=ExportOptions, description="Format-specific options"
     )
 
 

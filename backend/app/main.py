@@ -17,9 +17,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
-from app.api.v1 import fsm, algorithm, export, category, example, health, auth, tasks
-from app.config import settings, LOGGING_CONFIG
-from app.db.session import engine, create_db_and_tables
+from app.api.v1 import algorithm, auth, category, example, export, fsm, health, tasks
+from app.config import LOGGING_CONFIG, settings
+from app.db.session import create_db_and_tables, engine
 from app.middleware.error_handler import error_handler_middleware
 from app.middleware.logging import logging_middleware
 from app.middleware.rate_limit import rate_limit_middleware
@@ -51,8 +51,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Initialize observability (telemetry + metrics)
     try:
-        from app.observability.telemetry import setup_telemetry
         from app.observability.metrics import setup_metrics
+        from app.observability.telemetry import setup_telemetry
+
         setup_telemetry(app)
         setup_metrics(app)
         logger.info("Observability initialized")
@@ -67,6 +68,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Shutdown telemetry gracefully
     try:
         from app.observability.telemetry import shutdown_telemetry
+
         shutdown_telemetry()
     except Exception:
         pass
@@ -74,6 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Close Redis connection
     try:
         from app.cache import close_redis
+
         await close_redis()
     except Exception:
         pass
@@ -156,53 +159,21 @@ app.middleware("http")(logging_middleware)
 # Include API routers
 API_PREFIX = "/api/v1"
 
-app.include_router(
-    health.router,
-    prefix=API_PREFIX,
-    tags=["Health"]
-)
+app.include_router(health.router, prefix=API_PREFIX, tags=["Health"])
 
-app.include_router(
-    fsm.router,
-    prefix=f"{API_PREFIX}/fsms",
-    tags=["FSMs"]
-)
+app.include_router(fsm.router, prefix=f"{API_PREFIX}/fsms", tags=["FSMs"])
 
-app.include_router(
-    algorithm.router,
-    prefix=f"{API_PREFIX}/fsms",
-    tags=["Algorithms"]
-)
+app.include_router(algorithm.router, prefix=f"{API_PREFIX}/fsms", tags=["Algorithms"])
 
-app.include_router(
-    export.router,
-    prefix=f"{API_PREFIX}/fsms",
-    tags=["Export"]
-)
+app.include_router(export.router, prefix=f"{API_PREFIX}/fsms", tags=["Export"])
 
-app.include_router(
-    category.router,
-    prefix=f"{API_PREFIX}/categories",
-    tags=["Categories"]
-)
+app.include_router(category.router, prefix=f"{API_PREFIX}/categories", tags=["Categories"])
 
-app.include_router(
-    example.router,
-    prefix=f"{API_PREFIX}/examples",
-    tags=["Examples"]
-)
+app.include_router(example.router, prefix=f"{API_PREFIX}/examples", tags=["Examples"])
 
-app.include_router(
-    auth.router,
-    prefix=f"{API_PREFIX}/auth",
-    tags=["Authentication"]
-)
+app.include_router(auth.router, prefix=f"{API_PREFIX}/auth", tags=["Authentication"])
 
-app.include_router(
-    tasks.router,
-    prefix=f"{API_PREFIX}/tasks",
-    tags=["Tasks"]
-)
+app.include_router(tasks.router, prefix=f"{API_PREFIX}/tasks", tags=["Tasks"])
 
 
 @app.exception_handler(HTTPException)
@@ -221,7 +192,9 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Override FastAPI's default validation error handler to use consistent response format."""
     return JSONResponse(
         status_code=422,
@@ -239,19 +212,21 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get("/")
 async def root() -> JSONResponse:
     """Root endpoint - API information"""
-    return JSONResponse({
-        "success": True,
-        "data": {
-            "name": settings.app_name,
-            "version": settings.app_version,
-            "environment": settings.environment,
-            "docs_url": "/docs" if settings.debug else "Documentation disabled in production",
-        },
-        "metadata": {
-            "timestamp": "2025-11-29T12:00:00Z",
-            "api_version": "v1",
+    return JSONResponse(
+        {
+            "success": True,
+            "data": {
+                "name": settings.app_name,
+                "version": settings.app_version,
+                "environment": settings.environment,
+                "docs_url": "/docs" if settings.debug else "Documentation disabled in production",
+            },
+            "metadata": {
+                "timestamp": "2025-11-29T12:00:00Z",
+                "api_version": "v1",
+            },
         }
-    })
+    )
 
 
 if __name__ == "__main__":
