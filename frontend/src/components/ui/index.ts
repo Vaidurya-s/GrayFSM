@@ -1,6 +1,11 @@
 // UI Component Library — GrayFSM
-export { CommandPalette, useCommandPalette } from './CommandPalette';
+//
+// Hooks/contexts live in their own files (split out so React Refresh can
+// fast-refresh component changes without a full reload). The barrel below
+// keeps the public import path stable for callers.
+export { CommandPalette } from './CommandPalette';
 export type { Command } from './CommandPalette';
+export { useCommandPalette } from './use-command-palette';
 
 export { Alert } from './Alert';
 export type { AlertProps, AlertVariant } from './Alert';
@@ -26,8 +31,9 @@ export type { SpinnerProps, SpinnerSize } from './Spinner';
 export { Tabs, TabPanel } from './Tabs';
 export type { TabsProps, TabPanelProps, Tab } from './Tabs';
 
-export { ToastProvider, useToast } from './Toast';
-export type { Toast, ToastType } from './Toast';
+export { ToastProvider } from './Toast';
+export { useToast } from './toast-context';
+export type { Toast, ToastType } from './toast-context';
 
 export { Tooltip } from './Tooltip';
 export type { TooltipProps, TooltipPlacement } from './Tooltip';

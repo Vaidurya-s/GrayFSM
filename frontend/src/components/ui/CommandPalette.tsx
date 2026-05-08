@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { ROUTES, generateRoute } from '../../config/routes';
-import { useTheme } from '../providers/ThemeProvider';
+import { useTheme } from '../providers/theme-context';
 import { useUIStore } from '../../store/uiStore';
 import { useFSMStore } from '../../store/fsmStore';
 
@@ -559,27 +559,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   );
 }
 
-// ─── Hook: global Ctrl+K / Cmd+K trigger ─────────────────────────────────────
-
-export function useCommandPalette() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((v) => !v), []);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().includes('MAC');
-      const trigger = isMac ? e.metaKey : e.ctrlKey;
-      if (trigger && e.key === 'k') {
-        e.preventDefault();
-        toggle();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [toggle]);
-
-  return { isOpen, open, close, toggle };
-}
+// `useCommandPalette` now lives in `./use-command-palette`. Importers
+// should pull from there directly or from the `./index` barrel —
+// keeping a re-export here would re-introduce the
+// react-refresh/only-export-components warning.

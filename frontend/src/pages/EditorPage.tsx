@@ -6,7 +6,7 @@ import FSMCreateForm from '../components/forms/FSMCreateForm';
 import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
 import { useFSM, useUpdateFSM } from '../hooks/useFSM';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSMStore } from '../store/fsmStore';
 import { useUIStore } from '../store/uiStore';

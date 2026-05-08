@@ -1,36 +1,13 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-} from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { ToastContext, type Toast, type ToastType } from './toast-context';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-export interface Toast {
-  id: string;
-  type: ToastType;
-  message: string;
-  title?: string;
-  duration?: number; // ms; 0 = persistent
-}
-
-interface ToastContextValue {
-  addToast: (toast: Omit<Toast, 'id'>) => string;
-  removeToast: (id: string) => void;
-}
-
-// ─── Context ─────────────────────────────────────────────────────────────────
-
-const ToastContext = createContext<ToastContextValue | null>(null);
+// `useToast` and the `Toast` / `ToastType` types live in `./toast-context`
+// (importers should go through the `./index` barrel or that file directly).
+// Re-exporting them from this .tsx file would re-introduce the
+// react-refresh/only-export-components warning.
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -91,7 +68,7 @@ function ToastItem({
       className={cn(
         'flex items-start gap-3 w-80 rounded-lg border shadow-lg p-4',
         'animate-in slide-in-from-right-5 fade-in-0 duration-200',
-        config.wrapper
+        config.wrapper,
       )}
     >
       <span className={cn('shrink-0 mt-0.5', config.iconColor)}>{config.icon}</span>
@@ -144,32 +121,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </div>
           ))}
         </div>,
-        document.body
+        document.body,
       )}
     </ToastContext.Provider>
   );
-}
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) {
-    throw new Error('useToast must be used within a <ToastProvider>');
-  }
-
-  const { addToast, removeToast } = ctx;
-
-  return {
-    toast: addToast,
-    dismiss: removeToast,
-    success: (message: string, opts?: Partial<Omit<Toast, 'id' | 'type' | 'message'>>) =>
-      addToast({ type: 'success', message, ...opts }),
-    error: (message: string, opts?: Partial<Omit<Toast, 'id' | 'type' | 'message'>>) =>
-      addToast({ type: 'error', message, ...opts }),
-    warning: (message: string, opts?: Partial<Omit<Toast, 'id' | 'type' | 'message'>>) =>
-      addToast({ type: 'warning', message, ...opts }),
-    info: (message: string, opts?: Partial<Omit<Toast, 'id' | 'type' | 'message'>>) =>
-      addToast({ type: 'info', message, ...opts }),
-  };
 }

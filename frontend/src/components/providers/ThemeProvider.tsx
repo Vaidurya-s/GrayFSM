@@ -1,20 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from 'react';
-
-export type Theme = 'light' | 'dark' | 'system';
-
-interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  isDark: boolean;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+import { useEffect, useState, type ReactNode } from 'react';
+import { ThemeContext, type Theme } from './theme-context';
 
 const STORAGE_KEY = 'grayfsm-theme';
 
@@ -85,12 +70,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme must be used inside <ThemeProvider>');
-  }
-  return ctx;
 }
