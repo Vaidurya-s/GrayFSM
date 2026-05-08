@@ -64,9 +64,6 @@ ignore = [
     # FastAPI uses `= Depends(...)` in defaults — framework pattern,
     # not a B008 mutable-default-argument bug.
     "B008",
-    # B904 (raise ... from) is a real correctness improvement but the
-    # existing code has ~20 violations; tracked for a follow-up cleanup PR.
-    "B904",
     # E501 (line too long) is enforced by `ruff format`, not `ruff check`,
     # so disable the duplicate complaint.
     "E501",

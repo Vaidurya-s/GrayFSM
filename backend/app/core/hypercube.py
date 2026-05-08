@@ -77,7 +77,7 @@ class HypercubeGraph:
         try:
             return nx.shortest_path(self.graph, start_code, end_code)
         except nx.NodeNotFound as e:
-            raise ValueError(f"Code not found in hypercube: {e}")
+            raise ValueError(f"Code not found in hypercube: {e}") from e
         except nx.NetworkXNoPath:
             # Should never happen in a hypercube, but handle gracefully
             return [start_code, end_code]

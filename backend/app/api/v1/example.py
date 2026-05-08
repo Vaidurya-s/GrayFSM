@@ -49,4 +49,4 @@ async def get_example(example_name: str):
         example = await _example_service.get_example(example_name)
         return example
     except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from None

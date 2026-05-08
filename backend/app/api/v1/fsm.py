@@ -37,7 +37,7 @@ async def create_fsm(
         return fsm
     except FSMValidationException as e:
         # Validation messages describe the user's own input; safe to return.
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from None
 
 
 @router.get("/{fsm_id}", response_model=FSMResponse)
@@ -53,7 +53,7 @@ async def get_fsm(
         fsm = await service.get_fsm(fsm_id, user_id=user_id)
         return fsm
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
 
 
 @router.put("/{fsm_id}", response_model=FSMResponse)
@@ -71,7 +71,7 @@ async def update_fsm(
         return fsm
     except (FSMNotFoundException, FSMPermissionException):
         # Collapse not-found and forbidden into 404 to prevent enumeration.
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
 
 
 @router.post("/{fsm_id}/fork", response_model=FSMResponse, status_code=201)
@@ -89,7 +89,7 @@ async def fork_fsm(
         forked = await service.fork_fsm(fsm_id, fork_data.name, user_id=user_id)
         return forked
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
 
 
 @router.get("")
@@ -149,4 +149,4 @@ async def delete_fsm(
         user_id = UUID(current_user["user_id"]) if current_user else None
         await service.delete_fsm(fsm_id, user_id=user_id)
     except (FSMNotFoundException, FSMPermissionException):
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
