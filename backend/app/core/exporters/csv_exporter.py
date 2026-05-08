@@ -11,8 +11,6 @@ Section 2: Transitions
 - from_state, to_state, input, output
 """
 
-from typing import Dict, Optional
-
 from app.utils.exceptions import ExportException
 
 
@@ -24,7 +22,7 @@ class CSVExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate a CSV representation of the FSM.

@@ -19,7 +19,7 @@ Adapted from security/fixes/01_authentication_middleware.py
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 # A lightweight dict representing the decoded token payload.
 # Keeping this as a plain dict avoids pulling in heavy ORM/DB deps.
-UserToken = Dict[str, Any]
+UserToken = dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 # ---------------------------------------------------------------------------
 
 
-def _decode_token(token: str) -> Optional[UserToken]:
+def _decode_token(token: str) -> UserToken | None:
     """
     Decode and validate a JWT token.
 
@@ -113,8 +113,8 @@ def _decode_token(token: str) -> Optional[UserToken]:
 
 
 def create_access_token(
-    data: Dict[str, Any],
-    expires_delta: Optional[timedelta] = None,
+    data: dict[str, Any],
+    expires_delta: timedelta | None = None,
 ) -> str:
     """
     Create a signed JWT access token.
@@ -157,8 +157,8 @@ def create_access_token(
 
 async def get_optional_current_user(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
-) -> Optional[UserToken]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+) -> UserToken | None:
     """
     FastAPI dependency: returns the current user or ``None``.
 
@@ -166,7 +166,7 @@ async def get_optional_current_user(
     identically whether or not the client sends a token.
     Checks Authorization header first, then falls back to httpOnly cookie.
     """
-    token: Optional[str] = None
+    token: str | None = None
 
     if credentials is not None:
         token = credentials.credentials
@@ -188,7 +188,7 @@ async def get_optional_current_user(
 
 async def get_required_current_user(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> UserToken:
     """
     FastAPI dependency: returns the current user **or raises 401**.
@@ -196,7 +196,7 @@ async def get_required_current_user(
     Use this only on endpoints that explicitly need authentication.
     Checks Authorization header first, then falls back to httpOnly cookie.
     """
-    token: Optional[str] = None
+    token: str | None = None
 
     if credentials is not None:
         token = credentials.credentials

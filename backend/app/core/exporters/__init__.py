@@ -6,7 +6,7 @@ All exporters share the same interface:
     export(definition, fsm_type, name, options) -> str
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from app.core.exporters.csv_exporter import CSVExporter
 from app.core.exporters.json_exporter import JSONExporter
@@ -17,7 +17,7 @@ from app.core.exporters.vhdl import VHDLExporter
 from app.utils.exceptions import ExportException
 
 # Registry mapping format name -> exporter class
-EXPORTER_REGISTRY: Dict[str, Any] = {
+EXPORTER_REGISTRY: dict[str, Any] = {
     "verilog": VerilogExporter,
     "vhdl": VHDLExporter,
     "json": JSONExporter,
@@ -27,7 +27,7 @@ EXPORTER_REGISTRY: Dict[str, Any] = {
 }
 
 # File extension mapping
-FORMAT_EXTENSIONS: Dict[str, str] = {
+FORMAT_EXTENSIONS: dict[str, str] = {
     "verilog": ".v",
     "vhdl": ".vhd",
     "json": ".json",

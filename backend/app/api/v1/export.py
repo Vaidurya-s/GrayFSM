@@ -2,7 +2,6 @@
 Export endpoints for HDL generation
 """
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -25,16 +24,16 @@ router = APIRouter()
 class ExportOptions(BaseModel):
     """Typed options for FSM export, replacing raw Dict to prevent injection"""
 
-    module_name: Optional[str] = None
+    module_name: str | None = None
     include_comments: bool = True
     include_synthesis_pragmas: bool = True
-    target_tool: Optional[str] = Field(None, pattern="^(vivado|quartus|generic)$")
+    target_tool: str | None = Field(None, pattern="^(vivado|quartus|generic)$")
     clock_period: int = Field(10, ge=1, le=1000)
     include_waveform: bool = True
     separator: str = Field(",", max_length=1)
     include_headers: bool = True
     include_section_labels: bool = False
-    style: Optional[str] = Field(None, pattern="^(standard|compact|verbose)$")
+    style: str | None = Field(None, pattern="^(standard|compact|verbose)$")
 
 
 class ExportRequest(BaseModel):

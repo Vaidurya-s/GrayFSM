@@ -1,7 +1,6 @@
 """Redis cache connection and helpers"""
 
 import json
-from typing import Optional
 
 import redis.asyncio as redis
 
@@ -10,10 +9,10 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_redis_client: Optional[redis.Redis] = None
+_redis_client: redis.Redis | None = None
 
 
-async def get_redis() -> Optional[redis.Redis]:
+async def get_redis() -> redis.Redis | None:
     """Get Redis client, returns None if unavailable"""
     global _redis_client
     if _redis_client is None:
@@ -27,7 +26,7 @@ async def get_redis() -> Optional[redis.Redis]:
     return _redis_client
 
 
-async def cache_get(key: str) -> Optional[dict]:
+async def cache_get(key: str) -> dict | None:
     """Get cached value, returns None on miss or error"""
     client = await get_redis()
     if not client:

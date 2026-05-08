@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from app.config import settings
 from app.utils.logger import get_logger
@@ -48,7 +48,7 @@ class TokenBlacklist:
     that don't want to touch Redis.
     """
 
-    def __init__(self, redis_client: Optional["redis_pkg.Redis"] = None):
+    def __init__(self, redis_client: redis_pkg.Redis | None = None):
         self._redis = redis_client
         self._fallback: set[str] = set()
 
@@ -56,7 +56,7 @@ class TokenBlacklist:
     # Public API
     # ------------------------------------------------------------------
 
-    def revoke(self, token: str, ttl_seconds: Optional[int] = None) -> None:
+    def revoke(self, token: str, ttl_seconds: int | None = None) -> None:
         """Mark ``token`` as revoked. ``ttl_seconds`` defaults to the configured
         access-token lifetime, but callers should pass the actual remaining-
         until-exp seconds when they have it."""
@@ -107,10 +107,10 @@ class TokenBlacklist:
 # `blacklist_token`/`is_token_blacklisted` module-level helpers in auth.py
 # until those callers are migrated.
 
-_default: Optional[TokenBlacklist] = None
+_default: TokenBlacklist | None = None
 
 
-def _build_default_redis() -> Optional["redis_pkg.Redis"]:
+def _build_default_redis() -> redis_pkg.Redis | None:
     """Construct a sync Redis client for the singleton, or None if unreachable."""
     try:
         import redis  # noqa: WPS433 — lazy

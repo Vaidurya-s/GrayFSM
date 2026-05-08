@@ -5,7 +5,7 @@ Example Service - Loads example FSMs from JSON files on disk
 import json
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.utils.exceptions import FSMNotFoundException
 from app.utils.logger import get_logger
@@ -20,9 +20,9 @@ class ExampleService:
     """Service for loading and serving example FSMs"""
 
     def __init__(self):
-        self._cache: Optional[List[Dict[str, Any]]] = None
+        self._cache: list[dict[str, Any]] | None = None
 
-    async def list_examples(self) -> List[Dict[str, Any]]:
+    async def list_examples(self) -> list[dict[str, Any]]:
         """
         Load all example FSMs from the examples directory.
 
@@ -56,7 +56,7 @@ class ExampleService:
         logger.info("Loaded example FSMs", count=len(examples))
         return examples
 
-    async def get_example(self, example_name: str) -> Dict[str, Any]:
+    async def get_example(self, example_name: str) -> dict[str, Any]:
         """
         Get a single example FSM by name (derived from filename).
 
@@ -76,7 +76,7 @@ class ExampleService:
 
         raise FSMNotFoundException(f"example:{example_name}")
 
-    def _load_example_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
+    def _load_example_file(self, file_path: Path) -> dict[str, Any] | None:
         """
         Load and parse a single example JSON file.
 
@@ -86,7 +86,7 @@ class ExampleService:
         Returns:
             Parsed example dictionary or None on failure
         """
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             raw = json.load(f)
 
         states = raw.get("states", [])

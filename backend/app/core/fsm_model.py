@@ -4,7 +4,6 @@ FSM validation and manipulation
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
 
 from app.utils.exceptions import FSMValidationException
 
@@ -22,9 +21,9 @@ class Transition:
 
     from_state: str
     to_state: str
-    input_value: Optional[str] = None
-    output_value: Optional[str] = None
-    label: Optional[str] = None
+    input_value: str | None = None
+    output_value: str | None = None
+    label: str | None = None
 
 
 @dataclass
@@ -32,9 +31,9 @@ class State:
     """FSM state"""
 
     id: str
-    label: Optional[str] = None
-    output: Optional[str] = None  # For Moore machines
-    encoding: Optional[str] = None
+    label: str | None = None
+    output: str | None = None  # For Moore machines
+    encoding: str | None = None
     is_dummy: bool = False
 
 
@@ -44,10 +43,10 @@ class FSMValidator:
     @staticmethod
     def validate_fsm_structure(
         fsm_type: FSMType,
-        states: List[str],
+        states: list[str],
         initial_state: str,
-        transitions: List[Dict],
-        outputs: Optional[Dict[str, str]] = None,
+        transitions: list[dict],
+        outputs: dict[str, str] | None = None,
     ) -> None:
         """
         Validate complete FSM structure.
@@ -85,7 +84,7 @@ class FSMValidator:
                     raise FSMValidationException(f"Missing output for state '{state}'")
 
     @staticmethod
-    def validate_transitions(states: List[str], transitions: List[Dict]) -> None:
+    def validate_transitions(states: list[str], transitions: list[dict]) -> None:
         """
         Validate all transitions reference valid states.
 
@@ -120,8 +119,8 @@ class FSMValidator:
 
     @staticmethod
     def check_reachability(
-        states: List[str], initial_state: str, transitions: List[Dict]
-    ) -> Set[str]:
+        states: list[str], initial_state: str, transitions: list[dict]
+    ) -> set[str]:
         """
         Check which states are reachable from initial state.
 
@@ -134,7 +133,7 @@ class FSMValidator:
             Set of reachable state IDs
         """
         # Build adjacency list
-        graph: Dict[str, List[str]] = {state: [] for state in states}
+        graph: dict[str, list[str]] = {state: [] for state in states}
         for trans in transitions:
             from_state = trans["from_state"]
             to_state = trans["to_state"]

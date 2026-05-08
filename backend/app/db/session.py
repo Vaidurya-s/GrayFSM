@@ -6,7 +6,7 @@ Optimized connection pool configuration based on:
 - Medium traffic workload profile (50-200 concurrent users)
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from sqlalchemy import func as sa_func
 from sqlalchemy import select

@@ -10,8 +10,6 @@ The module includes:
   - cover property: each transition is taken
 """
 
-from typing import Dict, List, Optional
-
 from app.utils.exceptions import ExportException
 
 
@@ -23,7 +21,7 @@ class SVAExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate a SystemVerilog assertions module for the given FSM.
@@ -49,9 +47,9 @@ class SVAExporter:
         clock_name: str = options.get("clock_name", "clk")
         reset_name: str = options.get("reset_name", "rst_n")
 
-        states: List[str] = definition.get("states", [])
-        transitions: List[Dict] = definition.get("transitions", [])
-        encodings: Dict[str, str] = definition.get("encodings", {})
+        states: list[str] = definition.get("states", [])
+        transitions: list[dict] = definition.get("transitions", [])
+        encodings: dict[str, str] = definition.get("encodings", {})
 
         if not states:
             raise ExportException("FSM has no states to export")
@@ -66,7 +64,7 @@ class SVAExporter:
 
         module_name = self._sanitize_name(name) + "_sva"
 
-        lines: List[str] = []
+        lines: list[str] = []
 
         # ---------------------------------------------------------------
         # File header
@@ -161,9 +159,8 @@ class SVAExporter:
 
         # Group transitions by (from_state, input) -> set of to_states
         import collections
-        from typing import DefaultDict
 
-        trans_map: DefaultDict = collections.defaultdict(set)
+        trans_map: collections.defaultdict = collections.defaultdict(set)
         for t in transitions:
             from_s = t.get("from_state", "")
             to_s = t.get("to_state", "")

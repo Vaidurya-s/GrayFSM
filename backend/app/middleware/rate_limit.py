@@ -14,8 +14,8 @@ Adapted from security/fixes/03_rate_limiting.py
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple
 
 from fastapi import status
 from starlette.requests import Request
@@ -42,14 +42,14 @@ class InMemoryRateLimitStore:
 
     def __init__(self) -> None:
         # key -> list of request timestamps (floats)
-        self._store: Dict[str, list] = {}
+        self._store: dict[str, list] = {}
 
     def is_allowed(
         self,
         key: str,
         limit: int,
         window: int,
-    ) -> Tuple[bool, Dict]:
+    ) -> tuple[bool, dict]:
         """Return ``(allowed, info_dict)``."""
         now = time.time()
         window_start = now - window
@@ -134,7 +134,7 @@ class RedisRateLimitStore:
         key: str,
         limit: int,
         window: int,
-    ) -> Tuple[bool, Dict]:
+    ) -> tuple[bool, dict]:
         """Return ``(allowed, info_dict)`` using Redis sorted sets."""
         if not self._redis:
             raise RuntimeError("Redis not connected")
@@ -182,11 +182,11 @@ class RedisRateLimitStore:
 # ---------------------------------------------------------------------------
 
 _memory_store = InMemoryRateLimitStore()
-_redis_store: Optional[RedisRateLimitStore] = None
+_redis_store: RedisRateLimitStore | None = None
 _redis_attempted = False
 
 
-async def _get_redis_store() -> Optional[RedisRateLimitStore]:
+async def _get_redis_store() -> RedisRateLimitStore | None:
     """Lazily attempt a Redis connection once."""
     global _redis_store, _redis_attempted
 
@@ -311,7 +311,7 @@ def _build_rules() -> list[RateLimitRule]:
     ]
 
 
-async def _check(rule: RateLimitRule, request: Request) -> Tuple[bool, Dict]:
+async def _check(rule: RateLimitRule, request: Request) -> tuple[bool, dict]:
     """Apply a single rule. Returns (allowed, info-dict).
 
     Centralises the Redis-then-memory fallback that was duplicated
@@ -336,7 +336,7 @@ async def _check(rule: RateLimitRule, request: Request) -> Tuple[bool, Dict]:
         return True, {}
 
 
-def _too_many(rule: RateLimitRule, info: Dict) -> JSONResponse:
+def _too_many(rule: RateLimitRule, info: dict) -> JSONResponse:
     """Build the 429 response. Single source of truth for the envelope."""
     return JSONResponse(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,

@@ -5,8 +5,6 @@ Generates a Verilog testbench for testing a synthesized FSM module.
 Includes clock generation, reset sequencing, stimulus generation, and waveform dumping.
 """
 
-from typing import Dict, List, Optional
-
 from app.utils.exceptions import ExportException
 
 
@@ -18,7 +16,7 @@ class TestbenchExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate a Verilog testbench for the given FSM.
@@ -134,7 +132,7 @@ class TestbenchExporter:
         if transitions:
             lines.append("        // Apply stimulus for each transition")
             # Group transitions by from_state for organized stimulus
-            trans_by_state: Dict[str, List[Dict]] = {}
+            trans_by_state: dict[str, list[dict]] = {}
             for t in transitions:
                 fs = t.get("from_state", "")
                 trans_by_state.setdefault(fs, []).append(t)

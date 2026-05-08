@@ -10,8 +10,6 @@ Design notes:
   `detail=e.message` (already scrubbed) or substitute a generic string.
 """
 
-from typing import Optional
-
 
 class GrayFSMException(Exception):
     """Base exception for all GrayFSM errors."""
@@ -20,7 +18,7 @@ class GrayFSMException(Exception):
         self,
         message: str,
         code: str = "GRAYFSM_ERROR",
-        cause: Optional[BaseException] = None,
+        cause: BaseException | None = None,
     ):
         self.message = message
         self.code = code
@@ -58,7 +56,7 @@ class AlgorithmException(GrayFSMException):
     exception via `cause` for server-side logging.
     """
 
-    def __init__(self, message: str, cause: Optional[BaseException] = None):
+    def __init__(self, message: str, cause: BaseException | None = None):
         super().__init__(message=message, code="ALGORITHM_ERROR", cause=cause)
 
 
@@ -70,7 +68,7 @@ class ExportException(GrayFSMException):
     `cause` parameter is for.
     """
 
-    def __init__(self, message: str, cause: Optional[BaseException] = None):
+    def __init__(self, message: str, cause: BaseException | None = None):
         super().__init__(message=message, code="EXPORT_ERROR", cause=cause)
 
 

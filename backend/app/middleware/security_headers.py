@@ -13,8 +13,6 @@ Adds standard security headers to all HTTP responses:
 Adapted from security/configs/security_headers.py
 """
 
-from typing import Dict, Optional
-
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -34,7 +32,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     production (keyed off ``settings.is_production``).
     """
 
-    def __init__(self, app, csp_config: Optional[Dict[str, str]] = None):
+    def __init__(self, app, csp_config: dict[str, str] | None = None):
         super().__init__(app)
         self.csp_config = csp_config or self._default_csp()
         logger.info(
@@ -46,7 +44,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     # CSP helpers
     # ------------------------------------------------------------------
 
-    def _default_csp(self) -> Dict[str, str]:
+    def _default_csp(self) -> dict[str, str]:
         """Return a default Content-Security-Policy directive map."""
 
         if not settings.is_production:

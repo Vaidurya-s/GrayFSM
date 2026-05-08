@@ -2,7 +2,6 @@
 Category Service - Business logic for FSM category operations
 """
 
-from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -22,8 +21,8 @@ class CategoryService:
 
     async def list_categories(
         self,
-        parent_id: Optional[UUID] = None,
-    ) -> List[Category]:
+        parent_id: UUID | None = None,
+    ) -> list[Category]:
         """
         List all categories, optionally filtered by parent.
 
@@ -51,7 +50,7 @@ class CategoryService:
 
         return categories
 
-    async def get_category(self, category_id: UUID) -> Optional[Category]:
+    async def get_category(self, category_id: UUID) -> Category | None:
         """
         Get a single category by ID.
 
@@ -64,7 +63,7 @@ class CategoryService:
         result = await self.db.execute(select(Category).where(Category.id == category_id))
         return result.scalar_one_or_none()
 
-    async def get_category_by_slug(self, slug: str) -> Optional[Category]:
+    async def get_category_by_slug(self, slug: str) -> Category | None:
         """
         Get a single category by its slug.
 

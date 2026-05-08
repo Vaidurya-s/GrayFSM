@@ -3,7 +3,6 @@ Authentication Service - Business logic for user authentication
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 from uuid import UUID
 
 from passlib.context import CryptContext
@@ -146,7 +145,7 @@ class AuthService:
         logger.info(f"User logged in: {email[:3]}***")
         return user
 
-    async def get_user_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_user_by_id(self, user_id: UUID) -> User | None:
         """
         Get a user by ID.
 
@@ -160,7 +159,7 @@ class AuthService:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def _get_user_by_email(self, email: str) -> Optional[User]:
+    async def _get_user_by_email(self, email: str) -> User | None:
         """
         Get a user by email (internal method).
 

@@ -8,7 +8,7 @@ another user's optimization output (which can include the original FSM
 definition).
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -22,7 +22,7 @@ router = APIRouter()
 
 # In-memory store: task_id -> task state dict
 # Format: {"task_id": str, "status": str, "fsm_id": str, "user_id": str, ...}
-_task_store: Dict[str, Any] = {}
+_task_store: dict[str, Any] = {}
 
 
 def create_task(task_id: str, fsm_id: str, user_id: str = None) -> dict:

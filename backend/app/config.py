@@ -6,7 +6,6 @@ Configuration is loaded from environment variables with validation.
 """
 
 import logging
-from typing import List, Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -68,10 +67,10 @@ class Settings(BaseSettings):
     account_lockout_minutes: int = 15
 
     # CORS
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
     cors_allow_credentials: bool = False
-    cors_allow_methods: List[str] = ["*"]
-    cors_allow_headers: List[str] = ["*"]
+    cors_allow_methods: list[str] = ["*"]
+    cors_allow_headers: list[str] = ["*"]
 
     # Rate Limiting
     rate_limit_enabled: bool = True
@@ -98,12 +97,12 @@ class Settings(BaseSettings):
     export_max_file_size_mb: int = 10
 
     # Monitoring
-    sentry_dsn: Optional[str] = None
+    sentry_dsn: str | None = None
     metrics_enabled: bool = True
 
     # File Upload
     max_upload_size_mb: int = 5
-    allowed_upload_formats: List[str] = ["json", "csv"]
+    allowed_upload_formats: list[str] = ["json", "csv"]
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
@@ -120,7 +119,7 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: str | List[str]) -> List[str]:
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
         """Parse CORS origins from string or list"""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]

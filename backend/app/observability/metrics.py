@@ -14,7 +14,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +213,7 @@ class GrayFSMMetrics:
 # Singleton accessor
 # ---------------------------------------------------------------------------
 
-_metrics_instance: Optional[GrayFSMMetrics] = None
+_metrics_instance: GrayFSMMetrics | None = None
 
 
 def get_metrics() -> GrayFSMMetrics:

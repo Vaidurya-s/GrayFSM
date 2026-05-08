@@ -2,7 +2,6 @@
 Category endpoints
 """
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -19,7 +18,7 @@ router = APIRouter()
 
 @router.get("")
 async def list_categories(
-    parent_id: Optional[UUID] = Query(None, description="Filter by parent category ID"),
+    parent_id: UUID | None = Query(None, description="Filter by parent category ID"),
     db: AsyncSession = Depends(get_db),
 ):
     """

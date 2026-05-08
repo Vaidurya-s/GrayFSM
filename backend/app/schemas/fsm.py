@@ -3,7 +3,7 @@ Pydantic schemas for FSM API requests/responses
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -14,23 +14,23 @@ class TransitionBase(BaseModel):
 
     from_state: str
     to_state: str
-    input: Optional[str] = None
-    output: Optional[str] = None
-    label: Optional[str] = None
+    input: str | None = None
+    output: str | None = None
+    label: str | None = None
 
 
 class FSMCreate(BaseModel):
     """Schema for creating a new FSM"""
 
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     fsm_type: str = Field(..., pattern="^(moore|mealy)$")
-    states: List[str] = Field(..., min_length=1)
+    states: list[str] = Field(..., min_length=1)
     initial_state: str
-    transitions: List[Dict[str, Any]]
-    outputs: Optional[Dict[str, str]] = None
-    category_id: Optional[UUID] = None
-    tags: Optional[List[str]] = []
+    transitions: list[dict[str, Any]]
+    outputs: dict[str, str] | None = None
+    category_id: UUID | None = None
+    tags: list[str] | None = []
     visibility: str = Field(default="private", pattern="^(private|public|unlisted)$")
 
     @field_validator("initial_state")
@@ -47,7 +47,7 @@ class FSMResponse(BaseModel):
 
     id: UUID
     name: str
-    description: Optional[str]
+    description: str | None
     fsm_type: str
     state_count: int
     transition_count: int
@@ -56,9 +56,9 @@ class FSMResponse(BaseModel):
     is_optimized: bool
     dummy_state_count: int
     view_count: int
-    states: List[str] = []
+    states: list[str] = []
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
 
     class Config:
         from_attributes = True
@@ -67,10 +67,10 @@ class FSMResponse(BaseModel):
 class FSMUpdate(BaseModel):
     """Schema for updating an existing FSM"""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-    visibility: Optional[str] = Field(None, pattern="^(private|public|unlisted)$")
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    tags: list[str] | None = None
+    visibility: str | None = Field(None, pattern="^(private|public|unlisted)$")
 
 
 class FSMFork(BaseModel):
@@ -85,7 +85,7 @@ class OptimizationRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     algorithm: str = Field(..., pattern="^(greedy|bfs_optimal|global_sa|global_ga)$")
-    options: Optional[Dict[str, Any]] = {}
+    options: dict[str, Any] | None = {}
     async_mode: bool = Field(default=False, alias="async")
 
 
@@ -108,4 +108,4 @@ class OptimizationResponse(BaseModel):
     total_states: int
     improvement_percentage: float
     metrics: OptimizationMetrics
-    encoding_map: Optional[Dict[str, str]] = None
+    encoding_map: dict[str, str] | None = None

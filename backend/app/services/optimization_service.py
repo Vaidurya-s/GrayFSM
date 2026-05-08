@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -52,10 +52,10 @@ logger = get_logger(__name__)
 class _OptimizationOutcome:
     """Pure output of running an algorithm — DB-free, schema-agnostic."""
 
-    states_list: List[str]
-    transitions: List[Dict[str, Any]]
-    outputs: Dict[str, Any]
-    encodings: Dict[str, str]
+    states_list: list[str]
+    transitions: list[dict[str, Any]]
+    outputs: dict[str, Any]
+    encodings: dict[str, str]
     dummy_states: list
     execution_time_ms: int
 
@@ -93,7 +93,7 @@ class OptimizationService:
         self,
         fsm_id: UUID,
         request: OptimizationRequest,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> OptimizationResponse:
         """Run ``request.algorithm`` against the FSM identified by ``fsm_id``.
 
@@ -181,7 +181,7 @@ class OptimizationService:
         await cache_set(cache_key, response.model_dump(mode="json"))
         return response
 
-    async def verify_ownership(self, fsm_id: UUID, user_id: Optional[UUID]) -> None:
+    async def verify_ownership(self, fsm_id: UUID, user_id: UUID | None) -> None:
         """Verify the caller owns this FSM, without loading the full record.
 
         Used by the async-task path in api/v1/algorithm.py to give the
@@ -195,7 +195,7 @@ class OptimizationService:
 
     # ---- helpers (DB / IO) -----------------------------------------------
 
-    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
+    async def _load_fsm(self, fsm_id: UUID, user_id: UUID | None = None) -> FSM:
         """Load an FSM by id, enforcing ownership.
 
         Returns ``FSMNotFoundException`` for both "does not exist" and
@@ -226,7 +226,7 @@ class OptimizationService:
         fsm_id: UUID,
         request: OptimizationRequest,
         original_fsm: FSM,
-        pre_encodings: Dict[str, str],
+        pre_encodings: dict[str, str],
     ) -> _OptimizationOutcome:
         """Invoke the registered algorithm and assemble its output into an
         ``_OptimizationOutcome``. On algorithm failure: records an
@@ -271,10 +271,10 @@ class OptimizationService:
 
     @staticmethod
     def _build_outcome(
-        definition: Dict[str, Any],
-        pre_encodings: Dict[str, str],
+        definition: dict[str, Any],
+        pre_encodings: dict[str, str],
         dummy_states: list,
-        new_transitions: List[Dict[str, Any]],
+        new_transitions: list[dict[str, Any]],
         execution_time_ms: int,
     ) -> _OptimizationOutcome:
         """Pure helper: merge the original state/encoding/output lists with
@@ -303,7 +303,7 @@ class OptimizationService:
         request: OptimizationRequest,
         outcome: _OptimizationOutcome,
         metrics: _MetricsBundle,
-        user_id: Optional[UUID],
+        user_id: UUID | None,
     ) -> FSM:
         """Build and stage the derived FSM row. Caller is responsible for
         committing (we batch optimized-FSM + AlgorithmResult into one txn)."""
@@ -399,12 +399,12 @@ class OptimizationService:
     # ---- pure-function helpers ------------------------------------------
 
     @staticmethod
-    def _assign_gray_encodings(states: List[str], bit_width: int) -> Dict[str, str]:
+    def _assign_gray_encodings(states: list[str], bit_width: int) -> dict[str, str]:
         """Assign Gray codes to states, falling back to plain binary if there
         are more states than codes (shouldn't happen — algorithms ensure
         bit_width is wide enough — but defensive)."""
         gray_codes = generate_gray_codes(bit_width)
-        encodings: Dict[str, str] = {}
+        encodings: dict[str, str] = {}
         for i, state in enumerate(states):
             if i < len(gray_codes):
                 encodings[state] = gray_codes[i]
@@ -414,7 +414,7 @@ class OptimizationService:
 
     @staticmethod
     def _calculate_avg_hamming(
-        transitions: List[Dict[str, Any]], encodings: Dict[str, str]
+        transitions: list[dict[str, Any]], encodings: dict[str, str]
     ) -> float:
         if not transitions:
             return 0.0
@@ -429,10 +429,10 @@ class OptimizationService:
         return total / count if count > 0 else 0.0
 
     @staticmethod
-    def _calculate_max_hamming(transitions: List[Dict[str, Any]], encodings: Dict[str, str]) -> int:
+    def _calculate_max_hamming(transitions: list[dict[str, Any]], encodings: dict[str, str]) -> int:
         if not transitions:
             return 0
-        distances: List[int] = []
+        distances: list[int] = []
         for trans in transitions:
             from_code = encodings.get(trans.get("from_state", ""))
             to_code = encodings.get(trans.get("to_state", ""))

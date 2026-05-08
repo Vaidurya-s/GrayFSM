@@ -7,15 +7,13 @@ All algorithms share the same interface:
     optimize_fsm(states, transitions, outputs, fsm_type) -> (dummy_states, new_transitions)
 """
 
-from typing import Dict, Type
-
 from app.core.algorithms.bfs_optimal import BFSOptimizer
 from app.core.algorithms.greedy import GreedyOptimizer
 from app.core.algorithms.simulated_annealing import SimulatedAnnealingOptimizer
 from app.utils.exceptions import AlgorithmException
 
 # Registry mapping algorithm name -> optimizer class
-ALGORITHM_REGISTRY: Dict[str, Type[GreedyOptimizer]] = {
+ALGORITHM_REGISTRY: dict[str, type[GreedyOptimizer]] = {
     "greedy": GreedyOptimizer,
     "bfs_optimal": BFSOptimizer,
     "simulated_annealing": SimulatedAnnealingOptimizer,
@@ -69,7 +67,7 @@ ALGORITHM_INFO = {
 }
 
 
-def get_algorithm(name: str) -> Type[GreedyOptimizer]:
+def get_algorithm(name: str) -> type[GreedyOptimizer]:
     """
     Get an algorithm class by name.
 
