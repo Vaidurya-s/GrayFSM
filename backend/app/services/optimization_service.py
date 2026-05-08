@@ -1,14 +1,33 @@
 """
-Optimization Service - Orchestrates FSM optimization using registered algorithms
+Optimization Service - Orchestrates FSM optimization using registered algorithms.
+
+The public surface is intentionally small (`optimize_fsm`, `verify_ownership`).
+Everything else is a private helper that focuses on one concern:
+
+- ``_load_fsm``               — DB read + ownership check
+- ``_run_algorithm``          — invoke the optimizer, handle algorithm failure
+- ``_build_outcome``          — assemble post-optimization state/transition/encoding lists
+- ``_compute_metrics``        — Hamming-before, Hamming-after, improvement %
+- ``_persist_optimized_fsm``  — create the derived FSM row
+- ``_record_attempt``         — create the AlgorithmResult row
+- ``_build_response``         — assemble the OptimizationResponse object
+
+The previous implementation crammed all seven concerns into a single 217-line
+``optimize_fsm`` method. Splitting them along these lines makes the orchestrator
+readable in one screen, and lets compare_algorithms and the encoding-only utility
+endpoints reuse the metric code without re-running the whole optimization.
 """
+
+from __future__ import annotations
+
 import math
 import time
-import traceback
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.algorithms import get_algorithm, get_algorithm_info
 from app.core.gray_code import generate_gray_codes, hamming_distance
@@ -24,11 +43,51 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Internal value objects
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _OptimizationOutcome:
+    """Pure output of running an algorithm — DB-free, schema-agnostic."""
+
+    states_list: List[str]
+    transitions: List[Dict[str, Any]]
+    outputs: Dict[str, Any]
+    encodings: Dict[str, str]
+    dummy_states: list
+    execution_time_ms: int
+
+
+@dataclass(frozen=True)
+class _MetricsBundle:
+    """Hamming-distance metrics before vs after optimization."""
+
+    avg_before: float
+    avg_after: float
+    max_before: int
+    max_after: int
+
+    @property
+    def improvement_pct(self) -> float:
+        if self.avg_before <= 0:
+            return 0.0
+        return ((self.avg_before - self.avg_after) / self.avg_before) * 100.0
+
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+
+
 class OptimizationService:
-    """Service for running FSM optimization algorithms"""
+    """Service for running FSM optimization algorithms."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    # ---- public API --------------------------------------------------
 
     async def optimize_fsm(
         self,
@@ -36,40 +95,23 @@ class OptimizationService:
         request: OptimizationRequest,
         user_id: Optional[UUID] = None,
     ) -> OptimizationResponse:
+        """Run ``request.algorithm`` against the FSM identified by ``fsm_id``.
+
+        High-level flow:
+          1. Cache hit?              → return cached response
+          2. Load + ownership check
+          3. Encode + run algorithm
+          4. Compute metrics
+          5. Persist optimized FSM + attempt record
+          6. Build response, cache it, return
         """
-        Optimize an FSM using the specified algorithm.
-
-        Steps:
-            1. Load FSM from DB (get definition JSONB field)
-            2. Parse definition into algorithm input format
-            3. Instantiate the selected optimizer based on request.algorithm
-            4. Run optimizer.optimize_fsm()
-            5. Create new FSM record with optimized definition (is_optimized=True)
-            6. Create AlgorithmResult record with metrics
-            7. Return OptimizationResponse
-
-        Args:
-            fsm_id: UUID of the FSM to optimize
-            request: Optimization request with algorithm choice and options
-
-        Returns:
-            OptimizationResponse with results
-
-        Raises:
-            FSMNotFoundException: If the FSM does not exist
-            AlgorithmException: If the algorithm fails
-        """
-        # Check cache before loading FSM
         from app.cache import cache_get, cache_set
+
         cache_key = f"optimize:{fsm_id}:{request.algorithm}"
-        cached = await cache_get(cache_key)
-        if cached:
+        if cached := await cache_get(cache_key):
             logger.info(f"Cache hit for {cache_key}")
             return OptimizationResponse(**cached)
 
-        # Step 1: Load FSM from DB and verify ownership.
-        # Optimize is strict-ownership: it consumes compute and creates a
-        # derived record, so even public FSMs cannot be optimized by others.
         original_fsm = await self._load_fsm(fsm_id, user_id=user_id)
         logger.info(
             "Starting optimization",
@@ -77,141 +119,47 @@ class OptimizationService:
             algorithm=request.algorithm,
         )
 
-        # Step 2: Parse definition into algorithm input format
+        # 1. Pre-optimization encoding + metrics. Done up front so we can
+        #    record `avg_hamming_before` even on algorithm failure.
         definition = original_fsm.definition
-        states_list = definition["states"]
-        transitions = definition["transitions"]
-        outputs = definition.get("outputs", {})
-        fsm_type = original_fsm.fsm_type
-        bit_width = original_fsm.bit_width
-
-        # Assign Gray code encodings to states
-        state_encodings = self._assign_gray_encodings(states_list, bit_width)
-
-        # Calculate Hamming distance before optimization
-        avg_hamming_before = self._calculate_avg_hamming(
-            transitions, state_encodings
+        pre_encodings = self._assign_gray_encodings(
+            definition["states"], original_fsm.bit_width
         )
-        max_hamming_before = self._calculate_max_hamming(
-            transitions, state_encodings
+        pre_avg = self._calculate_avg_hamming(definition["transitions"], pre_encodings)
+        pre_max = self._calculate_max_hamming(definition["transitions"], pre_encodings)
+
+        # 2. Run the algorithm. Records a failure row and re-raises on error
+        #    so the orchestrator stays linear.
+        outcome = await self._run_algorithm(
+            fsm_id=fsm_id,
+            request=request,
+            original_fsm=original_fsm,
+            pre_encodings=pre_encodings,
         )
 
-        # Step 3: Instantiate optimizer
-        algorithm_cls = get_algorithm(request.algorithm)
-        optimizer = algorithm_cls(bit_width)
-
-        # Step 4: Run optimization
-        start_time = time.perf_counter()
-        try:
-            dummy_states, new_transitions = optimizer.optimize_fsm(
-                states=state_encodings,
-                transitions=transitions,
-                outputs=outputs,
-                fsm_type=fsm_type,
-            )
-        except Exception as e:
-            execution_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
-            # Record failed attempt
-            await self._record_failure(
-                original_fsm_id=fsm_id,
-                algorithm=request.algorithm,
-                options=request.options or {},
-                execution_time_ms=execution_time_ms,
-                error_message=str(e),
-            )
-            raise AlgorithmException(
-                f"Algorithm '{request.algorithm}' failed: {str(e)}"
-            )
-
-        execution_time_ms = max(1, int((time.perf_counter() - start_time) * 1000))
-
-        # Build optimized state list and encodings
-        optimized_states_list = list(states_list)
-        optimized_outputs = dict(outputs)
-        optimized_encodings = dict(state_encodings)
-
-        for dummy in dummy_states:
-            optimized_states_list.append(dummy.id)
-            optimized_outputs[dummy.id] = dummy.output
-            optimized_encodings[dummy.id] = dummy.encoding
-
-        # Calculate Hamming distance after optimization
-        avg_hamming_after = self._calculate_avg_hamming(
-            new_transitions, optimized_encodings
-        )
-        max_hamming_after = self._calculate_max_hamming(
-            new_transitions, optimized_encodings
+        # 3. Post-optimization metrics from the algorithm's output.
+        metrics = _MetricsBundle(
+            avg_before=pre_avg,
+            avg_after=self._calculate_avg_hamming(outcome.transitions, outcome.encodings),
+            max_before=pre_max,
+            max_after=self._calculate_max_hamming(outcome.transitions, outcome.encodings),
         )
 
-        # Compute improvement percentage
-        if avg_hamming_before > 0:
-            improvement_pct = (
-                (avg_hamming_before - avg_hamming_after) / avg_hamming_before
-            ) * 100.0
-        else:
-            improvement_pct = 0.0
-
-        # Step 5: Create optimized FSM record
-        optimized_bit_width = math.ceil(
-            math.log2(max(len(optimized_states_list), 2))
+        # 4. Persist (atomic-ish: both records flushed together at commit).
+        optimized_fsm = await self._persist_optimized_fsm(
+            original_fsm=original_fsm,
+            request=request,
+            outcome=outcome,
+            metrics=metrics,
+            user_id=user_id,
         )
-        optimized_definition = {
-            "states": optimized_states_list,
-            "initial_state": definition["initial_state"],
-            "transitions": new_transitions,
-            "outputs": optimized_outputs,
-            "encodings": optimized_encodings,
-            "original_fsm_id": str(fsm_id),
-        }
-
-        optimized_fsm = FSM(
-            name=f"{original_fsm.name} (optimized - {request.algorithm})",
-            description=(
-                f"Optimized version of '{original_fsm.name}' "
-                f"using {request.algorithm} algorithm. "
-                f"{len(dummy_states)} dummy states added."
-            ),
-            fsm_type=fsm_type,
-            definition=optimized_definition,
-            state_count=len(optimized_states_list),
-            transition_count=len(new_transitions),
-            initial_state=definition["initial_state"],
-            bit_width=optimized_bit_width,
-            category_id=original_fsm.category_id,
-            tags=original_fsm.tags,
-            visibility=original_fsm.visibility,
-            # Inherit ownership from the source — falling back to the
-            # caller's user_id if the source somehow had none. Without
-            # this, derived FSMs are created with created_by=NULL and
-            # become unreachable under strict-ownership.
-            created_by=original_fsm.created_by or user_id,
-            is_optimized=True,
-            optimization_algorithm=request.algorithm,
-            dummy_state_count=len(dummy_states),
-            avg_hamming_distance=round(avg_hamming_after, 2),
-        )
-
-        self.db.add(optimized_fsm)
-        await self.db.flush()  # Get the ID without committing
-
-        # Step 6: Create AlgorithmResult record
-        algo_info = get_algorithm_info(request.algorithm)
-        algorithm_result = AlgorithmResult(
+        await self._record_attempt(
             original_fsm_id=fsm_id,
             optimized_fsm_id=optimized_fsm.id,
-            algorithm=request.algorithm,
-            algorithm_version=algo_info.get("version", "1.0.0"),
-            algorithm_parameters=request.options or {},
-            dummy_states_added=len(dummy_states),
-            total_states_final=len(optimized_states_list),
-            avg_hamming_before=round(avg_hamming_before, 2),
-            avg_hamming_after=round(avg_hamming_after, 2),
-            improvement_percentage=round(improvement_pct, 2),
-            execution_time_ms=execution_time_ms,
-            success=True,
+            request=request,
+            outcome=outcome,
+            metrics=metrics,
         )
-
-        self.db.add(algorithm_result)
         await self.db.commit()
         await self.db.refresh(optimized_fsm)
 
@@ -220,37 +168,22 @@ class OptimizationService:
             fsm_id=str(fsm_id),
             optimized_fsm_id=str(optimized_fsm.id),
             algorithm=request.algorithm,
-            dummy_states=len(dummy_states),
-            execution_time_ms=execution_time_ms,
-            improvement_pct=round(improvement_pct, 2),
+            dummy_states=len(outcome.dummy_states),
+            execution_time_ms=outcome.execution_time_ms,
+            improvement_pct=round(metrics.improvement_pct, 2),
         )
 
-        # Step 7: Return OptimizationResponse
-        metrics = OptimizationMetrics(
-            avg_hamming_before=round(avg_hamming_before, 2),
-            avg_hamming_after=round(avg_hamming_after, 2),
-            max_hamming_before=max_hamming_before,
-            max_hamming_after=max_hamming_after,
-        )
-        response = OptimizationResponse(
-            optimized_fsm_id=optimized_fsm.id,
-            algorithm=request.algorithm,
-            execution_time_ms=execution_time_ms,
-            dummy_states_added=len(dummy_states),
-            total_states=len(optimized_states_list),
-            improvement_percentage=round(improvement_pct, 2),
+        # 5. Build, cache, return.
+        response = self._build_response(
+            optimized_fsm=optimized_fsm,
+            request=request,
+            outcome=outcome,
             metrics=metrics,
-            encoding_map=optimized_encodings,
         )
-
-        # Cache result
         await cache_set(cache_key, response.model_dump(mode="json"))
-
         return response
 
-    async def verify_ownership(
-        self, fsm_id: UUID, user_id: Optional[UUID]
-    ) -> None:
+    async def verify_ownership(self, fsm_id: UUID, user_id: Optional[UUID]) -> None:
         """Verify the caller owns this FSM, without loading the full record.
 
         Used by the async-task path in api/v1/algorithm.py to give the
@@ -262,27 +195,25 @@ class OptimizationService:
         """
         await self._load_fsm(fsm_id, user_id=user_id)
 
-    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
-        """
-        Load an FSM from the database by ID, enforcing ownership.
+    # ---- helpers (DB / IO) -----------------------------------------------
 
-        Returns 404 (FSMNotFoundException) for both "does not exist" and
-        "not yours" so that callers cannot enumerate FSM IDs they don't own.
+    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
+        """Load an FSM by id, enforcing ownership.
+
+        Returns ``FSMNotFoundException`` for both "does not exist" and
+        "not yours" so callers cannot enumerate IDs they don't own.
 
         Raises:
-            FSMNotFoundException: If the FSM does not exist or the caller
-                does not own it.
-            FSMValidationException: If the FSM exists but has no definition.
+            FSMNotFoundException: missing or non-owned.
+            FSMValidationException: row exists but has no definition payload.
         """
-        result = await self.db.execute(
-            select(FSM).where(FSM.id == fsm_id)
-        )
+        result = await self.db.execute(select(FSM).where(FSM.id == fsm_id))
         fsm = result.scalar_one_or_none()
 
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
-        # Strict-ownership: legacy NULL-created_by rows are now unreachable
+        # Strict-ownership: legacy NULL-created_by rows are unreachable
         # via this service (was previously allowed-through; see DRIFT.md).
         if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
             raise FSMNotFoundException(str(fsm_id))
@@ -292,86 +223,225 @@ class OptimizationService:
 
         return fsm
 
+    async def _run_algorithm(
+        self,
+        fsm_id: UUID,
+        request: OptimizationRequest,
+        original_fsm: FSM,
+        pre_encodings: Dict[str, str],
+    ) -> _OptimizationOutcome:
+        """Invoke the registered algorithm and assemble its output into an
+        ``_OptimizationOutcome``. On algorithm failure: records an
+        AlgorithmResult(success=False) row, then re-raises AlgorithmException.
+        """
+        definition = original_fsm.definition
+        algorithm_cls = get_algorithm(request.algorithm)
+        optimizer = algorithm_cls(original_fsm.bit_width)
+
+        start_time = time.perf_counter()
+        try:
+            dummy_states, new_transitions = optimizer.optimize_fsm(
+                states=pre_encodings,
+                transitions=definition["transitions"],
+                outputs=definition.get("outputs", {}),
+                fsm_type=original_fsm.fsm_type,
+            )
+        except Exception as e:
+            elapsed_ms = max(1, int((time.perf_counter() - start_time) * 1000))
+            await self._record_failure(
+                original_fsm_id=fsm_id,
+                algorithm=request.algorithm,
+                options=request.options or {},
+                execution_time_ms=elapsed_ms,
+                error_message=str(e),
+            )
+            # Inner exception text preserved on `.cause` for server-side logs;
+            # the user-visible message stays scrubbed.
+            raise AlgorithmException(
+                f"Algorithm '{request.algorithm}' failed",
+                cause=e,
+            ) from e
+
+        elapsed_ms = max(1, int((time.perf_counter() - start_time) * 1000))
+        return self._build_outcome(
+            definition=definition,
+            pre_encodings=pre_encodings,
+            dummy_states=dummy_states,
+            new_transitions=new_transitions,
+            execution_time_ms=elapsed_ms,
+        )
+
     @staticmethod
-    def _assign_gray_encodings(
-        states: List[str], bit_width: int
-    ) -> Dict[str, str]:
-        """
-        Assign Gray code encodings to states.
+    def _build_outcome(
+        definition: Dict[str, Any],
+        pre_encodings: Dict[str, str],
+        dummy_states: list,
+        new_transitions: List[Dict[str, Any]],
+        execution_time_ms: int,
+    ) -> _OptimizationOutcome:
+        """Pure helper: merge the original state/encoding/output lists with
+        the dummy states the algorithm produced."""
+        states = list(definition["states"])
+        outputs = dict(definition.get("outputs", {}))
+        encodings = dict(pre_encodings)
 
-        Args:
-            states: List of state IDs
-            bit_width: Number of encoding bits
+        for dummy in dummy_states:
+            states.append(dummy.id)
+            outputs[dummy.id] = dummy.output
+            encodings[dummy.id] = dummy.encoding
 
-        Returns:
-            Dictionary mapping state ID to Gray code string
-        """
+        return _OptimizationOutcome(
+            states_list=states,
+            transitions=new_transitions,
+            outputs=outputs,
+            encodings=encodings,
+            dummy_states=dummy_states,
+            execution_time_ms=execution_time_ms,
+        )
+
+    async def _persist_optimized_fsm(
+        self,
+        original_fsm: FSM,
+        request: OptimizationRequest,
+        outcome: _OptimizationOutcome,
+        metrics: _MetricsBundle,
+        user_id: Optional[UUID],
+    ) -> FSM:
+        """Build and stage the derived FSM row. Caller is responsible for
+        committing (we batch optimized-FSM + AlgorithmResult into one txn)."""
+        optimized_bit_width = math.ceil(math.log2(max(len(outcome.states_list), 2)))
+        definition = {
+            "states": outcome.states_list,
+            "initial_state": original_fsm.definition["initial_state"],
+            "transitions": outcome.transitions,
+            "outputs": outcome.outputs,
+            "encodings": outcome.encodings,
+            "original_fsm_id": str(original_fsm.id),
+        }
+
+        optimized = FSM(
+            name=f"{original_fsm.name} (optimized - {request.algorithm})",
+            description=(
+                f"Optimized version of '{original_fsm.name}' "
+                f"using {request.algorithm} algorithm. "
+                f"{len(outcome.dummy_states)} dummy states added."
+            ),
+            fsm_type=original_fsm.fsm_type,
+            definition=definition,
+            state_count=len(outcome.states_list),
+            transition_count=len(outcome.transitions),
+            initial_state=original_fsm.definition["initial_state"],
+            bit_width=optimized_bit_width,
+            category_id=original_fsm.category_id,
+            tags=original_fsm.tags,
+            visibility=original_fsm.visibility,
+            # Inherit ownership from the source — falling back to the
+            # caller's user_id if the source somehow had none. Without
+            # this, derived FSMs are created with created_by=NULL and
+            # become unreachable under strict-ownership.
+            created_by=original_fsm.created_by or user_id,
+            is_optimized=True,
+            optimization_algorithm=request.algorithm,
+            dummy_state_count=len(outcome.dummy_states),
+            avg_hamming_distance=round(metrics.avg_after, 2),
+        )
+        self.db.add(optimized)
+        await self.db.flush()  # populate id without committing
+        return optimized
+
+    async def _record_attempt(
+        self,
+        original_fsm_id: UUID,
+        optimized_fsm_id: UUID,
+        request: OptimizationRequest,
+        outcome: _OptimizationOutcome,
+        metrics: _MetricsBundle,
+    ) -> None:
+        """Stage the AlgorithmResult row recording a successful run."""
+        algo_info = get_algorithm_info(request.algorithm)
+        attempt = AlgorithmResult(
+            original_fsm_id=original_fsm_id,
+            optimized_fsm_id=optimized_fsm_id,
+            algorithm=request.algorithm,
+            algorithm_version=algo_info.get("version", "1.0.0"),
+            algorithm_parameters=request.options or {},
+            dummy_states_added=len(outcome.dummy_states),
+            total_states_final=len(outcome.states_list),
+            avg_hamming_before=round(metrics.avg_before, 2),
+            avg_hamming_after=round(metrics.avg_after, 2),
+            improvement_percentage=round(metrics.improvement_pct, 2),
+            execution_time_ms=outcome.execution_time_ms,
+            success=True,
+        )
+        self.db.add(attempt)
+
+    @staticmethod
+    def _build_response(
+        optimized_fsm: FSM,
+        request: OptimizationRequest,
+        outcome: _OptimizationOutcome,
+        metrics: _MetricsBundle,
+    ) -> OptimizationResponse:
+        return OptimizationResponse(
+            optimized_fsm_id=optimized_fsm.id,
+            algorithm=request.algorithm,
+            execution_time_ms=outcome.execution_time_ms,
+            dummy_states_added=len(outcome.dummy_states),
+            total_states=len(outcome.states_list),
+            improvement_percentage=round(metrics.improvement_pct, 2),
+            metrics=OptimizationMetrics(
+                avg_hamming_before=round(metrics.avg_before, 2),
+                avg_hamming_after=round(metrics.avg_after, 2),
+                max_hamming_before=metrics.max_before,
+                max_hamming_after=metrics.max_after,
+            ),
+            encoding_map=outcome.encodings,
+        )
+
+    # ---- pure-function helpers ------------------------------------------
+
+    @staticmethod
+    def _assign_gray_encodings(states: List[str], bit_width: int) -> Dict[str, str]:
+        """Assign Gray codes to states, falling back to plain binary if there
+        are more states than codes (shouldn't happen — algorithms ensure
+        bit_width is wide enough — but defensive)."""
         gray_codes = generate_gray_codes(bit_width)
-        encodings = {}
+        encodings: Dict[str, str] = {}
         for i, state in enumerate(states):
             if i < len(gray_codes):
                 encodings[state] = gray_codes[i]
             else:
-                # More states than available codes -- extend bit width
                 encodings[state] = format(i, f"0{bit_width}b")
         return encodings
 
     @staticmethod
     def _calculate_avg_hamming(
-        transitions: List[Dict], encodings: Dict[str, str]
+        transitions: List[Dict[str, Any]], encodings: Dict[str, str]
     ) -> float:
-        """
-        Calculate the average Hamming distance across all transitions.
-
-        Args:
-            transitions: List of transition dicts with from_state/to_state
-            encodings: State -> Gray code mapping
-
-        Returns:
-            Average Hamming distance (0.0 if no transitions)
-        """
         if not transitions:
             return 0.0
-
         total = 0.0
         count = 0
         for trans in transitions:
-            from_state = trans.get("from_state", "")
-            to_state = trans.get("to_state", "")
-            from_code = encodings.get(from_state)
-            to_code = encodings.get(to_state)
+            from_code = encodings.get(trans.get("from_state", ""))
+            to_code = encodings.get(trans.get("to_state", ""))
             if from_code and to_code and len(from_code) == len(to_code):
                 total += hamming_distance(from_code, to_code)
                 count += 1
-
         return total / count if count > 0 else 0.0
 
     @staticmethod
     def _calculate_max_hamming(
-        transitions: List[Dict], encodings: Dict[str, str]
+        transitions: List[Dict[str, Any]], encodings: Dict[str, str]
     ) -> int:
-        """
-        Calculate the maximum Hamming distance across all transitions.
-
-        Args:
-            transitions: List of transition dicts with from_state/to_state
-            encodings: State -> Gray code mapping
-
-        Returns:
-            Maximum Hamming distance (0 if no transitions)
-        """
         if not transitions:
             return 0
-
-        distances = []
+        distances: List[int] = []
         for trans in transitions:
-            from_state = trans.get("from_state", "")
-            to_state = trans.get("to_state", "")
-            from_code = encodings.get(from_state)
-            to_code = encodings.get(to_state)
+            from_code = encodings.get(trans.get("from_state", ""))
+            to_code = encodings.get(trans.get("to_state", ""))
             if from_code and to_code and len(from_code) == len(to_code):
                 distances.append(hamming_distance(from_code, to_code))
-
         return max(distances) if distances else 0
 
     async def _record_failure(
@@ -382,18 +452,11 @@ class OptimizationService:
         execution_time_ms: int,
         error_message: str,
     ) -> None:
-        """
-        Record a failed optimization attempt in the database.
-
-        Args:
-            original_fsm_id: UUID of the original FSM
-            algorithm: Algorithm name
-            options: Algorithm parameters
-            execution_time_ms: How long before failure
-            error_message: Error description
-        """
+        """Record a failed optimization attempt. Best-effort: any exception
+        in the recording itself is logged and swallowed so the original
+        AlgorithmException reaches the caller."""
         try:
-            result = AlgorithmResult(
+            row = AlgorithmResult(
                 original_fsm_id=original_fsm_id,
                 algorithm=algorithm,
                 algorithm_parameters=options,
@@ -403,10 +466,7 @@ class OptimizationService:
                 success=False,
                 error_message=error_message,
             )
-            self.db.add(result)
+            self.db.add(row)
             await self.db.commit()
-        except Exception as exc:
-            logger.error(
-                "Failed to record optimization failure",
-                error=str(exc),
-            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to record optimization failure", error=str(exc))
