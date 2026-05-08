@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import PropertyPanel from '../components/fsm/PropertyPanel';
@@ -14,13 +14,15 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { ShortcutDefinition } from '../hooks/useKeyboardShortcuts';
 import { ROUTES, generateRoute } from '../config/routes';
 import { cn } from '../utils/cn';
+import { useEditorModals } from './editor/useEditorModals';
 
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
+  // Three editor-owned modals (create / shortcuts / import) — co-located
+  // in a hook so each modal's open/close pair is one named action instead
+  // of a useState-and-setter dance at the page level.
+  const modals = useEditorModals();
 
   const { data: fsmResponse, isLoading, error } = useFSM(id);
   const updateMutation = useUpdateFSM();
@@ -99,12 +101,12 @@ export default function EditorPage() {
       }
       return;
     }
-    setShowCreateForm(true);
+    modals.openCreate();
   }, [id, updateMutation, draftName, toastSuccess, toastError]);
 
   const handleCreateSuccess = useCallback(
     (fsmId: string) => {
-      setShowCreateForm(false);
+      modals.closeCreate();
       navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
     },
     [navigate]
@@ -112,7 +114,7 @@ export default function EditorPage() {
 
   const handleImportSuccess = useCallback(
     (fsmId: string) => {
-      setShowImportModal(false);
+      modals.closeImport();
       toastSuccess('FSM imported successfully');
       navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: fsmId }));
     },
@@ -211,7 +213,7 @@ export default function EditorPage() {
       },
       {
         key: '?',
-        handler: () => setShowShortcutsModal(true),
+        handler: () => modals.openShortcuts(),
         description: 'Show keyboard shortcuts',
       },
     ],
@@ -285,7 +287,7 @@ export default function EditorPage() {
         <div className="flex items-center gap-2">
           {/* Keyboard shortcuts help button */}
           <button
-            onClick={() => setShowShortcutsModal(true)}
+            onClick={() => modals.openShortcuts()}
             data-testid="editor-shortcuts-help"
             title="Keyboard shortcuts (?)"
             className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
@@ -332,7 +334,7 @@ export default function EditorPage() {
 
           {/* Import button */}
           <button
-            onClick={() => setShowImportModal(true)}
+            onClick={() => modals.openImport()}
             data-testid="editor-import"
             className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
@@ -411,7 +413,7 @@ export default function EditorPage() {
                     Add First State
                   </button>
                   <button
-                    onClick={() => setShowImportModal(true)}
+                    onClick={() => modals.openImport()}
                     data-testid="editor-import-empty"
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                   >
@@ -513,7 +515,7 @@ export default function EditorPage() {
       </div>
 
       {/* Create FSM modal */}
-      {showCreateForm && (
+      {modals.createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
             className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
@@ -524,19 +526,19 @@ export default function EditorPage() {
             </h2>
             <FSMCreateForm
               onSuccess={handleCreateSuccess}
-              onCancel={() => setShowCreateForm(false)}
+              onCancel={() => modals.closeCreate()}
             />
           </div>
         </div>
       )}
 
       {/* Keyboard shortcuts modal */}
-      {showShortcutsModal && (
-        <KeyboardShortcutsModal onClose={() => setShowShortcutsModal(false)} />
+      {modals.shortcutsOpen && (
+        <KeyboardShortcutsModal onClose={() => modals.closeShortcuts()} />
       )}
 
       {/* Import FSM modal */}
-      {showImportModal && (
+      {modals.importOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
             className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
@@ -545,7 +547,7 @@ export default function EditorPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Import FSM</h2>
               <button
-                onClick={() => setShowImportModal(false)}
+                onClick={() => modals.closeImport()}
                 className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                 aria-label="Close"
               >
@@ -556,7 +558,7 @@ export default function EditorPage() {
             </div>
             <ImportForm
               onSuccess={handleImportSuccess}
-              onCancel={() => setShowImportModal(false)}
+              onCancel={() => modals.closeImport()}
             />
           </div>
         </div>
