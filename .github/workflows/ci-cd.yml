@@ -218,9 +218,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Backend image
@@ -231,8 +232,11 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:buildcache,mode=max
+          # cache-from/cache-to require ghcr.io auth, and the login step
+          # only runs on push events. On pull_request events, skip the
+          # registry cache to avoid a 403 when pushing the buildcache layer.
+          cache-from: ${{ github.event_name == 'push' && format('type=registry,ref={0}/{1}-backend:buildcache', env.REGISTRY, env.IMAGE_NAME) || '' }}
+          cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}/{1}-backend:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME) || '' }}
 
   # Docker Build - Frontend
   build-frontend:
@@ -266,9 +270,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Frontend image
@@ -279,8 +284,10 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:buildcache,mode=max
+          # See backend image step for rationale: skip registry cache on
+          # PR events to avoid auth failures.
+          cache-from: ${{ github.event_name == 'push' && format('type=registry,ref={0}/{1}-frontend:buildcache', env.REGISTRY, env.IMAGE_NAME) || '' }}
+          cache-to: ${{ github.event_name == 'push' && format('type=registry,ref={0}/{1}-frontend:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME) || '' }}
 
   # Deployment - Staging
   deploy-staging:

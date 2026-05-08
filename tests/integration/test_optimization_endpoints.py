@@ -70,7 +70,7 @@ class TestOptimizationEndpoints:
 
         assert "task_id" in data
         assert data["status"] in ["pending", "running"]
-        assert "websocket_url" in data
+        assert "status_url" in data
 
         # Check task status
         task_id = data["task_id"]

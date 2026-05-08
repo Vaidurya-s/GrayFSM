@@ -77,27 +77,31 @@ class FSMService:
         
         return fsm
     
-    async def get_fsm(self, fsm_id: UUID) -> FSM:
+    async def get_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
         """
-        Get FSM by ID.
-        
-        Args:
-            fsm_id: FSM UUID
-            
-        Returns:
-            FSM instance
-            
+        Get FSM by ID with visibility-aware access control.
+
+        Public FSMs are readable by anyone (including anonymous users).
+        Private FSMs are readable only by their owner. Legacy FSMs with no
+        owner (created_by=None) are always readable.
+
         Raises:
-            FSMNotFoundException: If FSM not found
+            FSMNotFoundException: If FSM not found, OR if a private FSM is
+                requested by a non-owner. The two cases are deliberately
+                indistinguishable to prevent enumeration of private IDs.
         """
         result = await self.db.execute(
             select(FSM).where(FSM.id == fsm_id)
         )
         fsm = result.scalar_one_or_none()
-        
+
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
-        
+
+        if fsm.visibility != "public" and fsm.created_by is not None:
+            if user_id is None or fsm.created_by != user_id:
+                raise FSMNotFoundException(str(fsm_id))
+
         # Increment view count
         fsm.view_count += 1
         await self.db.commit()
@@ -186,14 +190,24 @@ class FSMService:
         await self.db.refresh(fsm)
         return fsm
 
-    async def fork_fsm(self, fsm_id: UUID, new_name: str) -> FSM:
+    async def fork_fsm(
+        self, fsm_id: UUID, new_name: str, user_id: Optional[UUID] = None
+    ) -> FSM:
         """
         Fork an existing FSM into a new copy.
 
+        Forking is allowed for public FSMs (anyone may copy) and for private
+        FSMs only by their owner. The fork is owned by the caller.
+
         Raises:
-            FSMNotFoundException: If the source FSM does not exist
+            FSMNotFoundException: If the source FSM does not exist or the
+                caller cannot see it (private + non-owner).
         """
         original = await self.get_fsm_raw(fsm_id)
+
+        if original.visibility != "public" and original.created_by is not None:
+            if user_id is None or original.created_by != user_id:
+                raise FSMNotFoundException(str(fsm_id))
 
         forked = FSM(
             name=new_name,
@@ -207,6 +221,7 @@ class FSMService:
             category_id=original.category_id,
             tags=list(original.tags) if original.tags else [],
             visibility=original.visibility,
+            created_by=user_id,
         )
 
         self.db.add(forked)

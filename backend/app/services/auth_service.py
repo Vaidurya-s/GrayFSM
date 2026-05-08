@@ -22,6 +22,12 @@ logger = get_logger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Pre-computed bcrypt hash used to equalize timing on login attempts for
+# non-existent emails. Without this, attackers can distinguish "user exists,
+# wrong password" (slow, ~100ms) from "user does not exist" (fast, ~1ms) by
+# response time. The hash is of a value that is never a valid password.
+_TIMING_DUMMY_HASH = pwd_context.hash("timing-equalization-not-a-real-password")
+
 
 def hash_password(password: str) -> str:
     """
@@ -104,6 +110,10 @@ class AuthService:
         """
         user = await self._get_user_by_email(email)
         if not user:
+            # Run a dummy bcrypt verify before raising so total response time
+            # matches the "user exists, wrong password" branch below. This
+            # closes a timing oracle that would otherwise leak email validity.
+            pwd_context.verify(password, _TIMING_DUMMY_HASH)
             logger.warning(f"Login attempted with non-existent email: {email[:3]}***")
             raise UserNotFoundException(f"User with email {email} not found")
 

@@ -103,7 +103,7 @@ export default function HomePage() {
 
               {fsms && fsms.length > 0 && (
                 <div className="space-y-2">
-                  {fsms.map((fsm) => (
+                  {fsms.map((fsm: FSM) => (
                     <button
                       key={fsm.id}
                       onClick={() => setSelectedFSM(fsm)}

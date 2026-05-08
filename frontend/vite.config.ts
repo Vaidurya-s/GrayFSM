@@ -21,7 +21,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Source maps shipped to production let anyone read the original TS.
+    // Keep them on for `vite dev` (default) and any non-prod build.
+    sourcemap: process.env.NODE_ENV !== 'production',
     rollupOptions: {
       output: {
         manualChunks: {

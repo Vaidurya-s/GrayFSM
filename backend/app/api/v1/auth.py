@@ -46,9 +46,12 @@ async def register(
     try:
         user = await service.register(email=request.email, password=request.password)
     except UserAlreadyExistsException as exc:
+        # Generic 400 (rather than 409 with the original message) so callers
+        # cannot probe whether an email is already registered.
+        logger.info("register_email_taken", extra={"email_prefix": request.email[:3]})
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=exc.message,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration failed. Please try a different email address.",
         ) from exc
 
     # Create access token

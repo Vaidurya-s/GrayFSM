@@ -116,10 +116,22 @@ class Settings(BaseSettings):
                 "It must not be empty or contain the placeholder 'change-in-production'."
             )
 
+        if len(self.secret_key) < 32:
+            raise ValueError(
+                "SECRET_KEY must be at least 32 bytes in production."
+            )
+
         if self.debug:
             raise ValueError(
                 "DEBUG must be False in production. "
                 "Set the DEBUG environment variable to 'false'."
+            )
+
+        # Reject the dev-default DB credentials — easy to ship by accident.
+        if "grayfsm:password@" in self.database_url:
+            raise ValueError(
+                "DATABASE_URL contains the development placeholder password. "
+                "Set DATABASE_URL to the production connection string."
             )
 
         if self.cors_origins == ["*"]:
