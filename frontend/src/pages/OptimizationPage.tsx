@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
@@ -10,7 +10,11 @@ import HammingChart from '../components/visualization/HammingChart';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import ComparisonView from '../components/visualization/ComparisonView';
 import MetricsDashboard from '../components/visualization/MetricsDashboard';
-import Hypercube3D from '../components/visualization/Hypercube3D';
+// Hypercube3D pulls in three.js + @react-three/* (~933 KB minified). The
+// component only renders on the "Hypercube" tab of the optimization
+// results page — almost no users hit this path on first load. Lazy-load
+// it so three.js doesn't bloat the initial bundle.
+const Hypercube3D = lazy(() => import('../components/visualization/Hypercube3D'));
 import { ROUTES, generateRoute } from '../config/routes';
 import { fsmAPI } from '../api/endpoints/fsms';
 import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
@@ -213,15 +217,24 @@ export default function OptimizationPage() {
                 {activeTab === 'hypercube' && (
                   <div className="h-[560px] p-4">
                     <ErrorBoundary>
-                      <Hypercube3D
-                        numBits={computeNumBits(result.total_states)}
-                        highlightedStates={
-                          result.encoding_map
-                            ? Object.values(result.encoding_map)
-                            : (originalFSM?.states ?? [])
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center h-full">
+                            <Spinner />
+                            <p className="ml-3 text-sm text-gray-500">Loading 3D visualization…</p>
+                          </div>
                         }
-                        transitions={originalFSM?.transitions ?? []}
-                      />
+                      >
+                        <Hypercube3D
+                          numBits={computeNumBits(result.total_states)}
+                          highlightedStates={
+                            result.encoding_map
+                              ? Object.values(result.encoding_map)
+                              : (originalFSM?.states ?? [])
+                          }
+                          transitions={originalFSM?.transitions ?? []}
+                        />
+                      </Suspense>
                     </ErrorBoundary>
                   </div>
                 )}
