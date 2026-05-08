@@ -92,13 +92,16 @@ jobs:
           cd backend
           alembic upgrade head
 
-      # NOTE: `alembic check` was previously run here. It currently fails
-      # because the head migration has drifted from the SQLAlchemy models
-      # (a number of indexes are defined in migrations but not in models,
-      # and the users table has type/nullable mismatches). Resolving that
-      # drift is an app-code change, not a CI plumbing change, so it's
-      # left out of this workflow. Track-and-fix in a separate PR; once
-      # the drift is gone, re-add a `alembic check` step here.
+      - name: Validate migration sync (alembic check)
+        # Re-enabled after PR fixed the model/migration drift. `env.py`
+        # has an `include_object` filter that ignores Postgres-specific
+        # indexes (GIN, full-text, partial WHERE clauses, expression-based)
+        # that aren't expressible in plain SQLAlchemy declarations.
+        env:
+          DATABASE_URL: postgresql+asyncpg://grayfsm:testpass@localhost:5432/grayfsm_migration_test
+        run: |
+          cd backend
+          alembic check
 
       - name: Test migration downgrade
         env:
