@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { FSM, State, Transition } from '../types/fsm';
+import { FSMHistory, type FSMSnapshot } from './fsmHistory';
 
-interface Snapshot {
+interface Snapshot extends FSMSnapshot {
   draftStates: State[];
   draftTransitions: Transition[];
   draftName: string;
@@ -20,9 +21,9 @@ interface FSMStore {
   draftFsmType: 'moore' | 'mealy';
   draftInitialState: string;
 
-  // Undo/redo history
-  history: Snapshot[];
-  historyIndex: number;
+  // Undo/redo cursor mirror — kept in store state because React components
+  // subscribe to canUndo/canRedo to disable buttons. The actual stack lives
+  // in the `FSMHistory` instance below.
   canUndo: boolean;
   canRedo: boolean;
 
@@ -60,11 +61,9 @@ interface FSMStore {
   pasteClipboard: () => void;
 }
 
-const MAX_HISTORY = 50;
-
 const initialDraftState = {
-  draftStates: [],
-  draftTransitions: [],
+  draftStates: [] as State[],
+  draftTransitions: [] as Transition[],
   draftName: '',
   draftDescription: '',
   draftFsmType: 'moore' as const,
@@ -78,12 +77,21 @@ function makeSnapshot(s: {
   draftInitialState: string;
 }): Snapshot {
   return {
-    draftStates: s.draftStates.map((st) => ({ ...st, position: st.position ? { ...st.position } : undefined })),
+    draftStates: s.draftStates.map((st) => ({
+      ...st,
+      position: st.position ? { ...st.position } : undefined,
+    })),
     draftTransitions: s.draftTransitions.map((t) => ({ ...t })),
     draftName: s.draftName,
     draftInitialState: s.draftInitialState,
   };
 }
+
+// History stack lives outside the zustand state tree because it's a pure
+// data-structure concern, not part of the rendered UI state. Components
+// only need to read `canUndo` / `canRedo` (which we do mirror into the
+// store), and call `undo()` / `redo()` (which delegate to this instance).
+const history = new FSMHistory<Snapshot>();
 
 export const useFSMStore = create<FSMStore>((set, get) => ({
   currentFSM: null,
@@ -92,13 +100,9 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
   isEditing: false,
   ...initialDraftState,
 
-  // Undo/redo history — starts empty; first mutation pushes initial + new snapshot
-  history: [],
-  historyIndex: -1,
   canUndo: false,
   canRedo: false,
 
-  // Clipboard
   clipboard: null,
 
   setCurrentFSM: (fsm) => set({ currentFSM: fsm }),
@@ -112,49 +116,33 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
   setDraftInitialState: (state) => set({ draftInitialState: state }),
 
   pushSnapshot: () => {
-    const s = get();
-    const snap = makeSnapshot(s);
-    // If we are not at the end, discard future history
-    const base = s.history.slice(0, s.historyIndex + 1);
-    const next = [...base, snap].slice(-MAX_HISTORY);
-    const nextIndex = next.length - 1;
-    set({
-      history: next,
-      historyIndex: nextIndex,
-      canUndo: nextIndex > 0,
-      canRedo: false,
-    });
+    history.record(makeSnapshot(get()));
+    set({ canUndo: history.canUndo, canRedo: history.canRedo });
   },
 
   undo: () => {
-    const s = get();
-    if (s.historyIndex <= 0) return;
-    const newIndex = s.historyIndex - 1;
-    const snap = s.history[newIndex];
+    const snap = history.undo();
+    if (!snap) return;
     set({
       draftStates: snap.draftStates,
       draftTransitions: snap.draftTransitions,
       draftName: snap.draftName,
       draftInitialState: snap.draftInitialState,
-      historyIndex: newIndex,
-      canUndo: newIndex > 0,
-      canRedo: true,
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
     });
   },
 
   redo: () => {
-    const s = get();
-    if (s.historyIndex >= s.history.length - 1) return;
-    const newIndex = s.historyIndex + 1;
-    const snap = s.history[newIndex];
+    const snap = history.redo();
+    if (!snap) return;
     set({
       draftStates: snap.draftStates,
       draftTransitions: snap.draftTransitions,
       draftName: snap.draftName,
       draftInitialState: snap.draftInitialState,
-      historyIndex: newIndex,
-      canUndo: true,
-      canRedo: newIndex < s.history.length - 1,
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
     });
   },
 
@@ -166,7 +154,7 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
   updateState: (id, updates) => {
     set((s) => ({
       draftStates: s.draftStates.map((st) =>
-        st.id === id ? { ...st, ...updates } : st
+        st.id === id ? { ...st, ...updates } : st,
       ),
     }));
     get().pushSnapshot();
@@ -176,7 +164,7 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
     set((s) => ({
       draftStates: s.draftStates.filter((st) => st.id !== id),
       draftTransitions: s.draftTransitions.filter(
-        (t) => t.from_state !== id && t.to_state !== id
+        (t) => t.from_state !== id && t.to_state !== id,
       ),
       selectedNode: s.selectedNode === id ? null : s.selectedNode,
     }));
@@ -191,7 +179,7 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
   updateTransition: (index, updates) => {
     set((s) => ({
       draftTransitions: s.draftTransitions.map((t, i) =>
-        i === index ? { ...t, ...updates } : t
+        i === index ? { ...t, ...updates } : t,
       ),
     }));
     get().pushSnapshot();
@@ -204,19 +192,20 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
     get().pushSnapshot();
   },
 
-  resetDraft: () =>
+  resetDraft: () => {
+    history.reset();
     set({
       ...initialDraftState,
       selectedNode: null,
       selectedEdge: null,
-      history: [],
-      historyIndex: -1,
       canUndo: false,
       canRedo: false,
       clipboard: null,
-    }),
+    });
+  },
 
   loadFSMIntoDraft: (fsm) => {
+    history.reset();
     set({
       currentFSM: fsm,
       draftName: fsm.name,
@@ -232,13 +221,11 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
         })),
       draftTransitions: fsm.transitions || [],
       isEditing: true,
-      // Reset history when loading a new FSM
-      history: [],
-      historyIndex: -1,
       canUndo: false,
       canRedo: false,
     });
-    // Push the initial loaded state as the first history entry
+    // Push the initial loaded state as the first history entry, so an
+    // immediate undo can return to "as-loaded".
     get().pushSnapshot();
   },
 
@@ -248,7 +235,7 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
     const state = s.draftStates.find((st) => st.id === s.selectedNode);
     if (!state) return;
     const connectedTransitions = s.draftTransitions.filter(
-      (t) => t.from_state === s.selectedNode || t.to_state === s.selectedNode
+      (t) => t.from_state === s.selectedNode || t.to_state === s.selectedNode,
     );
     set({ clipboard: { states: [state], transitions: connectedTransitions } });
   },
