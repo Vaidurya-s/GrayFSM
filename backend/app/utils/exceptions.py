@@ -11,10 +11,16 @@ class GrayFSMException(Exception):
 
 
 class FSMNotFoundException(GrayFSMException):
-    """Raised when FSM is not found"""
+    """Raised when FSM is not found.
+
+    The id is stored on the exception for server-side logging but is NOT
+    included in the user-facing message — exposing it would let unauthenticated
+    callers enumerate which IDs exist.
+    """
     def __init__(self, fsm_id: str):
+        self.fsm_id = fsm_id
         super().__init__(
-            message=f"FSM with ID '{fsm_id}' not found",
+            message="FSM not found",
             code="FSM_NOT_FOUND"
         )
 
@@ -65,9 +71,14 @@ class InvalidCredentialsException(GrayFSMException):
 
 
 class FSMPermissionException(GrayFSMException):
-    """Raised when a user lacks permission to modify an FSM"""
+    """Raised when a user lacks permission for the requested operation.
+
+    Routes should typically translate this to a 404 (not a 403) so callers
+    cannot distinguish "exists but forbidden" from "does not exist".
+    """
     def __init__(self, fsm_id: str):
+        self.fsm_id = fsm_id
         super().__init__(
-            message=f"You do not have permission to modify FSM '{fsm_id}'",
+            message="Not found",
             code="FSM_PERMISSION_DENIED"
         )

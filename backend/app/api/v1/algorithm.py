@@ -30,9 +30,17 @@ router = APIRouter()
 
 
 async def _run_optimization_task(
-    task_id: str, fsm_id: UUID, algorithm: str, options: dict
+    task_id: str,
+    fsm_id: UUID,
+    algorithm: str,
+    options: dict,
+    user_id: Optional[UUID] = None,
 ) -> None:
-    """Background task: runs optimization and updates task store."""
+    """Background task: runs optimization and updates task store.
+
+    The owning user_id is passed through so the optimization service can
+    verify ownership at execution time, not just at request time.
+    """
     from app.api.v1.tasks import update_task
     from app.db.session import AsyncSessionLocal
 
@@ -43,10 +51,12 @@ async def _run_optimization_task(
             req = OptimizationRequest.model_validate(
                 {"algorithm": algorithm, "async": False, "options": options or {}}
             )
-            result = await service.optimize_fsm(fsm_id, req)
+            result = await service.optimize_fsm(fsm_id, req, user_id=user_id)
             update_task(task_id, status="completed", result=result.model_dump(mode="json"))
     except Exception as exc:
-        update_task(task_id, status="failed", error=str(exc))
+        # Don't echo arbitrary exception text to a user-visible task record.
+        logger.exception("optimization_task_failed", extra={"task_id": task_id})
+        update_task(task_id, status="failed", error="Optimization failed")
 
 
 @router.post("/{fsm_id}/optimize", response_model=OptimizationResponse)
@@ -75,16 +85,26 @@ async def optimize_fsm(
         422: FSM validation error
         400: Algorithm error (unknown algorithm or execution failure)
     """
+    user_id = UUID(current_user["user_id"])
+
     if request.async_mode:
         from app.api.v1.tasks import create_task
+        # Verify ownership synchronously so the user gets immediate 404 on
+        # someone else's FSM, instead of a task that fails async.
+        try:
+            await OptimizationService(db)._load_fsm(fsm_id, user_id=user_id)
+        except FSMNotFoundException:
+            raise HTTPException(status_code=404, detail="FSM not found")
+
         task_id = str(uuid.uuid4())
-        create_task(task_id, str(fsm_id))
+        create_task(task_id, str(fsm_id), user_id=str(user_id))
         background_tasks.add_task(
             _run_optimization_task,
             task_id,
             fsm_id,
             request.algorithm,
             request.options or {},
+            user_id,
         )
         return JSONResponse(status_code=202, content={
             "success": True,
@@ -96,14 +116,17 @@ async def optimize_fsm(
     service = OptimizationService(db)
 
     try:
-        result = await service.optimize_fsm(fsm_id, request)
+        result = await service.optimize_fsm(fsm_id, request, user_id=user_id)
         return result
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
     except FSMValidationException as e:
         raise HTTPException(status_code=422, detail=str(e))
     except AlgorithmException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # AlgorithmException messages can wrap arbitrary inner errors; log
+        # the full chain and return a generic message.
+        logger.exception("algorithm_failed", extra={"fsm_id": str(fsm_id)})
+        raise HTTPException(status_code=400, detail="Algorithm execution failed")
 
 
 @router.get("/{fsm_id}/results")
@@ -111,21 +134,21 @@ async def get_optimization_results(
     fsm_id: UUID,
     algorithm: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[UserToken] = Depends(get_optional_current_user),
+    current_user: UserToken = Depends(get_required_current_user),
 ):
     """
-    List optimization results for a given FSM.
+    List optimization results for a given FSM. Strict-ownership.
 
-    Returns all AlgorithmResult records associated with this FSM, optionally
-    filtered by algorithm name.
-
-    Args:
-        fsm_id: UUID of the FSM
-        algorithm: Optional filter — only return results for this algorithm
-
-    Returns:
-        Wrapped list of optimization result records
+    Returns AlgorithmResult records the caller owns for this FSM. Callers
+    cannot read results for FSMs owned by other users.
     """
+    user_id = UUID(current_user["user_id"])
+    # Verify FSM exists and is owned by this user before exposing results.
+    try:
+        await OptimizationService(db)._load_fsm(fsm_id, user_id=user_id)
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
+
     query = select(AlgorithmResult).where(AlgorithmResult.original_fsm_id == fsm_id)
     if algorithm:
         query = query.where(AlgorithmResult.algorithm == algorithm)
@@ -184,6 +207,7 @@ async def compare_algorithms(
     if invalid:
         raise HTTPException(status_code=422, detail=f"Unknown algorithms: {invalid}")
 
+    user_id = UUID(current_user["user_id"])
     service = OptimizationService(db)
     results = []
 
@@ -192,14 +216,18 @@ async def compare_algorithms(
             req = OptimizationRequest.model_validate(
                 {"algorithm": algo, "async": False, "options": options}
             )
-            result = await service.optimize_fsm(fsm_id, req)
+            result = await service.optimize_fsm(fsm_id, req, user_id=user_id)
             results.append(result.model_dump(mode="json"))
-        except FSMNotFoundException as e:
-            raise HTTPException(status_code=404, detail=str(e))
-        except (AlgorithmException, FSMValidationException) as e:
+        except FSMNotFoundException:
+            raise HTTPException(status_code=404, detail="FSM not found")
+        except (AlgorithmException, FSMValidationException):
+            logger.exception(
+                "compare_algorithm_failed",
+                extra={"fsm_id": str(fsm_id), "algorithm": algo},
+            )
             results.append({
                 "algorithm": algo,
-                "error": str(e),
+                "error": "Algorithm execution failed",
                 "success": False,
             })
 

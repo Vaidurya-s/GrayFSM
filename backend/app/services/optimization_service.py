@@ -4,7 +4,7 @@ Optimization Service - Orchestrates FSM optimization using registered algorithms
 import math
 import time
 import traceback
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +31,10 @@ class OptimizationService:
         self.db = db
 
     async def optimize_fsm(
-        self, fsm_id: UUID, request: OptimizationRequest
+        self,
+        fsm_id: UUID,
+        request: OptimizationRequest,
+        user_id: Optional[UUID] = None,
     ) -> OptimizationResponse:
         """
         Optimize an FSM using the specified algorithm.
@@ -64,8 +67,10 @@ class OptimizationService:
             logger.info(f"Cache hit for {cache_key}")
             return OptimizationResponse(**cached)
 
-        # Step 1: Load FSM from DB
-        original_fsm = await self._load_fsm(fsm_id)
+        # Step 1: Load FSM from DB and verify ownership.
+        # Optimize is strict-ownership: it consumes compute and creates a
+        # derived record, so even public FSMs cannot be optimized by others.
+        original_fsm = await self._load_fsm(fsm_id, user_id=user_id)
         logger.info(
             "Starting optimization",
             fsm_id=str(fsm_id),
@@ -238,18 +243,17 @@ class OptimizationService:
 
         return response
 
-    async def _load_fsm(self, fsm_id: UUID) -> FSM:
+    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
         """
-        Load an FSM from the database by ID.
+        Load an FSM from the database by ID, enforcing ownership.
 
-        Args:
-            fsm_id: UUID of the FSM
-
-        Returns:
-            FSM ORM instance
+        Returns 404 (FSMNotFoundException) for both "does not exist" and
+        "not yours" so that callers cannot enumerate FSM IDs they don't own.
 
         Raises:
-            FSMNotFoundException: If the FSM does not exist
+            FSMNotFoundException: If the FSM does not exist or the caller
+                does not own it.
+            FSMValidationException: If the FSM exists but has no definition.
         """
         result = await self.db.execute(
             select(FSM).where(FSM.id == fsm_id)
@@ -259,10 +263,12 @@ class OptimizationService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
+        if fsm.created_by is not None:
+            if user_id is None or fsm.created_by != user_id:
+                raise FSMNotFoundException(str(fsm_id))
+
         if not fsm.definition:
-            raise FSMValidationException(
-                f"FSM '{fsm_id}' has no definition data"
-            )
+            raise FSMValidationException("FSM has no definition data")
 
         return fsm
 

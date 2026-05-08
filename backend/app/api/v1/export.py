@@ -71,12 +71,14 @@ async def export_fsm(
         400: Export error (unsupported format or generation failure)
     """
     service = ExportService(db)
+    user_id = UUID(current_user["user_id"])
 
     try:
         result = await service.export_fsm(
             fsm_id=fsm_id,
             format_name=request.format,
             options=request.options.model_dump(exclude_none=True),
+            user_id=user_id,
         )
         content = result.get("content", "")
         return {
@@ -86,10 +88,11 @@ async def export_fsm(
                 "file_size_bytes": len(content.encode("utf-8")),
             },
         }
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ExportException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
+    except ExportException:
+        logger.exception("export_failed", extra={"fsm_id": str(fsm_id)})
+        raise HTTPException(status_code=400, detail="Export failed")
 
 
 @router.get("/{fsm_id}/export/{format_name}")
@@ -117,21 +120,24 @@ async def get_cached_export(
     """
     valid_formats = {"verilog", "vhdl", "json", "csv", "testbench"}
     if format_name not in valid_formats:
-        raise HTTPException(status_code=400, detail=f"Unsupported format: {format_name}")
+        raise HTTPException(status_code=400, detail="Unsupported format")
 
     service = ExportService(db)
+    user_id = UUID(current_user["user_id"])
 
     try:
         result = await service.export_fsm(
             fsm_id=fsm_id,
             format_name=format_name,
             options={},
+            user_id=user_id,
         )
         return PlainTextResponse(content=result.get("content", ""))
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ExportException as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
+    except ExportException:
+        logger.exception("export_failed", extra={"fsm_id": str(fsm_id)})
+        raise HTTPException(status_code=400, detail="Export failed")
 
 
 @router.get("/formats")

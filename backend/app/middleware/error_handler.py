@@ -41,18 +41,17 @@ async def error_handler_middleware(request: Request, call_next):
     except RequestValidationError as e:
         logger.error(f"Validation error: {str(e)}")
 
-        # In production, sanitize error details to avoid information disclosure
-        if settings.environment == "production":
-            sanitized_errors = [
-                {
-                    "field": err.get("loc", ["unknown"])[-1],
-                    "message": err.get("msg", "Validation error")
-                }
-                for err in e.errors()
-            ]
-            details = sanitized_errors
-        else:
-            details = e.errors()
+        # Always sanitize. The full Pydantic error structure can include
+        # input values, internal type details, and ctx fields that leak
+        # schema information. A misconfigured environment must not flip this
+        # gate — keep it unconditional.
+        details = [
+            {
+                "field": err.get("loc", ["unknown"])[-1],
+                "message": err.get("msg", "Validation error"),
+            }
+            for err in e.errors()
+        ]
 
         return JSONResponse(
             status_code=422,

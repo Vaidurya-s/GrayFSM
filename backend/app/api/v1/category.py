@@ -72,7 +72,8 @@ async def get_category(
     category = await service.get_category(category_id)
 
     if not category:
-        raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found")
+        logger.info("category_not_found", extra={"category_id": str(category_id)})
+        raise HTTPException(status_code=404, detail="Category not found")
 
     return {
         "id": str(category.id),

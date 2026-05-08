@@ -1,6 +1,7 @@
 """
 Export Service - Orchestrates FSM export to various formats (Verilog, VHDL, JSON)
 """
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,34 +26,33 @@ class ExportService:
         fsm_id: UUID,
         format_name: str,
         options: dict = None,
+        user_id: Optional[UUID] = None,
     ) -> dict:
         """
         Export an FSM to the specified format.
 
-        Args:
-            fsm_id: UUID of the FSM to export
-            format_name: Target format ('verilog', 'vhdl', 'json')
-            options: Format-specific options
-
-        Returns:
-            Dictionary with format, content, and file_name
+        Strict-ownership: callers may only export FSMs they own (legacy
+        FSMs with no owner are also allowed through). Cache lookups happen
+        AFTER ownership is verified to avoid serving cached output to
+        unauthorized callers.
 
         Raises:
-            FSMNotFoundException: If the FSM does not exist
-            ExportException: If export generation fails
+            FSMNotFoundException: If the FSM does not exist or is not owned
+                by the caller.
+            ExportException: If export generation fails.
         """
         options = options or {}
 
-        # Check cache before loading FSM
+        # Verify ownership BEFORE consulting the cache. Otherwise a cached
+        # export from a previous owner would be served without ownership check.
+        fsm = await self._load_fsm(fsm_id, user_id=user_id)
+
         from app.cache import cache_get, cache_set
         cache_key = f"export:{fsm_id}:{format_name}"
         cached = await cache_get(cache_key)
         if cached:
             logger.info(f"Cache hit for {cache_key}")
             return cached
-
-        # Load FSM from DB
-        fsm = await self._load_fsm(fsm_id)
 
         logger.info(
             "Exporting FSM",
@@ -115,18 +115,17 @@ class ExportService:
         """
         return list_formats()
 
-    async def _load_fsm(self, fsm_id: UUID) -> FSM:
+    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
         """
-        Load an FSM from the database.
+        Load an FSM from the database, enforcing ownership.
 
-        Args:
-            fsm_id: UUID of the FSM
-
-        Returns:
-            FSM ORM instance
+        Returns 404 (FSMNotFoundException) for both "does not exist" and
+        "not yours" so that callers cannot enumerate FSM IDs.
 
         Raises:
-            FSMNotFoundException: If the FSM does not exist
+            FSMNotFoundException: If the FSM does not exist or is not owned
+                by the caller.
+            ExportException: If the FSM exists but has no definition.
         """
         result = await self.db.execute(
             select(FSM).where(FSM.id == fsm_id)
@@ -136,10 +135,12 @@ class ExportService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
+        if fsm.created_by is not None:
+            if user_id is None or fsm.created_by != user_id:
+                raise FSMNotFoundException(str(fsm_id))
+
         if not fsm.definition:
-            raise ExportException(
-                f"FSM '{fsm_id}' has no definition data to export"
-            )
+            raise ExportException("FSM has no definition data to export")
 
         return fsm
 

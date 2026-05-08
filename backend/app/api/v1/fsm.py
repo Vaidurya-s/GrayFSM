@@ -32,6 +32,7 @@ async def create_fsm(
         fsm = await service.create_fsm(fsm_data, user_id=user_id)
         return fsm
     except FSMValidationException as e:
+        # Validation messages describe the user's own input; safe to return.
         raise HTTPException(status_code=422, detail=str(e))
 
 
@@ -41,13 +42,14 @@ async def get_fsm(
     db: AsyncSession = Depends(get_db),
     current_user: Optional[UserToken] = Depends(get_optional_current_user),
 ):
-    """Get FSM by ID."""
+    """Get FSM by ID. Public FSMs are visible to anyone; private only to owner."""
     service = FSMService(db)
     try:
-        fsm = await service.get_fsm(fsm_id)
+        user_id = UUID(current_user["user_id"]) if current_user else None
+        fsm = await service.get_fsm(fsm_id, user_id=user_id)
         return fsm
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
 
 
 @router.put("/{fsm_id}", response_model=FSMResponse)
@@ -63,10 +65,9 @@ async def update_fsm(
         user_id = UUID(current_user["user_id"]) if current_user else None
         fsm = await service.update_fsm(fsm_id, update_data, user_id=user_id)
         return fsm
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except FSMPermissionException as e:
-        raise HTTPException(status_code=403, detail=str(e))
+    except (FSMNotFoundException, FSMPermissionException):
+        # Collapse not-found and forbidden into 404 to prevent enumeration.
+        raise HTTPException(status_code=404, detail="FSM not found")
 
 
 @router.post("/{fsm_id}/fork", response_model=FSMResponse, status_code=201)
@@ -76,13 +77,15 @@ async def fork_fsm(
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
 ):
-    """Fork an existing FSM into a new copy with a different name."""
+    """Fork an existing FSM into a new copy. Public FSMs may be forked by anyone;
+    private FSMs only by their owner. The fork is owned by the caller."""
     service = FSMService(db)
     try:
-        forked = await service.fork_fsm(fsm_id, fork_data.name)
+        user_id = UUID(current_user["user_id"])
+        forked = await service.fork_fsm(fsm_id, fork_data.name, user_id=user_id)
         return forked
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except FSMNotFoundException:
+        raise HTTPException(status_code=404, detail="FSM not found")
 
 
 @router.get("")
@@ -137,7 +140,5 @@ async def delete_fsm(
     try:
         user_id = UUID(current_user["user_id"]) if current_user else None
         await service.delete_fsm(fsm_id, user_id=user_id)
-    except FSMNotFoundException as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except FSMPermissionException as e:
-        raise HTTPException(status_code=403, detail=str(e))
+    except (FSMNotFoundException, FSMPermissionException):
+        raise HTTPException(status_code=404, detail="FSM not found")
