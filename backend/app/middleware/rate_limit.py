@@ -14,7 +14,8 @@ Adapted from security/fixes/03_rate_limiting.py
 """
 
 import time
-from typing import Dict, Optional, Tuple
+from dataclasses import dataclass
+from typing import Callable, Dict, Optional, Tuple
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -220,20 +221,6 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
-# Path-specific rate limits for sensitive auth endpoints. Built lazily
-# (via the function below) so changes to `settings.rate_limit_*` at
-# import time pick up the latest config — the middleware caches the
-# returned dict per request, not per process.
-def _auth_rate_limits() -> dict[str, tuple[int, int]]:
-    return {
-        "/api/v1/auth/login": (settings.rate_limit_login, settings.rate_limit_login_window),
-        "/api/v1/auth/register": (
-            settings.rate_limit_register,
-            settings.rate_limit_register_window,
-        ),
-    }
-
-
 # Paths that should never be rate-limited
 _EXEMPT_PATHS = frozenset({
     "/health",
@@ -245,150 +232,171 @@ _EXEMPT_PATHS = frozenset({
 
 
 # ---------------------------------------------------------------------------
+# Rate-limit rule abstraction
+# ---------------------------------------------------------------------------
+#
+# The middleware previously had two near-identical 50-line blocks: one
+# for auth-path-specific limits, one for the global per-IP limit. Each
+# ran its own Redis-or-memory fallback and built its own 429 response.
+# Adding a new tier (e.g. per-user premium) meant a third copy.
+#
+# The strategy below collapses those into a single dispatch loop. A
+# `RateLimitRule` describes "for requests matching this predicate,
+# enforce N hits per W seconds, keyed by F(request)". The middleware
+# evaluates rules in order; first match wins.
+
+@dataclass(frozen=True)
+class RateLimitRule:
+    """One rate-limit policy.
+
+    matches:    predicate against the Request — first match wins
+    key_for:    derives the bucket key (per-IP, per-user, etc.)
+    limit/window: late-bound via factories so settings reloads are picked up
+    name:       short label for logs / X-RateLimit-* response headers
+    """
+    name: str
+    matches: Callable[[Request], bool]
+    key_for: Callable[[Request], str]
+    limit_factory: Callable[[], int]
+    window_factory: Callable[[], int]
+
+    @property
+    def limit(self) -> int:
+        return self.limit_factory()
+
+    @property
+    def window(self) -> int:
+        return self.window_factory()
+
+
+def _path_matches(*paths: str) -> Callable[[Request], bool]:
+    target = frozenset(paths)
+    return lambda req: req.url.path in target
+
+
+def _bucket(prefix: str) -> Callable[[Request], str]:
+    return lambda req: f"{prefix}:{_get_client_ip(req)}:{req.url.path}"
+
+
+def _build_rules() -> list[RateLimitRule]:
+    """Construct the active rule list. Order matters — auth-specific rules
+    must come BEFORE the catch-all so the stricter limits take precedence."""
+    return [
+        RateLimitRule(
+            name="auth_login",
+            matches=_path_matches("/api/v1/auth/login"),
+            key_for=_bucket("rl:auth"),
+            limit_factory=lambda: settings.rate_limit_login,
+            window_factory=lambda: settings.rate_limit_login_window,
+        ),
+        RateLimitRule(
+            name="auth_register",
+            matches=_path_matches("/api/v1/auth/register"),
+            key_for=_bucket("rl:auth"),
+            limit_factory=lambda: settings.rate_limit_register,
+            window_factory=lambda: settings.rate_limit_register_window,
+        ),
+        RateLimitRule(
+            name="anonymous_global",
+            matches=lambda req: True,  # catch-all
+            key_for=lambda req: f"rl:ip:{_get_client_ip(req)}",
+            limit_factory=lambda: settings.rate_limit_anonymous,
+            window_factory=lambda: settings.rate_limit_window,
+        ),
+    ]
+
+
+async def _check(rule: RateLimitRule, request: Request) -> Tuple[bool, Dict]:
+    """Apply a single rule. Returns (allowed, info-dict).
+
+    Centralises the Redis-then-memory fallback that was duplicated
+    across the two original blocks. Always returns (True, {}) on
+    internal error so a misconfigured rate limiter never blocks
+    legitimate traffic — fail-open is the deliberate policy.
+    """
+    try:
+        redis = await _get_redis_store()
+        if redis and redis.available:
+            return await redis.is_allowed(rule.key_for(request), rule.limit, rule.window)
+        return _memory_store.is_allowed(rule.key_for(request), rule.limit, rule.window)
+    except Exception as exc:
+        logger.error(
+            "Rate limiter error, allowing request through",
+            extra={
+                "error": str(exc),
+                "rule": rule.name,
+                "client_ip": _get_client_ip(request),
+            },
+        )
+        return True, {}
+
+
+def _too_many(rule: RateLimitRule, info: Dict) -> JSONResponse:
+    """Build the 429 response. Single source of truth for the envelope."""
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "success": False,
+            "error": {
+                "code": "RATE_LIMIT_EXCEEDED",
+                "message": "Too many requests. Please try again later.",
+                "details": {
+                    "limit": info.get("limit"),
+                    "reset": info.get("reset"),
+                },
+            },
+        },
+        headers={
+            "Retry-After": str(rule.window),
+            "X-RateLimit-Limit": str(info.get("limit", rule.limit)),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": str(info.get("reset", "")),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Middleware function
 # ---------------------------------------------------------------------------
 
 async def rate_limit_middleware(request: Request, call_next):
-    """
-    Per-IP sliding-window rate limiter.
+    """Per-IP sliding-window rate limiter.
 
-    Behaviour:
     - Disabled entirely when ``settings.rate_limit_enabled`` is ``False``.
     - Health / docs endpoints are always exempt.
+    - Evaluates rules from ``_build_rules()`` in order; first match wins.
     - Uses Redis if available, otherwise an in-memory dict.
     - On any internal error the request is **allowed through** (fail-open).
     - Returns HTTP 429 with ``Retry-After`` header when limit is exceeded.
     """
-    # Master switch
     if not settings.rate_limit_enabled:
         return await call_next(request)
 
-    # Exempt paths
     if request.url.path in _EXEMPT_PATHS:
         return await call_next(request)
 
-    # Determine limits
-    limit = settings.rate_limit_anonymous
-    window = settings.rate_limit_window
+    rule = next((r for r in _build_rules() if r.matches(request)), None)
+    if rule is None:
+        # Shouldn't happen given the catch-all in _build_rules, but be defensive.
+        return await call_next(request)
 
-    # Build the rate-limit key
-    client_ip = _get_client_ip(request)
-    path = request.url.path
-
-    # Check for path-specific (auth) rate limits — stricter than the global limit
-    auth_limits = _auth_rate_limits()
-    if path in auth_limits:
-        auth_limit, auth_window = auth_limits[path]
-        auth_key = f"rl:auth:{client_ip}:{path}"
-
-        auth_allowed = True
-        auth_rate_info: Dict = {}
-
-        try:
-            redis = await _get_redis_store()
-            if redis and redis.available:
-                auth_allowed, auth_rate_info = await redis.is_allowed(auth_key, auth_limit, auth_window)
-            else:
-                auth_allowed, auth_rate_info = _memory_store.is_allowed(auth_key, auth_limit, auth_window)
-        except Exception as exc:
-            logger.error(
-                "Auth rate limiter error, allowing request through",
-                extra={"error": str(exc), "client_ip": client_ip, "path": path},
-            )
-            auth_allowed = True
-            auth_rate_info = {}
-
-        if not auth_allowed:
-            logger.warning(
-                "Auth rate limit exceeded",
-                extra={
-                    "client_ip": client_ip,
-                    "path": path,
-                    "limit": auth_limit,
-                    "window": auth_window,
-                },
-            )
-            return JSONResponse(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "message": "Too many requests. Please try again later.",
-                        "details": {
-                            "limit": auth_rate_info.get("limit"),
-                            "reset": auth_rate_info.get("reset"),
-                        },
-                    },
-                },
-                headers={
-                    "Retry-After": str(auth_window),
-                    "X-RateLimit-Limit": str(auth_rate_info.get("limit", auth_limit)),
-                    "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(auth_rate_info.get("reset", "")),
-                },
-            )
-
-    key = f"rl:ip:{client_ip}"
-
-    # Try Redis first, fall back to in-memory
-    allowed = True
-    rate_info: Dict = {}
-
-    try:
-        redis = await _get_redis_store()
-        if redis and redis.available:
-            allowed, rate_info = await redis.is_allowed(key, limit, window)
-        else:
-            allowed, rate_info = _memory_store.is_allowed(key, limit, window)
-    except Exception as exc:
-        # Fail open — never block a request because of a rate-limiter bug
-        logger.error(
-            "Rate limiter error, allowing request through",
-            extra={"error": str(exc), "client_ip": client_ip},
-        )
-        allowed = True
-        rate_info = {}
-
+    allowed, info = await _check(rule, request)
     if not allowed:
         logger.warning(
             "Rate limit exceeded",
             extra={
-                "client_ip": client_ip,
+                "rule": rule.name,
+                "client_ip": _get_client_ip(request),
                 "path": request.url.path,
-                "limit": limit,
-                "window": window,
+                "limit": rule.limit,
+                "window": rule.window,
             },
         )
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={
-                "success": False,
-                "error": {
-                    "code": "RATE_LIMIT_EXCEEDED",
-                    "message": "Too many requests. Please try again later.",
-                    "details": {
-                        "limit": rate_info.get("limit"),
-                        "reset": rate_info.get("reset"),
-                    },
-                },
-            },
-            headers={
-                "Retry-After": str(window),
-                "X-RateLimit-Limit": str(rate_info.get("limit", limit)),
-                "X-RateLimit-Remaining": "0",
-                "X-RateLimit-Reset": str(rate_info.get("reset", "")),
-            },
-        )
+        return _too_many(rule, info)
 
-    # Request allowed — forward and annotate the response
     response = await call_next(request)
-
-    if rate_info:
-        response.headers["X-RateLimit-Limit"] = str(rate_info.get("limit", limit))
-        response.headers["X-RateLimit-Remaining"] = str(
-            rate_info.get("remaining", 0)
-        )
-        response.headers["X-RateLimit-Reset"] = str(rate_info.get("reset", ""))
-
+    if info:
+        response.headers["X-RateLimit-Limit"] = str(info.get("limit", rule.limit))
+        response.headers["X-RateLimit-Remaining"] = str(info.get("remaining", 0))
+        response.headers["X-RateLimit-Reset"] = str(info.get("reset", ""))
     return response
