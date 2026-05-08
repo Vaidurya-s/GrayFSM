@@ -29,20 +29,29 @@ class Settings(BaseSettings):
     workers: int = 4
     reload: bool = True
     
-    # Database
+    # Database. The defaults are obvious placeholders, NOT real connection
+    # strings — they exist only so module imports don't fail when the env
+    # isn't set yet (e.g. test collection time, `python -c "import app"`).
+    # `validate_production_settings` rejects any URL containing the
+    # `_placeholder_` sentinel when ENVIRONMENT=production, so a deployer
+    # who forgets to set DATABASE_URL fails fast instead of silently
+    # connecting to localhost (the previous default).
     database_url: str = Field(
-        default="postgresql+asyncpg://grayfsm:password@localhost:5432/grayfsm",
-        description="PostgreSQL database URL"
+        default="postgresql+asyncpg://_placeholder_:_placeholder_@127.0.0.1:5432/_placeholder_db_",
+        description="PostgreSQL database URL (required in production)",
     )
     database_pool_size: int = 20
     database_max_overflow: int = 10
     database_echo: bool = False
-    
-    # Redis
-    redis_url: str = "redis://localhost:6379/0"
+
+    # Redis — same placeholder-default policy as database_url.
+    redis_url: str = Field(
+        default="redis://_placeholder_:0/0",
+        description="Redis URL (required in production)",
+    )
     redis_cache_ttl: int = 3600  # seconds
     redis_max_connections: int = 50
-    
+
     # Authentication (Phase 4)
     secret_key: str = ""
     algorithm: str = "HS256"
@@ -109,6 +118,20 @@ class Settings(BaseSettings):
         """Enforce secure defaults when running in production."""
         if self.environment.lower() != "production":
             return self
+
+        # The defaults are placeholders containing "_placeholder_". Reject
+        # them in prod so a missing DATABASE_URL/REDIS_URL fails fast with
+        # a clear message instead of dying later inside SQLAlchemy.
+        if not self.database_url or "_placeholder_" in self.database_url:
+            raise ValueError(
+                "DATABASE_URL must be set to a real connection string in "
+                "production. The placeholder default is rejected."
+            )
+        if not self.redis_url or "_placeholder_" in self.redis_url:
+            raise ValueError(
+                "REDIS_URL must be set to a real connection string in "
+                "production. The placeholder default is rejected."
+            )
 
         if not self.secret_key or "change-in-production" in self.secret_key:
             raise ValueError(
