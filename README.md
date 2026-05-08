@@ -132,7 +132,7 @@ pip install -r requirements.txt
 docker run -d --name grayfsm-pg -e POSTGRES_USER=grayfsm -e POSTGRES_PASSWORD=password -e POSTGRES_DB=grayfsm -p 5432:5432 postgres:15-alpine
 docker run -d --name grayfsm-redis -p 6379:6379 redis:7-alpine
 
-# Configure environment
+# Configure environment (REQUIRED — config defaults are runtime-rejected placeholders)
 cp .env.example .env
 
 # Run server
@@ -247,12 +247,14 @@ npm test
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Install pre-commit hooks (one-time setup: `pip install pre-commit && pre-commit install`). This wires up a gitleaks scan plus standard hygiene checks before each commit.
-4. Make your changes and add tests
-5. Run the test suite to verify
-6. Submit a pull request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide: local setup, code style, branching conventions, test layout, and security disclosure.
+
+Quick start for an experienced contributor:
+
+1. Fork → branch (`feat/`, `fix/`, `chore/`, etc.) → `cp backend/.env.example backend/.env`.
+2. `pip install pre-commit && pre-commit install` *(mandatory — sets up gitleaks + ruff + prettier hooks).*
+3. Make your changes, add tests, ensure `ruff check`, `mypy`, `tsc --noEmit`, and the relevant pytest/vitest suite all pass.
+4. Submit one PR per concern; squash-merge is default.
 
 ---
 
