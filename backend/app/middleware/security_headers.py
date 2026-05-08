@@ -65,13 +65,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "frame-ancestors": "'none'",
             }
 
-        # Production: strict policy
+        # Production policy. Kept aligned with infrastructure/docker/default.conf
+        # so deployments behind nginx (which serves the SPA) and direct
+        # FastAPI deployments (which serve their own HTML) get the same
+        # browser-side enforcement. style-src must allow 'unsafe-inline'
+        # because the bundled SPA (three.js, recharts, react-flow) injects
+        # runtime <style> blocks for dynamic theming — verified by inspecting
+        # the production build output. script-src stays strict ('self' only)
+        # since the bundle is loaded via external <script src="..."> tags.
         return {
             "default-src": "'self'",
             "script-src": "'self'",
-            "style-src": "'self'",
-            "img-src": "'self' data: blob:",
-            "font-src": "'self'",
+            "style-src": "'self' 'unsafe-inline'",
+            "img-src": "'self' data: blob: https:",
+            "font-src": "'self' data:",
             "connect-src": "'self'",
             "frame-src": "'none'",
             "object-src": "'none'",
@@ -79,7 +86,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "form-action": "'self'",
             "frame-ancestors": "'none'",
             "upgrade-insecure-requests": "",
-            "block-all-mixed-content": "",
         }
 
     def _build_csp_header(self) -> str:
