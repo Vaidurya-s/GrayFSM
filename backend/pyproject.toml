@@ -8,8 +8,8 @@ packages = [{include = "grayfsm", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.104.1"
-uvicorn = {extras = ["standard"], version = "^0.24.0"}
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.30.0"}
 networkx = "^3.2.1"
 pydantic = "^2.5.0"
 sqlalchemy = "^2.0.23"

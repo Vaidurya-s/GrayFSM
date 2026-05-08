@@ -2,8 +2,12 @@
 # Install with: pip install -r requirements.txt
 
 # Core Framework
-fastapi>=0.104.1,<0.105.0
-uvicorn[standard]>=0.24.0,<0.25.0
+# fastapi 0.115+ pulls a starlette new enough to clear:
+#   - PYSEC-2024-38 (ReDoS in Content-Type parsing)
+#   - CVE-2024-47874 (multipart DoS)
+#   - CVE-2025-54121
+fastapi>=0.115.0,<0.116.0
+uvicorn[standard]>=0.30.0,<1.0.0
 
 # Data Validation & Serialization
 pydantic>=2.5.0,<3.0.0
