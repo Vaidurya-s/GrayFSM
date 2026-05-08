@@ -5,8 +5,6 @@ Nodes are Gray code strings (e.g. "010"). Edges connect codes
 that differ by exactly one bit.
 """
 
-from typing import List
-
 import networkx as nx
 
 from app.core.gray_code import generate_gray_codes
@@ -56,7 +54,7 @@ class HypercubeGraph:
 
         return g
 
-    def shortest_path(self, start_code: str, end_code: str) -> List[str]:
+    def shortest_path(self, start_code: str, end_code: str) -> list[str]:
         """
         Find shortest path between two Gray codes in hypercube.
 
@@ -84,7 +82,7 @@ class HypercubeGraph:
             # Should never happen in a hypercube, but handle gracefully
             return [start_code, end_code]
 
-    def find_intermediate_states(self, start_code: str, end_code: str) -> List[str]:
+    def find_intermediate_states(self, start_code: str, end_code: str) -> list[str]:
         """
         Find intermediate Gray codes needed for single-bit transitions.
 
@@ -101,7 +99,7 @@ class HypercubeGraph:
             return []
         return path[1:-1]
 
-    def get_neighbors(self, code: str) -> List[str]:
+    def get_neighbors(self, code: str) -> list[str]:
         """
         Get all Gray codes that differ by one bit.
 

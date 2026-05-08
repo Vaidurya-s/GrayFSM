@@ -6,7 +6,6 @@ Strips internal metadata and produces a standardized format.
 """
 
 import json
-from typing import Dict, Optional
 
 from app.utils.exceptions import ExportException
 
@@ -19,7 +18,7 @@ class JSONExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate a clean JSON representation of the FSM.

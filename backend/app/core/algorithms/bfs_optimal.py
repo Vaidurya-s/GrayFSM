@@ -5,8 +5,6 @@ Uses breadth-first search to find optimal paths through hypercube,
 guaranteeing minimum dummy states per transition.
 """
 
-from typing import Dict, List, Set, Tuple
-
 from app.core.algorithms.greedy import DummyState, GreedyOptimizer
 
 
@@ -21,22 +19,22 @@ class BFSOptimizer(GreedyOptimizer):
 
     def __init__(self, bit_width: int):
         super().__init__(bit_width)
-        self.used_encodings: Set[str] = set()
+        self.used_encodings: set[str] = set()
 
     def optimize_fsm(
         self,
-        states: Dict[str, str],
-        transitions: List[Dict],
-        outputs: Dict[str, str],
+        states: dict[str, str],
+        transitions: list[dict],
+        outputs: dict[str, str],
         fsm_type: str,
-    ) -> Tuple[List[DummyState], List[Dict]]:
+    ) -> tuple[list[DummyState], list[dict]]:
         """Optimize using BFS with encoding reuse"""
         # Track used encodings
         self.used_encodings = set(states.values())
 
         return super().optimize_fsm(states, transitions, outputs, fsm_type)
 
-    def _find_best_path(self, from_code: str, to_code: str) -> List[str]:
+    def _find_best_path(self, from_code: str, to_code: str) -> list[str]:
         """
         Find best path considering already-used codes.
 

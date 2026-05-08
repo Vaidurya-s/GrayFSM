@@ -3,7 +3,6 @@ FSM Service - Business logic for FSM operations
 """
 
 import math
-from typing import List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -27,7 +26,7 @@ class FSMService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_fsm(self, fsm_data: FSMCreate, user_id: Optional[UUID] = None) -> FSM:
+    async def create_fsm(self, fsm_data: FSMCreate, user_id: UUID | None = None) -> FSM:
         """
         Create new FSM with validation.
 
@@ -81,7 +80,7 @@ class FSMService:
 
         return fsm
 
-    async def get_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
+    async def get_fsm(self, fsm_id: UUID, user_id: UUID | None = None) -> FSM:
         """
         Get FSM by ID with visibility-aware access control.
 
@@ -118,12 +117,12 @@ class FSMService:
         self,
         skip: int = 0,
         limit: int = 20,
-        visibility: Optional[str] = None,
-        fsm_type: Optional[str] = None,
-        search: Optional[str] = None,
+        visibility: str | None = None,
+        fsm_type: str | None = None,
+        search: str | None = None,
         sort_by: str = "created_at",
         sort_order: str = "desc",
-    ) -> Tuple[List[FSM], int]:
+    ) -> tuple[list[FSM], int]:
         """
         List FSMs with filtering, pagination, and total count.
 
@@ -158,7 +157,7 @@ class FSMService:
         total = count_result.scalar_one()
         return list(result.scalars().all()), total
 
-    def _check_ownership(self, fsm: FSM, user_id: Optional[UUID]) -> None:
+    def _check_ownership(self, fsm: FSM, user_id: UUID | None) -> None:
         """Raise FSMPermissionException unless user_id is the FSM's owner.
 
         Strict-ownership policy. The previous behaviour treated FSMs with
@@ -177,7 +176,7 @@ class FSMService:
             raise FSMPermissionException(str(fsm.id))
 
     async def update_fsm(
-        self, fsm_id: UUID, update_data: FSMUpdate, user_id: Optional[UUID] = None
+        self, fsm_id: UUID, update_data: FSMUpdate, user_id: UUID | None = None
     ) -> FSM:
         """
         Update an existing FSM's metadata.
@@ -202,7 +201,7 @@ class FSMService:
         await self.db.refresh(fsm)
         return fsm
 
-    async def fork_fsm(self, fsm_id: UUID, new_name: str, user_id: Optional[UUID] = None) -> FSM:
+    async def fork_fsm(self, fsm_id: UUID, new_name: str, user_id: UUID | None = None) -> FSM:
         """
         Fork an existing FSM into a new copy.
 
@@ -249,7 +248,7 @@ class FSMService:
             raise FSMNotFoundException(str(fsm_id))
         return fsm
 
-    async def delete_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> None:
+    async def delete_fsm(self, fsm_id: UUID, user_id: UUID | None = None) -> None:
         """Delete FSM by ID.
 
         Raises:

@@ -5,8 +5,6 @@ Generates synthesizable Verilog code from an FSM definition.
 Produces a standard always @(posedge clk) state machine template.
 """
 
-from typing import Dict, List, Optional
-
 from app.utils.exceptions import ExportException
 
 
@@ -18,7 +16,7 @@ class VerilogExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate Verilog HDL for the given FSM.
@@ -178,14 +176,14 @@ class VerilogExporter:
     def _generate_next_state_logic(
         self,
         lines: list,
-        states: List[str],
-        transitions: List[Dict],
+        states: list[str],
+        transitions: list[dict],
         encodings: dict,
         state_bits: int,
     ) -> None:
         """Generate case items for next-state logic."""
         # Group transitions by from_state
-        trans_by_state: Dict[str, List[Dict]] = {}
+        trans_by_state: dict[str, list[dict]] = {}
         for t in transitions:
             fs = t.get("from_state", "")
             trans_by_state.setdefault(fs, []).append(t)
@@ -212,12 +210,12 @@ class VerilogExporter:
     def _generate_mealy_output_logic(
         self,
         lines: list,
-        states: List[str],
-        transitions: List[Dict],
+        states: list[str],
+        transitions: list[dict],
         output_bits: int,
     ) -> None:
         """Generate Mealy output logic (state + input dependent)."""
-        trans_by_state: Dict[str, List[Dict]] = {}
+        trans_by_state: dict[str, list[dict]] = {}
         for t in transitions:
             fs = t.get("from_state", "")
             trans_by_state.setdefault(fs, []).append(t)

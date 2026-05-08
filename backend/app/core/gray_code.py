@@ -2,8 +2,6 @@
 Gray Code generation and manipulation utilities
 """
 
-from typing import List
-
 
 def int_to_gray(n: int, bit_width: int) -> str:
     """
@@ -42,7 +40,7 @@ def gray_to_int(gray: str) -> int:
     return n
 
 
-def generate_gray_codes(bit_width: int) -> List[str]:
+def generate_gray_codes(bit_width: int) -> list[str]:
     """
     Generate all n-bit Gray codes in sequence.
 

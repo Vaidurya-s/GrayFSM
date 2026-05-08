@@ -6,7 +6,6 @@ inserting the minimum number of dummy states needed for that specific transition
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
 
 from app.core.gray_code import hamming_distance
 from app.core.hypercube import HypercubeGraph
@@ -40,15 +39,15 @@ class GreedyOptimizer:
         self.bit_width = bit_width
         self.hypercube = HypercubeGraph(bit_width)
         self.dummy_counter = 0
-        self.dummy_states: List[DummyState] = []
+        self.dummy_states: list[DummyState] = []
 
     def optimize_fsm(
         self,
-        states: Dict[str, str],  # state_id -> gray_encoding
-        transitions: List[Dict],
-        outputs: Dict[str, str],
+        states: dict[str, str],  # state_id -> gray_encoding
+        transitions: list[dict],
+        outputs: dict[str, str],
         fsm_type: str,
-    ) -> Tuple[List[DummyState], List[Dict]]:
+    ) -> tuple[list[DummyState], list[dict]]:
         """
         Optimize FSM by inserting dummy states.
 
@@ -96,10 +95,10 @@ class GreedyOptimizer:
         to_state: str,
         from_code: str,
         to_code: str,
-        original_trans: Dict,
-        outputs: Dict[str, str],
+        original_trans: dict,
+        outputs: dict[str, str],
         fsm_type: str,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Insert dummy states for a single transition.
 

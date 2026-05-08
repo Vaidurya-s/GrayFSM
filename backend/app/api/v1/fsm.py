@@ -3,7 +3,6 @@ FSM CRUD API endpoints
 """
 
 import math
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -45,7 +44,7 @@ async def create_fsm(
 async def get_fsm(
     fsm_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[UserToken] = Depends(get_optional_current_user),
+    current_user: UserToken | None = Depends(get_optional_current_user),
 ):
     """Get FSM by ID. Public FSMs are visible to anyone; private only to owner."""
     service = FSMService(db)
@@ -97,13 +96,13 @@ async def fork_fsm(
 async def list_fsms(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    fsm_type: Optional[str] = Query(None),
-    visibility: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    sort_by: Optional[str] = Query("created_at"),
-    sort_order: Optional[str] = Query("desc"),
+    fsm_type: str | None = Query(None),
+    visibility: str | None = Query(None),
+    search: str | None = Query(None),
+    sort_by: str | None = Query("created_at"),
+    sort_order: str | None = Query("desc"),
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[UserToken] = Depends(get_optional_current_user),
+    current_user: UserToken | None = Depends(get_optional_current_user),
 ):
     """
     List FSMs with pagination.

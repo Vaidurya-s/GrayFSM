@@ -5,8 +5,6 @@ Generates synthesizable VHDL code from an FSM definition.
 Produces a standard process(clk) state machine template.
 """
 
-from typing import Dict, List, Optional
-
 from app.utils.exceptions import ExportException
 
 
@@ -18,7 +16,7 @@ class VHDLExporter:
         definition: dict,
         fsm_type: str,
         name: str,
-        options: Optional[Dict] = None,
+        options: dict | None = None,
     ) -> str:
         """
         Generate VHDL for the given FSM.
@@ -200,11 +198,11 @@ class VHDLExporter:
     def _generate_next_state_logic(
         self,
         lines: list,
-        states: List[str],
-        transitions: List[Dict],
+        states: list[str],
+        transitions: list[dict],
     ) -> None:
         """Generate VHDL case items for next-state logic."""
-        trans_by_state: Dict[str, List[Dict]] = {}
+        trans_by_state: dict[str, list[dict]] = {}
         for t in transitions:
             fs = t.get("from_state", "")
             trans_by_state.setdefault(fs, []).append(t)
@@ -232,12 +230,12 @@ class VHDLExporter:
     def _generate_mealy_output_logic(
         self,
         lines: list,
-        states: List[str],
-        transitions: List[Dict],
+        states: list[str],
+        transitions: list[dict],
         output_bits: int,
     ) -> None:
         """Generate VHDL Mealy output logic."""
-        trans_by_state: Dict[str, List[Dict]] = {}
+        trans_by_state: dict[str, list[dict]] = {}
         for t in transitions:
             fs = t.get("from_state", "")
             trans_by_state.setdefault(fs, []).append(t)

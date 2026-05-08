@@ -11,12 +11,12 @@ can start without the opentelemetry packages installed.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Sentinel that tracks whether telemetry was successfully initialised
-_telemetry_provider: Optional[Any] = None
+_telemetry_provider: Any | None = None
 
 
 def setup_telemetry(app: Any) -> None:

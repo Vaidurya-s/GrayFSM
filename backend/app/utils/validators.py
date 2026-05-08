@@ -10,7 +10,6 @@ Adapted from security/fixes/02_input_validation.py
 
 import html
 import re
-from typing import List, Optional
 
 from app.utils.logger import get_logger
 
@@ -99,7 +98,7 @@ def validate_fsm_name(name: str) -> str:
     return sanitize_string(name)
 
 
-def validate_tags(tags: Optional[List[str]]) -> List[str]:
+def validate_tags(tags: list[str] | None) -> list[str]:
     """
     Validate a list of tags.
 
@@ -124,7 +123,7 @@ def validate_tags(tags: Optional[List[str]]) -> List[str]:
 
     tag_pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 _-]*$")
     seen: set = set()
-    result: List[str] = []
+    result: list[str] = []
 
     for raw_tag in tags:
         if not raw_tag or not raw_tag.strip():

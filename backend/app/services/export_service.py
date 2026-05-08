@@ -2,7 +2,6 @@
 Export Service - Orchestrates FSM export to various formats (Verilog, VHDL, JSON)
 """
 
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -27,7 +26,7 @@ class ExportService:
         fsm_id: UUID,
         format_name: str,
         options: dict = None,
-        user_id: Optional[UUID] = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """
         Export an FSM to the specified format.
@@ -121,7 +120,7 @@ class ExportService:
         """
         return list_formats()
 
-    async def _load_fsm(self, fsm_id: UUID, user_id: Optional[UUID] = None) -> FSM:
+    async def _load_fsm(self, fsm_id: UUID, user_id: UUID | None = None) -> FSM:
         """
         Load an FSM from the database, enforcing ownership.
 

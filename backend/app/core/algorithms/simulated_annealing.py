@@ -19,7 +19,6 @@ Algorithm:
 
 import math
 import random
-from typing import Dict, List, Optional, Tuple
 
 from app.core.algorithms.greedy import DummyState, GreedyOptimizer
 from app.core.gray_code import hamming_distance
@@ -48,7 +47,7 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
     DEFAULT_MIN_TEMP: float = 0.01
     DEFAULT_MAX_ITERATIONS: int = 10000
 
-    def __init__(self, bit_width: int, options: Optional[Dict] = None):
+    def __init__(self, bit_width: int, options: dict | None = None):
         """
         Initialise the optimizer.
 
@@ -72,7 +71,7 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         self.final_cost: float = 0.0
         self.improvement_ratio: float = 0.0
         # Best encoding assignment found (populated after optimize_fsm / optimize_encoding_only)
-        self.best_assignment: Dict[str, str] = {}
+        self.best_assignment: dict[str, str] = {}
 
     # ------------------------------------------------------------------
     # Public interface (matches GreedyOptimizer exactly)
@@ -80,11 +79,11 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
     def optimize_fsm(
         self,
-        states: Dict[str, str],  # state_id -> gray_encoding
-        transitions: List[Dict],
-        outputs: Dict[str, str],
+        states: dict[str, str],  # state_id -> gray_encoding
+        transitions: list[dict],
+        outputs: dict[str, str],
         fsm_type: str,
-    ) -> Tuple[List[DummyState], List[Dict]]:
+    ) -> tuple[list[DummyState], list[dict]]:
         """
         Optimise the FSM encoding assignment via simulated annealing,
         then resolve remaining HD > 1 transitions with dummy states.
@@ -117,8 +116,8 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
     def _compute_cost(
         self,
-        assignment: Dict[str, str],
-        transitions: List[Dict],
+        assignment: dict[str, str],
+        transitions: list[dict],
     ) -> float:
         """
         Cost = total Hamming distance summed over all transitions.
@@ -142,9 +141,9 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
     def _anneal(
         self,
-        initial_states: Dict[str, str],
-        transitions: List[Dict],
-    ) -> Dict[str, str]:
+        initial_states: dict[str, str],
+        transitions: list[dict],
+    ) -> dict[str, str]:
         """
         Run the simulated annealing loop.
 
@@ -232,9 +231,9 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
     def optimize_encoding_only(
         self,
-        states: Dict[str, str],
-        transitions: List[Dict],
-    ) -> Dict[str, str]:
+        states: dict[str, str],
+        transitions: list[dict],
+    ) -> dict[str, str]:
         """
         Return the improved encoding assignment without inserting dummy states.
 

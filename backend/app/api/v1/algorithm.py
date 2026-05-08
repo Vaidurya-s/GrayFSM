@@ -3,7 +3,6 @@ Algorithm optimization endpoints
 """
 
 import uuid
-from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -35,7 +34,7 @@ async def _run_optimization_task(
     fsm_id: UUID,
     algorithm: str,
     options: dict,
-    user_id: Optional[UUID] = None,
+    user_id: UUID | None = None,
 ) -> None:
     """Background task: runs optimization and updates task store.
 
@@ -137,7 +136,7 @@ async def optimize_fsm(
 @router.get("/{fsm_id}/results")
 async def get_optimization_results(
     fsm_id: UUID,
-    algorithm: Optional[str] = None,
+    algorithm: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
 ):
@@ -192,7 +191,7 @@ async def get_optimization_results(
 @router.post("/{fsm_id}/compare")
 async def compare_algorithms(
     fsm_id: UUID,
-    compare_request: Dict,
+    compare_request: dict,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
 ):
@@ -209,7 +208,7 @@ async def compare_algorithms(
     Returns:
         Wrapped list of OptimizationResponse objects — one per algorithm
     """
-    algorithms: List[str] = compare_request.get("algorithms", [])
+    algorithms: list[str] = compare_request.get("algorithms", [])
     options: dict = compare_request.get("options", {})
 
     if not algorithms:
@@ -251,7 +250,7 @@ async def compare_algorithms(
 
 @router.get("/algorithms")
 async def get_available_algorithms(
-    current_user: Optional[UserToken] = Depends(get_optional_current_user),
+    current_user: UserToken | None = Depends(get_optional_current_user),
 ):
     """
     List all available optimization algorithms.
