@@ -171,11 +171,10 @@ kind: Role
 metadata:
   name: grayfsm-frontend
   namespace: grayfsm
-spec:
-  rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "watch"]
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "watch"]
 
 ---
 # RoleBinding

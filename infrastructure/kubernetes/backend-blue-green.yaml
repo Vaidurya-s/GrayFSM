@@ -332,14 +332,13 @@ kind: Role
 metadata:
   name: grayfsm-backend
   namespace: grayfsm
-spec:
-  rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["get", "watch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
 
 ---
 # RoleBinding for backend
