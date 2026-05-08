@@ -74,9 +74,13 @@ class ExportService:
         except ExportException:
             raise
         except Exception as e:
+            # Don't concatenate str(e) into the user-visible message —
+            # underlying exceptions can leak file paths or DB context. The
+            # full exception is preserved on `.cause` for server-side logs.
             raise ExportException(
-                f"Failed to export FSM to {format_name}: {str(e)}"
-            )
+                f"Failed to export FSM to {format_name}",
+                cause=e,
+            ) from e
 
         # Build file name
         extension = get_file_extension(format_name)
@@ -140,6 +144,7 @@ class ExportService:
                 raise FSMNotFoundException(str(fsm_id))
 
         if not fsm.definition:
+            # No `cause` here — this isn't wrapping an inner exception.
             raise ExportException("FSM has no definition data to export")
 
         return fsm

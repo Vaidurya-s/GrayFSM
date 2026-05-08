@@ -1,12 +1,31 @@
 """
-Custom exception classes
+Custom exception classes.
+
+Design notes:
+- `message` is the user-facing string. It MUST NOT include inner-exception
+  text, IDs that aren't already known to the caller, or DB schema details.
+- `cause` (optional) is the underlying exception, kept for server-side
+  logging via `logger.exception(...)`. It is never echoed to clients.
+- Routes should catch these and either re-raise as HTTPException with
+  `detail=e.message` (already scrubbed) or substitute a generic string.
 """
 
+from typing import Optional
+
+
 class GrayFSMException(Exception):
-    """Base exception for all GrayFSM errors"""
-    def __init__(self, message: str, code: str = "GRAYFSM_ERROR"):
+    """Base exception for all GrayFSM errors."""
+    def __init__(
+        self,
+        message: str,
+        code: str = "GRAYFSM_ERROR",
+        cause: Optional[BaseException] = None,
+    ):
         self.message = message
         self.code = code
+        # Stored separately so callers and the global error handler can log
+        # the underlying exception without it leaking into the response body.
+        self.cause = cause
         super().__init__(self.message)
 
 
@@ -32,15 +51,25 @@ class FSMValidationException(GrayFSMException):
 
 
 class AlgorithmException(GrayFSMException):
-    """Raised when algorithm execution fails"""
-    def __init__(self, message: str):
-        super().__init__(message=message, code="ALGORITHM_ERROR")
+    """Raised when algorithm execution fails.
+
+    `message` should describe the failure category in stable, scrubbed
+    language (e.g. "Algorithm execution failed"). Pass the underlying
+    exception via `cause` for server-side logging.
+    """
+    def __init__(self, message: str, cause: Optional[BaseException] = None):
+        super().__init__(message=message, code="ALGORITHM_ERROR", cause=cause)
 
 
 class ExportException(GrayFSMException):
-    """Raised when export generation fails"""
-    def __init__(self, message: str):
-        super().__init__(message=message, code="EXPORT_ERROR")
+    """Raised when export generation fails.
+
+    See AlgorithmException for the message/cause contract. The message
+    must not concatenate `str(inner_exception)` — that's exactly what the
+    `cause` parameter is for.
+    """
+    def __init__(self, message: str, cause: Optional[BaseException] = None):
+        super().__init__(message=message, code="EXPORT_ERROR", cause=cause)
 
 
 class RateLimitException(GrayFSMException):
