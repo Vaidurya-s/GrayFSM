@@ -249,9 +249,10 @@ npm test
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Make your changes and add tests
-4. Run the test suite to verify
-5. Submit a pull request
+3. Install pre-commit hooks (one-time setup: `pip install pre-commit && pre-commit install`). This wires up a gitleaks scan plus standard hygiene checks before each commit.
+4. Make your changes and add tests
+5. Run the test suite to verify
+6. Submit a pull request
 
 ---
 
