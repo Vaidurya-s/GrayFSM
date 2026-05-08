@@ -28,6 +28,55 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+# ---------------------------------------------------------------------------
+# include_object filter
+# ---------------------------------------------------------------------------
+#
+# These indexes live in `b2c3d4e5f6a7_performance_indexes.py` but aren't
+# representable as `Column(..., index=True)` on a SQLAlchemy model — they
+# use Postgres-specific features (GIN, full-text, partial WHERE clauses,
+# expression-based, INCLUDE columns). `alembic check` rightly notices
+# they're "in the DB but not in the metadata" and would otherwise propose
+# dropping them on every autogenerate.
+#
+# Listing them here tells the autogenerate machinery to ignore them when
+# diffing — they remain in the DB, the metadata reflects only what
+# SQLAlchemy can express, and `alembic check` stays clean.
+#
+# When adding new performance indexes via raw SQL migrations, add their
+# names here too.
+PG_ONLY_INDEXES: frozenset[str] = frozenset(
+    {
+        "idx_algorithm_results_algorithm_performance",
+        "idx_algorithm_results_fsm_algorithm_time",
+        "idx_algorithm_results_success_improvement",
+        "idx_categories_fsm_count",
+        "idx_categories_parent_level_order",
+        "idx_fsms_created_at_desc",
+        "idx_fsms_created_by_visibility_created",
+        "idx_fsms_definition_gin",
+        "idx_fsms_definition_states",
+        "idx_fsms_definition_transitions",
+        "idx_fsms_is_optimized_algorithm_created",
+        "idx_fsms_list_covering",
+        "idx_fsms_popular",
+        "idx_fsms_recently_updated",
+        "idx_fsms_search_text",
+        "idx_fsms_tags_gin",
+        "idx_fsms_visibility_category_created",
+    }
+)
+
+
+def include_object(object, name, type_, reflected, compare_to):  # noqa: ARG001
+    """Skip Postgres-only indexes that aren't expressible in the SQLAlchemy
+    model. Everything else passes through to the default autogenerate
+    behaviour."""
+    if type_ == "index" and name in PG_ONLY_INDEXES:
+        return False
+    return True
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -43,6 +92,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_object=include_object,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -52,7 +102,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_object=include_object,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
