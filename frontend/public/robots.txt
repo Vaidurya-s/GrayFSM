@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Sitemap is generated server-side and exposed via the backend's
+# /sitemap.xml endpoint when one is configured. Until then, this file
+# tells crawlers everything is fair game.
