@@ -103,11 +103,10 @@ kind: Role
 metadata:
   name: grayfsm-db-migration
   namespace: grayfsm
-spec:
-  rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get"]
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
 
 ---
 # RoleBinding for database migration

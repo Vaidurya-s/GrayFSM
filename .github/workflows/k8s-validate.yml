@@ -1,0 +1,54 @@
+name: Validate Kubernetes manifests
+
+# Runs kubeconform against every manifest in infrastructure/kubernetes/.
+# Catches schema errors before they hit a cluster, plus typos that
+# kubectl --dry-run wouldn't notice (kubeconform validates against the
+# upstream OpenAPI schema, not just the cluster's currently-loaded CRDs).
+#
+# kubeconform is preferred over the older kubeval because it's actively
+# maintained, supports newer API versions, and ships strict schemas for
+# common CRDs (cert-manager, istio, etc.) via its --schema-location flag.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/k8s-validate.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/k8s-validate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  kubeconform:
+    name: kubeconform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o /tmp/kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tar.gz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: Validate manifests
+        # --strict     fail on additional unknown properties (catches typos)
+        # --summary    print a single-line summary at the end
+        # -kubernetes-version targets the lowest supported cluster version,
+        #     which is what production runs.
+        run: |
+          kubeconform \
+            --strict \
+            --summary \
+            --kubernetes-version 1.28.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            infrastructure/kubernetes/
