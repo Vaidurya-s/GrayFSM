@@ -57,7 +57,15 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
-    
+    # JWT audience claim — both encode and decode must agree.
+    # Bumping this value invalidates every issued token.
+    jwt_audience: str = "grayfsm-api"
+    # Account-lockout policy. After N consecutive bad-password attempts
+    # the account is locked for `account_lockout_minutes`. 5/15 was the
+    # previous hardcoded pair in auth_service.
+    max_failed_logins: int = 5
+    account_lockout_minutes: int = 15
+
     # CORS
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     cors_allow_credentials: bool = False
@@ -69,6 +77,13 @@ class Settings(BaseSettings):
     rate_limit_anonymous: int = 100  # requests per window
     rate_limit_authenticated: int = 1000
     rate_limit_window: int = 3600  # seconds (1 hour)
+    # Auth-endpoint rate limits (per-IP, narrower window than the
+    # anonymous-tier limit above). Tightening these is a brute-force
+    # mitigation; loosening them in dev is fine.
+    rate_limit_login: int = 5         # requests per `rate_limit_login_window`
+    rate_limit_login_window: int = 60
+    rate_limit_register: int = 3      # requests per `rate_limit_register_window`
+    rate_limit_register_window: int = 60
 
     # Algorithm Defaults
     default_algorithm: str = "greedy"

@@ -172,7 +172,7 @@ def _decode_token(token: str) -> Optional[UserToken]:
             token,
             settings.secret_key,
             algorithms=[settings.algorithm],
-            audience="grayfsm-api",
+            audience=settings.jwt_audience,
         )
     except JWTError as exc:
         logger.debug("JWT decode failed", extra={"error": str(exc)})
@@ -221,7 +221,7 @@ def create_access_token(
         "exp": expire,
         "iat": datetime.utcnow(),
         "type": "access",
-        "aud": "grayfsm-api",
+        "aud": settings.jwt_audience,
     })
 
     return jwt.encode(

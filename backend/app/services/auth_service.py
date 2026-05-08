@@ -9,6 +9,7 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.config import settings
 from app.models.user import User
 from app.middleware.auth import create_access_token
 from app.utils.exceptions import (
@@ -124,8 +125,10 @@ class AuthService:
 
         if not verify_password(password, user.hashed_password):
             user.failed_login_count = (user.failed_login_count or 0) + 1
-            if user.failed_login_count >= 5:
-                user.locked_until = datetime.utcnow() + timedelta(minutes=15)
+            if user.failed_login_count >= settings.max_failed_logins:
+                user.locked_until = datetime.utcnow() + timedelta(
+                    minutes=settings.account_lockout_minutes
+                )
                 logger.warning(f"Account locked after failed attempts: {email[:3]}***")
             await self.db.commit()
             logger.warning(f"Failed login attempt for: {email[:3]}***")
