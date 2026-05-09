@@ -212,7 +212,9 @@ async def compare_algorithms(
     options: dict = compare_request.get("options", {})
 
     if not algorithms:
-        raise HTTPException(status_code=422, detail="At least one algorithm must be specified") from None
+        raise HTTPException(
+            status_code=422, detail="At least one algorithm must be specified"
+        ) from None
 
     valid = {"greedy", "bfs_optimal", "global_sa", "global_ga"}
     invalid = [a for a in algorithms if a not in valid]
