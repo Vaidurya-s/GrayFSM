@@ -81,7 +81,7 @@ class AuthService:
         # Check if user already exists
         existing_user = await self._get_user_by_email(email)
         if existing_user:
-            logger.warning(f"Registration attempted with existing email: {email}")
+            logger.warning(f"Registration attempted with existing email: {email[:3]}***")
             raise UserAlreadyExistsException(f"User with email {email} already exists")
 
         # Hash password and create user
@@ -110,7 +110,10 @@ class AuthService:
             UserNotFoundException: If user doesn't exist
             InvalidCredentialsException: If password is incorrect
         """
-        user = await self._get_user_by_email(email)
+        # Use with_for_update() so concurrent login attempts serialize on the
+        # row — without this, 10 parallel bad-password requests all read
+        # failed_login_count=4 and write 5, so lockout never fires.
+        user = await self._get_user_by_email_for_update(email)
         if not user:
             # Run a dummy bcrypt verify before raising so total response time
             # matches the "user exists, wrong password" branch below. This
@@ -172,5 +175,23 @@ class AuthService:
             User instance or None if not found
         """
         stmt = select(User).where(User.email == email)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def _get_user_by_email_for_update(self, email: str) -> User | None:
+        """
+        Get a user by email with a row-level lock.
+
+        Used during login so that concurrent failed-login increments
+        serialize on the DB row and the lockout counter cannot be
+        bypassed by racing requests that all read the same stale value.
+
+        Args:
+            email: User email address
+
+        Returns:
+            User instance or None if not found
+        """
+        stmt = select(User).where(User.email == email).with_for_update()
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

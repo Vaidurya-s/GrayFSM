@@ -6,9 +6,10 @@ Configuration is loaded from environment variables with validation.
 """
 
 import logging
+from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _config_logger = logging.getLogger(__name__)
 
@@ -73,6 +74,18 @@ class Settings(BaseSettings):
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
 
+    # Trusted Proxies — comma-separated list of IP addresses that are allowed
+    # to set X-Forwarded-For. When empty (default), XFF is ignored and the
+    # direct connection IP is used for rate limiting and logging.
+    # Example: TRUSTED_PROXIES=10.0.0.1,10.0.0.2
+    # `NoDecode` skips pydantic-settings' built-in JSON decoding so the
+    # `parse_trusted_proxies` validator below sees the raw env string. Without
+    # it, a literal `TRUSTED_PROXIES=` (empty) blows up trying to JSON-decode "".
+    trusted_proxies: Annotated[list[str], NoDecode] = Field(
+        default=[],
+        description="IPs of trusted reverse proxies that may set X-Forwarded-For",
+    )
+
     # Rate Limiting
     rate_limit_enabled: bool = True
     rate_limit_anonymous: int = 100  # requests per window
@@ -124,6 +137,14 @@ class Settings(BaseSettings):
         """Parse CORS origins from string or list"""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
+        return v
+
+    @field_validator("trusted_proxies", mode="before")
+    @classmethod
+    def parse_trusted_proxies(cls, v: str | list[str]) -> list[str]:
+        """Parse trusted proxy IPs from comma-separated string or list"""
+        if isinstance(v, str):
+            return [ip.strip() for ip in v.split(",") if ip.strip()]
         return v
 
     @model_validator(mode="after")

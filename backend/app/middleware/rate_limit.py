@@ -215,13 +215,18 @@ async def _get_redis_store() -> RedisRateLimitStore | None:
 
 
 def _get_client_ip(request: Request) -> str:
-    """Extract the real client IP, respecting ``X-Forwarded-For``."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return "unknown"
+    """Extract the real client IP.
+
+    X-Forwarded-For is only honored when the direct connection comes from a
+    trusted proxy (``settings.trusted_proxies``). Without this guard an
+    attacker can rotate the leftmost XFF value and bypass all rate limits.
+    """
+    direct_ip = request.client.host if request.client else "unknown"
+    if direct_ip in settings.trusted_proxies:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return direct_ip
 
 
 # Paths that should never be rate-limited

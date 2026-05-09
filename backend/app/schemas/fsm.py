@@ -2,6 +2,7 @@
 Pydantic schemas for FSM API requests/responses
 """
 
+import re
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -15,7 +16,9 @@ class TransitionBase(BaseModel):
     from_state: str
     to_state: str
     input: str | None = None
-    output: str | None = None
+    # HDL output signal value — restricted to binary/don't-care characters so
+    # that user-supplied values cannot be injected verbatim into Verilog/VHDL.
+    output: str | None = Field(default=None, pattern=r"^[01xXzZ-]*$")
     label: str | None = None
 
 
@@ -28,7 +31,25 @@ class FSMCreate(BaseModel):
     states: list[str] = Field(..., min_length=1)
     initial_state: str
     transitions: list[dict[str, Any]]
-    outputs: dict[str, str] | None = None
+    # Moore outputs keyed by state name — values are constrained to binary/don't-care
+    # characters to prevent HDL injection when values are written into generated code.
+    outputs: dict[str, str] | None = Field(default=None)
+
+    @field_validator("outputs")
+    @classmethod
+    def validate_outputs(cls, v: dict[str, str] | None) -> dict[str, str] | None:
+        """Ensure output values only contain binary/don't-care characters."""
+        if v is None:
+            return v
+        _hdl_pattern = re.compile(r"^[01xXzZ-]*$")
+        for state, val in v.items():
+            if not _hdl_pattern.match(val):
+                raise ValueError(
+                    f"Output value for state '{state}' contains invalid characters. "
+                    "Only binary digits and don't-cares (0, 1, x, X, z, Z, -) are allowed."
+                )
+        return v
+
     category_id: UUID | None = None
     tags: list[str] | None = []
     visibility: str = Field(default="private", pattern="^(private|public|unlisted)$")
