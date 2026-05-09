@@ -17,6 +17,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Transition } from '../../types/fsm';
+import { useThemeColors, type ThemeColors } from './use-theme-colors';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,55 +54,8 @@ interface AnimParticle {
   speed: number;
 }
 
-interface ThemeColors {
-  ink: string;
-  inkSoft: string;
-  inkFaint: string;
-  rule: string;
-  accent: string;
-  paper: string;
-}
-
-const FALLBACK: ThemeColors = {
-  ink: '#14110d',
-  inkSoft: '#4a4338',
-  inkFaint: '#8c8474',
-  rule: '#c9c0a8',
-  accent: '#0c5ce8',
-  paper: '#f7f4ec',
-};
-
-/**
- * Read the design-system tokens from `:root` so the visualisation
- * inherits the active theme. Re-runs when the `dark` class flips.
- */
-function useThemeColors(): ThemeColors {
-  const [colors, setColors] = useState<ThemeColors>(FALLBACK);
-
-  useEffect(() => {
-    const read = () => {
-      if (typeof window === 'undefined') return;
-      const styles = getComputedStyle(document.documentElement);
-      setColors({
-        ink: styles.getPropertyValue('--ink').trim() || FALLBACK.ink,
-        inkSoft: styles.getPropertyValue('--ink-soft').trim() || FALLBACK.inkSoft,
-        inkFaint: styles.getPropertyValue('--ink-faint').trim() || FALLBACK.inkFaint,
-        rule: styles.getPropertyValue('--rule').trim() || FALLBACK.rule,
-        accent: styles.getPropertyValue('--accent').trim() || FALLBACK.accent,
-        paper: styles.getPropertyValue('--paper').trim() || FALLBACK.paper,
-      });
-    };
-    read();
-    const observer = new MutationObserver(read);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  return colors;
-}
+// `useThemeColors` is now shared with the recharts-based visualisations
+// (HammingChart, ComparisonView, MetricsDashboard) — see use-theme-colors.ts.
 
 // ---------------------------------------------------------------------------
 // Hypercube geometry helpers (unchanged from the previous version)
