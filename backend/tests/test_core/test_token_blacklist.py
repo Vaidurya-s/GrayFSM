@@ -11,8 +11,14 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+import redis as redis_pkg
 
 from app.middleware.token_blacklist import TokenBlacklist
+
+# Use a real redis exception so the degradation tests match the narrowed
+# except clause in token_blacklist.py (which catches redis.RedisError /
+# ConnectionError / TimeoutError, not bare RuntimeError).
+_REDIS_CONN_ERROR = redis_pkg.ConnectionError("connection lost")
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +109,7 @@ class TestRedisPath:
 class TestRedisDegradation:
     def test_revoke_falls_back_to_memory_when_redis_setex_raises(self):
         redis = MagicMock()
-        redis.setex.side_effect = RuntimeError("connection lost")
+        redis.setex.side_effect = _REDIS_CONN_ERROR
         bl = TokenBlacklist(redis_client=redis)
 
         # Should not raise.
@@ -116,7 +122,7 @@ class TestRedisDegradation:
 
     def test_is_revoked_returns_false_when_redis_exists_raises(self):
         redis = MagicMock()
-        redis.exists.side_effect = RuntimeError("connection lost")
+        redis.exists.side_effect = _REDIS_CONN_ERROR
         bl = TokenBlacklist(redis_client=redis)
 
         # Token never revoked, Redis errors -> fail-open False.
@@ -124,8 +130,8 @@ class TestRedisDegradation:
 
     def test_locally_revoked_token_still_blacklisted_when_redis_fails(self):
         redis = MagicMock()
-        redis.setex.side_effect = RuntimeError("connection lost")
-        redis.exists.side_effect = RuntimeError("connection lost")
+        redis.setex.side_effect = _REDIS_CONN_ERROR
+        redis.exists.side_effect = _REDIS_CONN_ERROR
         bl = TokenBlacklist(redis_client=redis)
 
         bl.revoke("token.jwt.x", ttl_seconds=60)

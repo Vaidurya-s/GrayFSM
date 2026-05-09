@@ -37,6 +37,20 @@ from app.utils.logger import get_logger
 if TYPE_CHECKING:  # pragma: no cover — only used by type checkers
     import redis as redis_pkg
 
+# Narrow exception types for Redis operations.
+# We import lazily so this module is importable even when redis is not
+# installed (tests without Redis).
+try:
+    import redis as _redis_mod
+
+    _REDIS_ERRORS = (
+        _redis_mod.RedisError,
+        ConnectionError,
+        TimeoutError,
+    )
+except ImportError:  # pragma: no cover
+    _REDIS_ERRORS = (ConnectionError, TimeoutError)  # type: ignore[assignment]
+
 logger = get_logger(__name__)
 
 
@@ -67,7 +81,7 @@ class TokenBlacklist:
             try:
                 self._redis.setex(self._key(token), ttl_seconds, "1")
                 return
-            except Exception as exc:  # noqa: BLE001 — fall back, log
+            except _REDIS_ERRORS as exc:  # fail-open: fall back to in-memory set
                 logger.warning(
                     "TokenBlacklist: Redis write failed, using in-memory fallback",
                     extra={"error": str(exc)},
@@ -82,7 +96,7 @@ class TokenBlacklist:
             return False
         try:
             return bool(self._redis.exists(self._key(token)))
-        except Exception:  # noqa: BLE001 — fail-open
+        except _REDIS_ERRORS:  # fail-open: treat unavailable Redis as not-revoked
             return False
 
     # ------------------------------------------------------------------
@@ -124,7 +138,7 @@ def _build_default_redis() -> redis_pkg.Redis | None:
         client.ping()
         logger.info("TokenBlacklist: connected to Redis")
         return client
-    except Exception as exc:  # noqa: BLE001
+    except _REDIS_ERRORS as exc:  # fail-open: no Redis means in-memory fallback
         logger.warning(
             "TokenBlacklist: Redis unavailable, using in-memory set",
             extra={"error": str(exc)},
@@ -169,6 +183,6 @@ def _remaining_ttl(token: str) -> int:
             remaining = exp - int(datetime.utcnow().timestamp())
             if remaining > 0:
                 return remaining
-    except Exception:  # noqa: BLE001 — fall back below
+    except Exception:  # noqa: BLE001 — jose can raise many unrelated types; fall back below
         pass
     return settings.access_token_expire_minutes * 60

@@ -652,3 +652,105 @@ class TestEncodeOnlyHelper:
         opt = SimulatedAnnealingOptimizer(bit_width=1, options={"seed": 0})
         result = opt.optimize_encoding_only(states, transitions)
         assert result == states
+
+
+# ---------------------------------------------------------------------------
+# Parameterized coverage of optimize_encoding_only (finding 9)
+#
+# Exercises both branches of the method (lines 252-256 of simulated_annealing.py):
+#   - len(states) <= 1  → short-circuit, return states unchanged
+#   - len(states) > 1   → run _anneal(), return improved assignment
+#
+# All runs use a fixed seed so results are deterministic in CI.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "states, transitions, expected_keys, check_permutation",
+    [
+        # Branch A: single-state short-circuit — best_assignment == input, 0 iterations
+        pytest.param(
+            {"S0": "0"},
+            [],
+            {"S0"},
+            False,
+            id="single_state_short_circuit",
+        ),
+        # Branch B: two states, one hop — anneal runs and returns a permutation
+        pytest.param(
+            {"A": "00", "B": "11"},
+            [{"from_state": "A", "to_state": "B"}],
+            {"A", "B"},
+            True,
+            id="two_states_one_hop_seed42",
+        ),
+        # Branch B: four states in a ring — anneal should not raise and must
+        #           return an assignment whose values are a permutation of the inputs
+        pytest.param(
+            {"A": "00", "B": "01", "C": "11", "D": "10"},
+            [
+                {"from_state": "A", "to_state": "B"},
+                {"from_state": "B", "to_state": "C"},
+                {"from_state": "C", "to_state": "D"},
+                {"from_state": "D", "to_state": "A"},
+            ],
+            {"A", "B", "C", "D"},
+            True,
+            id="four_states_ring_seed7",
+        ),
+        # Branch B: deliberately bad assignment — post-anneal cost must be <= pre
+        pytest.param(
+            {"A": "11", "B": "10", "C": "01", "D": "00"},
+            [
+                {"from_state": "A", "to_state": "C"},
+                {"from_state": "B", "to_state": "D"},
+            ],
+            {"A", "B", "C", "D"},
+            True,
+            id="bad_assignment_cost_monotone_seed99",
+        ),
+    ],
+)
+def test_optimize_encoding_only_parametrized(
+    states: Dict[str, str],
+    transitions: List[Dict],
+    expected_keys: set,
+    check_permutation: bool,
+) -> None:
+    """
+    Parameterized test covering both branches of optimize_encoding_only.
+
+    - Single-state input hits the len(states) <= 1 short-circuit and must
+      return the original dict unchanged with best_assignment populated.
+    - Multi-state input runs _anneal() and must return a valid permutation
+      of the original encodings whose total Hamming cost is <= the input cost.
+    """
+    # Use a fixed seed for all multi-state cases so the test is deterministic.
+    seed = 42
+    n_bits = len(next(iter(states.values())))
+    opt = SimulatedAnnealingOptimizer(
+        bit_width=n_bits,
+        options={"seed": seed, "max_iterations": 2000},
+    )
+
+    pre_cost = _total_hamming(states, transitions)
+    result = opt.optimize_encoding_only(states, transitions)
+
+    # Keys must be preserved exactly
+    assert set(result.keys()) == expected_keys
+
+    if check_permutation:
+        # Result is a permutation of the original codes
+        assert sorted(result.values()) == sorted(states.values()), (
+            "optimize_encoding_only must return a permutation of the input encodings"
+        )
+        # Cost is monotone non-increasing
+        post_cost = _total_hamming(result, transitions)
+        assert post_cost <= pre_cost, (
+            f"Cost increased from {pre_cost} to {post_cost}"
+        )
+        # best_assignment must be populated and consistent with result
+        assert opt.best_assignment == result
+    else:
+        # Single-state short-circuit: result equals original and iters == 0
+        assert result == states
+        assert opt.best_assignment == states

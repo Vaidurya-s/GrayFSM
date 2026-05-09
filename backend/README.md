@@ -57,8 +57,11 @@ cp .env.example .env
 # Create database
 createdb grayfsm
 
-# Run the schema
-psql -d grayfsm -f ../database-schema.sql
+# Apply Alembic migrations (canonical setup)
+alembic upgrade head
+
+# Optional: docs/database-schema.sql is a reference snapshot only;
+# Alembic migrations are the authoritative source of truth.
 ```
 
 6. **Start Redis**
@@ -135,8 +138,9 @@ pytest tests/ -v --cov=app
 
 ### Code Formatting
 ```bash
-black app/
-isort app/
+# Lint and auto-fix (ruff replaces black + isort)
+ruff check --fix app
+ruff format app
 ```
 
 ### Type Checking

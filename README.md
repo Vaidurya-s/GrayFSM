@@ -135,6 +135,9 @@ docker run -d --name grayfsm-redis -p 6379:6379 redis:7-alpine
 # Configure environment (REQUIRED — config defaults are runtime-rejected placeholders)
 cp .env.example .env
 
+# Apply database migrations (required on first clone)
+alembic upgrade head
+
 # Run server
 uvicorn app.main:app --reload --port 8000
 ```
