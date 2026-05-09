@@ -48,9 +48,7 @@ repos:
         files: ^backend/
         exclude: ^backend/(alembic/versions/|venv/)
 
-  # Frontend formatting via Prettier. ESLint runs in CI rather than
-  # pre-commit because the eslint-pre-commit plugin chain installs
-  # eslint+plugins on every clone — slow and brittle. Prettier is fast.
+  # Frontend formatting via Prettier.
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:
@@ -58,3 +56,29 @@ repos:
         files: ^frontend/src/.*\.(ts|tsx|js|jsx|css|json|md)$
         additional_dependencies:
           - prettier@^3.1.1
+
+  # mypy type-checks the Python backend. Uses the venv interpreter so
+  # installed stubs are available. Requires `pip install pre-commit` and
+  # `pre-commit install` inside backend/venv (or globally).
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (backend)
+        language: system
+        entry: backend/venv/bin/mypy
+        args: [--ignore-missing-imports, --config-file=backend/pyproject.toml]
+        files: ^backend/app/.*\.py$
+        exclude: ^backend/(alembic/versions/|venv/)
+        pass_filenames: false
+        always_run: false
+
+  # ESLint type/lint check for the frontend TypeScript sources.
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (frontend)
+        language: system
+        entry: frontend/node_modules/.bin/eslint
+        args: [--ext, "ts,tsx", --max-warnings, "3"]
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: true
