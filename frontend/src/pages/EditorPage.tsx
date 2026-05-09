@@ -27,27 +27,28 @@ export default function EditorPage() {
   const { data: fsmResponse, isLoading, error } = useFSM(id);
   const updateMutation = useUpdateFSM();
 
-  const {
-    draftStates,
-    draftTransitions,
-    draftName,
-    draftInitialState,
-    addState,
-    loadFSMIntoDraft,
-    resetDraft,
-    selectedNode,
-    selectedEdge,
-    removeState,
-    removeTransition,
-    setSelectedNode,
-    setSelectedEdge,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    copySelected,
-    pasteClipboard,
-  } = useFSMStore();
+  // Granular selectors — each hook call subscribes only to the slice it
+  // needs, so unrelated store writes (e.g. per-keystroke draftName changes
+  // or undo-stack pushes) do not trigger re-renders of this component.
+  const draftStates = useFSMStore((s) => s.draftStates);
+  const draftTransitions = useFSMStore((s) => s.draftTransitions);
+  const draftName = useFSMStore((s) => s.draftName);
+  const draftInitialState = useFSMStore((s) => s.draftInitialState);
+  const selectedNode = useFSMStore((s) => s.selectedNode);
+  const selectedEdge = useFSMStore((s) => s.selectedEdge);
+  const canUndo = useFSMStore((s) => s.canUndo);
+  const canRedo = useFSMStore((s) => s.canRedo);
+  const addState = useFSMStore((s) => s.addState);
+  const loadFSMIntoDraft = useFSMStore((s) => s.loadFSMIntoDraft);
+  const resetDraft = useFSMStore((s) => s.resetDraft);
+  const removeState = useFSMStore((s) => s.removeState);
+  const removeTransition = useFSMStore((s) => s.removeTransition);
+  const setSelectedNode = useFSMStore((s) => s.setSelectedNode);
+  const setSelectedEdge = useFSMStore((s) => s.setSelectedEdge);
+  const undo = useFSMStore((s) => s.undo);
+  const redo = useFSMStore((s) => s.redo);
+  const copySelected = useFSMStore((s) => s.copySelected);
+  const pasteClipboard = useFSMStore((s) => s.pasteClipboard);
 
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { success: toastSuccess, error: toastError } = useToast();
