@@ -20,6 +20,8 @@ endpoints reuse the metric code without re-running the whole optimization.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import time
 from dataclasses import dataclass
@@ -107,7 +109,11 @@ class OptimizationService:
         """
         from app.cache import cache_get, cache_set
 
-        cache_key = f"optimize:{fsm_id}:{request.algorithm}"
+        options = request.options or {}
+        options_hash = hashlib.sha256(
+            json.dumps(sorted(options.items()), default=str).encode()
+        ).hexdigest()[:8]
+        cache_key = f"optimize:{fsm_id}:{request.algorithm}:{options_hash}"
         if cached := await cache_get(cache_key):
             logger.info(f"Cache hit for {cache_key}")
             return OptimizationResponse(**cached)

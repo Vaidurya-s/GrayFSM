@@ -1,19 +1,23 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ROUTES } from './config/routes'
 import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import EditorPage from './pages/EditorPage'
-import OptimizationPage from './pages/OptimizationPage'
 import ExportPage from './pages/ExportPage'
 import GalleryPage from './pages/GalleryPage'
 import ExamplesPage from './pages/ExamplesPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
-import { ToastProvider } from './components/ui'
+import { ToastProvider, Spinner } from './components/ui'
 import { ThemeProvider } from './components/providers/ThemeProvider'
 import { CommandPalette, useCommandPalette } from './components/ui'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import type { ReactNode } from 'react'
+
+// OptimizationPage transitively imports recharts (~180 KB gz). Lazy-load it
+// so those chunks are only fetched when the user navigates to /optimize.
+const OptimizationPage = lazy(() => import('./pages/OptimizationPage'))
 
 function AppWithCommandPalette({ children }: { children: ReactNode }) {
   const { isOpen, close } = useCommandPalette()
@@ -69,12 +73,14 @@ function App() {
           }
         />
 
-        {/* Optimization */}
+        {/* Optimization — lazy-loaded to keep recharts out of the initial bundle */}
         <Route
           path={ROUTES.OPTIMIZE}
           element={
             <AppLayout>
-              <OptimizationPage />
+              <Suspense fallback={<Spinner size="lg" />}>
+                <OptimizationPage />
+              </Suspense>
             </AppLayout>
           }
         />
