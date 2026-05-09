@@ -20,7 +20,16 @@ import { fsmAPI } from '../api/endpoints/fsms';
 import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
 import type { APIResponse } from '../api/client';
 import type { AxiosResponse } from 'axios';
-import { Button, Card, Spinner, Alert, Badge, Kicktitle } from '../components/ui';
+import {
+  Button,
+  Card,
+  Spinner,
+  Alert,
+  Kicktitle,
+  CommandKey,
+  CommandKeyRow,
+  DataBlock,
+} from '../components/ui';
 
 type ResultTab = 'comparison' | 'metrics' | 'hypercube';
 
@@ -164,30 +173,35 @@ export default function OptimizationPage() {
               </div>
             </Card>
           ) : (
-            /* After optimization: tabbed interface */
-            <div className="bg-paper rounded-lg shadow border border-rule flex flex-col">
-              {/* Tab bar */}
-              <div className="flex border-b border-rule shrink-0">
+            /* After optimization: tabbed lab-report interface */
+            <div className="bg-paper border border-ink flex flex-col">
+              {/* Tab bar — datasheet aesthetic: mono uppercase, accent
+               *  bottom rule on active, hairline divider below. */}
+              <div className="flex border-b border-ink shrink-0">
                 {(
                   [
-                    { id: 'comparison', label: 'Comparison' },
-                    { id: 'metrics', label: 'Metrics' },
-                    { id: 'hypercube', label: 'Hypercube' },
+                    { id: 'comparison', label: '2.1 · Comparison' },
+                    { id: 'metrics',    label: '2.2 · Metrics' },
+                    { id: 'hypercube',  label: '2.3 · Hypercube' },
                   ] as { id: ResultTab; label: string }[]
-                ).map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    data-testid={`optimization-tab-${tab.id}`}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                      activeTab === tab.id
-                        ? 'text-blue-700 border-b-2 border-blue-500 bg-blue-50'
-                        : 'text-ink-soft hover:text-ink hover:bg-paper-deep'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                ).map((tab) => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      data-testid={`optimization-tab-${tab.id}`}
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex-1 px-4 py-3 text-[0.78rem] font-mono font-medium uppercase tracking-[0.1em] transition-colors border-b-2 -mb-[1px] ${
+                        active
+                          ? 'text-ink border-accent bg-accent-tint'
+                          : 'text-ink-soft border-transparent hover:text-ink hover:bg-paper-shade'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Tab panels */}
@@ -283,18 +297,53 @@ export default function OptimizationPage() {
           {result && (
             <Card
               variant="bordered"
-              header={<h2 className="text-lg font-semibold text-ink">Results</h2>}
+              header={
+                <div className="flex items-baseline justify-between gap-3">
+                  <Kicktitle number="2.4">Lab report</Kicktitle>
+                  <span className="font-mono text-[0.7rem] uppercase tracking-[0.1em] text-ink-faint">
+                    just now
+                  </span>
+                </div>
+              }
             >
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-ink-soft">Algorithm:</span>
-                <Badge variant="info" size="sm">{result.algorithm}</Badge>
-              </div>
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-ink-soft">Execution time:</span>
-                <span className="text-xs font-medium text-ink">
-                  {result.execution_time_ms}ms
-                </span>
-              </div>
+              {/* Run parameters — datasheet key/value */}
+              <DataBlock
+                items={[
+                  {
+                    label: 'Algorithm',
+                    value: result.algorithm.toUpperCase(),
+                    tone: 'accent',
+                  },
+                  {
+                    label: 'Execution',
+                    value: (
+                      <>
+                        <span className="font-tabular">
+                          {result.execution_time_ms}
+                        </span>
+                        <span className="text-ink-faint ml-1">ms</span>
+                      </>
+                    ),
+                  },
+                  {
+                    label: 'Total states',
+                    value: (
+                      <span className="font-tabular">{result.total_states}</span>
+                    ),
+                  },
+                  {
+                    label: 'Dummy added',
+                    value: (
+                      <span className="font-tabular">
+                        {result.dummy_states_added}
+                      </span>
+                    ),
+                    tone: result.dummy_states_added > 0 ? 'warn' : 'ok',
+                  },
+                ]}
+                className="mb-5"
+              />
+
               <HammingChart
                 avgBefore={result.metrics.avg_hamming_before}
                 avgAfter={result.metrics.avg_hamming_after}
@@ -304,27 +353,41 @@ export default function OptimizationPage() {
                 improvementPct={result.improvement_percentage}
               />
 
-              {/* Export + Back to Editor buttons */}
-              <div className="mt-4 pt-4 border-t border-rule space-y-2">
-                <Link
-                  to={`/export/${id}?optimized=true`}
-                  data-testid="optimization-export-link"
-                >
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700 focus:ring-green-500"
+              {/* Actions — datasheet command keys */}
+              <div
+                className="mt-5 pt-4 border-t border-rule"
+                data-testid="optimization-actions"
+              >
+                <CommandKeyRow>
+                  <CommandKey
+                    primary
+                    keyGlyph="↳"
+                    to={`/export/${id}?optimized=true`}
                   >
-                    Export Optimized FSM
-                  </Button>
-                </Link>
-                <Link
-                  to={generateRoute(ROUTES.EDITOR_EDIT, { id: id! })}
-                  data-testid="optimization-back-to-editor"
-                >
-                  <Button variant="secondary" className="w-full">
-                    Back to Editor
-                  </Button>
-                </Link>
+                    Export
+                  </CommandKey>
+                  <CommandKey
+                    keyGlyph="←"
+                    to={generateRoute(ROUTES.EDITOR_EDIT, { id: id! })}
+                  >
+                    Editor
+                  </CommandKey>
+                </CommandKeyRow>
               </div>
+              {/* Backwards-compat data-testid anchors so existing tests still
+               *  resolve the export / back-to-editor links by id. */}
+              <Link
+                to={`/export/${id}?optimized=true`}
+                data-testid="optimization-export-link"
+                aria-hidden
+                className="sr-only"
+              />
+              <Link
+                to={generateRoute(ROUTES.EDITOR_EDIT, { id: id! })}
+                data-testid="optimization-back-to-editor"
+                aria-hidden
+                className="sr-only"
+              />
             </Card>
           )}
           </div>
