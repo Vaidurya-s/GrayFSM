@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import {
-  EdgeProps,
+  type EdgeProps,
   getBezierPath,
   EdgeLabelRenderer,
   BaseEdge,
@@ -14,6 +14,15 @@ interface TransitionEdgeData {
   fsmType?: 'moore' | 'mealy';
 }
 
+/**
+ * TransitionEdge — datasheet-aesthetic React Flow edge.
+ *
+ * Bezier path in `--ink` (or `--accent` when selected). Edge label is a
+ * square hairline-bordered tag with mono uppercase text:
+ *   - Mealy: input | / | output  with the output in accent
+ *   - Moore: just input
+ *   - Falls back to `data.label` when the structured fields aren't set.
+ */
 function TransitionEdge({
   id,
   sourceX,
@@ -36,22 +45,14 @@ function TransitionEdge({
   });
 
   const isMealy = data?.fsmType === 'mealy';
-  const label = data?.label || (data?.input ? `${data.input}${data.output ? `/${data.output}` : ''}` : '');
-
-  // For Mealy FSMs, render input and output with different colors
-  const renderMealyLabel = () => {
-    if (!isMealy || !data?.input || !data?.output) {
-      return label;
-    }
-
-    return (
-      <span>
-        <span className="text-gray-700">{data.input}</span>
-        <span className="text-gray-500"> / </span>
-        <span className="text-blue-600">{data.output}</span>
-      </span>
-    );
-  };
+  const fallbackLabel =
+    data?.label ||
+    (data?.input
+      ? `${data.input}${data.output ? `/${data.output}` : ''}`
+      : '');
+  const hasStructured =
+    isMealy && typeof data?.input === 'string' && typeof data?.output === 'string';
+  const showLabel = Boolean(hasStructured || fallbackLabel);
 
   return (
     <>
@@ -60,11 +61,11 @@ function TransitionEdge({
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          stroke: selected ? '#3b82f6' : '#6b7280',
-          strokeWidth: selected ? 2 : 1.5,
+          stroke: selected ? 'var(--accent)' : 'var(--ink-soft)',
+          strokeWidth: selected ? 1.75 : 1.25,
         }}
       />
-      {label && (
+      {showLabel && (
         <EdgeLabelRenderer>
           <div
             data-testid={`transition-edge-${id}`}
@@ -74,12 +75,21 @@ function TransitionEdge({
               pointerEvents: 'all',
             }}
             className={cn(
-              'px-2 py-0.5 rounded text-xs font-medium',
-              'bg-white border shadow-sm cursor-pointer',
-              selected ? 'border-blue-500' : 'border-gray-300'
+              'font-mono uppercase tracking-[0.05em] text-[0.7rem]',
+              'px-1.5 py-[0.1rem] cursor-pointer',
+              'border bg-paper text-ink',
+              selected ? 'border-accent' : 'border-rule-strong',
             )}
           >
-            {isMealy ? renderMealyLabel() : label}
+            {hasStructured ? (
+              <>
+                <span>{data!.input}</span>
+                <span className="text-ink-faint mx-1">/</span>
+                <span className="text-accent">{data!.output}</span>
+              </>
+            ) : (
+              fallbackLabel
+            )}
           </div>
         </EdgeLabelRenderer>
       )}
