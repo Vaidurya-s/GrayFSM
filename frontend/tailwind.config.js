@@ -1,21 +1,56 @@
 /** @type {import('tailwindcss').Config} */
+//
+// Datasheet-brutalism design system — Phase 1 of the redesign.
+//
+// Notes:
+// - `darkMode: 'class'` is preserved; ThemeProvider toggles `.dark` on <html>.
+// - Color tokens are CSS variables defined in `src/styles/globals.css`; the
+//   entries below expose them as Tailwind utilities so authors can write
+//   `bg-paper`, `text-ink`, `border-rule`, `text-accent` etc.
+// - The legacy `primary` and `gray` ramps are kept (with `primary` re-pointed
+//   at the new electric blue) so existing pages keep rendering until their
+//   redesign phase lands. They will be removed once every page is migrated.
+// - `success` / `warning` / `error` are aliased to the semantic CSS vars.
+//
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // -------- design-system tokens (read CSS vars; theme-aware) --------
+        paper:       'var(--paper)',
+        'paper-shade': 'var(--paper-shade)',
+        'paper-deep':  'var(--paper-deep)',
+        ink:         'var(--ink)',
+        'ink-soft':  'var(--ink-soft)',
+        'ink-faint': 'var(--ink-faint)',
+        rule:        'var(--rule)',
+        'rule-strong': 'var(--rule-strong)',
+        accent:      'var(--accent)',
+        'accent-soft': 'var(--accent-soft)',
+        'accent-tint': 'var(--accent-tint)',
+
+        // -------- semantic status (vars; usable as bg-ok / text-warn etc.) -
+        ok:    'var(--ok)',
+        warn:  'var(--warn)',
+        err:   'var(--err)',
+
+        // -------- legacy scale, kept until pages are migrated --------------
+        // `primary` re-pointed to the new electric blue so existing
+        // primary-* utilities visually shift toward the new palette without
+        // breaking layout.
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50:  '#e8efff',
+          100: '#cfdbff',
+          200: '#a3b9ff',
+          300: '#7796f7',
+          400: '#4d77f0',
+          500: '#0c5ce8',
+          600: '#0a4dc7',
+          700: '#093ea0',
+          800: '#082f78',
+          900: '#062354',
         },
         gray: {
           50: '#f9fafb',
@@ -49,8 +84,15 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans:  ['IBM Plex Sans', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        serif: ['IBM Plex Serif', 'Iowan Old Style', 'Charter', 'Georgia', 'serif'],
+        mono:  ['IBM Plex Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+      },
+      // Tabular figures and other OpenType features as utility classes.
+      // Use `font-tabular` for any numeric column / metric.
+      fontFeatureSettings: {
+        tabular: '"tnum" 1, "lnum" 1',
+        oldstyle: '"onum" 1, "kern" 1, "liga" 1',
       },
       spacing: {
         18: '4.5rem',
@@ -58,6 +100,8 @@ export default {
         128: '32rem',
       },
       borderRadius: {
+        // Datasheet aesthetic: no rounded corners. The `4xl` token is kept
+        // for ReactFlow / Three.js controls that occasionally need it.
         '4xl': '2rem',
       },
       animation: {
@@ -85,5 +129,17 @@ export default {
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
+    // Expose `font-tabular` and `font-oldstyle` utilities backed by
+    // font-feature-settings — keeps numeric tables aligned.
+    function ({ addUtilities, theme }) {
+      const features = theme('fontFeatureSettings') || {};
+      const utilities = Object.fromEntries(
+        Object.entries(features).map(([name, value]) => [
+          `.font-${name}`,
+          { 'font-feature-settings': value },
+        ]),
+      );
+      addUtilities(utilities);
+    },
   ],
 };

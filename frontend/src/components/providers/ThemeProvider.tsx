@@ -9,13 +9,24 @@ function resolveIsDark(theme: Theme): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-function applyTheme(isDark: boolean) {
+/**
+ * Apply theme classes to the root <html> element.
+ *
+ * Three states matter for the CSS cascade in `globals.css`:
+ *   - `.dark`  — explicit dark theme (Tailwind's `darkMode: 'class'` reads this)
+ *   - `.light` — explicit light theme; needed so the
+ *                `@media (prefers-color-scheme: dark) :root:not(.light) { … }`
+ *                fallback doesn't override an explicit light choice on a
+ *                machine whose OS prefers dark.
+ *   - neither  — "system": the prefers-color-scheme media query decides.
+ *
+ * `theme` is the user's stored preference; `isDark` is the resolved current
+ * value used for Tailwind utilities.
+ */
+function applyTheme(theme: Theme, isDark: boolean) {
   const root = document.documentElement;
-  if (isDark) {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
+  root.classList.toggle('dark', isDark);
+  root.classList.toggle('light', theme === 'light');
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -33,10 +44,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [isDark, setIsDark] = useState<boolean>(() => resolveIsDark(theme));
 
-  // Apply theme class whenever isDark changes
+  // Apply theme classes whenever theme or isDark changes
   useEffect(() => {
-    applyTheme(isDark);
-  }, [isDark]);
+    applyTheme(theme, isDark);
+  }, [theme, isDark]);
 
   // Listen for system preference changes when in 'system' mode
   useEffect(() => {
