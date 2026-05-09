@@ -389,7 +389,7 @@ export default function ExamplesPage() {
         <>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <p className="text-xs text-ink-faint">
-              {apiExamples.length} example{apiExamples.length !== 1 ? 's' : ''} available
+              <span className="font-tabular">{apiExamples.length}</span> example{apiExamples.length !== 1 ? 's' : ''} available
             </p>
           </div>
           <Tabs

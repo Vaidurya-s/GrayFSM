@@ -314,7 +314,7 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                       </code>
                     </td>
                     <td className="px-4 py-2.5 text-right text-gray-500 text-xs">
-                      {grayCode.length} bit{grayCode.length !== 1 ? 's' : ''}
+                      <span className="font-tabular">{grayCode.length}</span> bit{grayCode.length !== 1 ? 's' : ''}
                     </td>
                   </tr>
                 ))}

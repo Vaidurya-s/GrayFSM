@@ -271,7 +271,7 @@ export default function GalleryPage() {
       {!isLoading && fsms.length > 0 && (
         <>
           <p className="text-xs text-ink-faint mb-4">
-            Showing {fsms.length} FSM{fsms.length !== 1 ? 's' : ''}
+            Showing <span className="font-tabular">{fsms.length}</span> FSM{fsms.length !== 1 ? 's' : ''}
             {hasFilters ? ' matching your filters' : ''}
             {totalItems > PAGE_SIZE && ` (${totalItems} total)`}
           </p>
@@ -305,12 +305,12 @@ export default function GalleryPage() {
                     {/* Stats row */}
                     <div className="flex items-center gap-3 text-xs text-ink-faint mb-3">
                       <span className="flex items-center gap-1">
-                        <span className="font-medium text-ink-soft">{fsm.state_count}</span>
+                        <span className="font-medium font-tabular text-ink-soft">{fsm.state_count}</span>
                         {' '}states
                       </span>
                       <span className="text-gray-200">|</span>
                       <span className="flex items-center gap-1">
-                        <span className="font-medium text-ink-soft">{fsm.transition_count}</span>
+                        <span className="font-medium font-tabular text-ink-soft">{fsm.transition_count}</span>
                         {' '}transitions
                       </span>
                       {typeof fsm.view_count === 'number' && (

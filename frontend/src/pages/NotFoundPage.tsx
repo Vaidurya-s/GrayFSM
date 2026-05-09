@@ -25,8 +25,9 @@ export default function NotFoundPage() {
           <span className="text-accent">ERR</span> · 404 · catalog
         </div>
 
-        {/* hero */}
-        <h1 className="font-mono font-light leading-[0.92] tracking-tight text-[clamp(3.5rem,12vw,7rem)] text-ink mb-4">
+        {/* hero — tight tracking + tabular figures so the digits sit
+         *  evenly under the kicker line above. */}
+        <h1 className="font-mono font-tabular font-light leading-[0.92] tracking-[-0.04em] text-[clamp(3.5rem,12vw,7rem)] text-ink mb-4">
           <span className="text-accent">404</span>
         </h1>
 

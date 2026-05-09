@@ -280,7 +280,7 @@ export default function EditorPage() {
               <span className="text-gray-700 dark:text-gray-200">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {draftStates.length} states, {draftTransitions.length} transitions
+              <span className="font-tabular">{draftStates.length}</span> states, <span className="font-tabular">{draftTransitions.length}</span> transitions
             </p>
           </div>
         </div>
