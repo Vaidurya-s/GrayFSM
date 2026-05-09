@@ -143,7 +143,7 @@ async def delete_fsm(
     fsm_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-) -> Any:
+) -> None:
     """Delete FSM by ID."""
     service = FSMService(db)
     try:

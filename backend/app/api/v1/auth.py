@@ -166,15 +166,19 @@ async def get_current_user(
 
 @router.post("/logout")
 async def logout(
+    request: Request,
     current_user: UserToken = Depends(get_required_current_user),
-    request: Request | None = None,
 ) -> dict:
     """
     Logout the current user by blacklisting their token.
 
+    FastAPI auto-injects ``request`` from the active HTTP context, so it
+    is required (no default). Reordered before ``current_user`` because
+    parameters with defaults must come after positional ones.
+
     Args:
-        current_user: Current user from token (ensures authentication required)
         request: HTTP request to extract token from Authorization header
+        current_user: Current user from token (ensures authentication required)
 
     Returns:
         Logout confirmation message
@@ -183,8 +187,6 @@ async def logout(
         HTTP 401: Authentication required
     """
     # Extract token from Authorization header
-    if request is None:
-        return {"message": "Logged out (no request context)"}
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.replace("Bearer ", "")
 
