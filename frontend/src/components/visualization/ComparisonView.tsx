@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useThemeColors } from './use-theme-colors';
 import ReactFlow, {
   Controls,
   MiniMap,
@@ -83,36 +84,50 @@ function StaticCanvas({ fsm, label, badge }: StaticCanvasProps) {
   const [edges] = useEdgesState(initialEdges);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg shrink-0">
-        <span className="text-sm font-semibold text-gray-700">{label}</span>
+    <div className="flex flex-col h-full border border-rule">
+      <div className="flex items-center justify-between px-3 py-2 bg-paper-shade border-b border-rule shrink-0">
+        <span className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink">
+          {label}
+        </span>
         {badge}
       </div>
       <div className="flex-1 min-h-0">
-        <ReactFlow
+        <ComparisonCanvas
           nodes={nodes}
           edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={false}
-          proOptions={{ hideAttribution: true }}
-        >
-          <Controls showInteractive={false} />
-          <MiniMap
-            nodeColor={(node) => {
-              if (node.data?.isInitial) return '#22c55e';
-              if (node.data?.isDummy) return '#f97316';
-              return '#e5e7eb';
-            }}
-            maskColor="rgba(0,0,0,0.1)"
-          />
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-        </ReactFlow>
+        />
       </div>
     </div>
+  );
+}
+
+/** Inner React Flow canvas — extracted so the MiniMap node colours can
+ *  be theme-aware via useThemeColors without re-keying the whole panel. */
+function ComparisonCanvas({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) {
+  const colors = useThemeColors();
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      fitView
+      nodesDraggable={false}
+      nodesConnectable={false}
+      elementsSelectable={false}
+      proOptions={{ hideAttribution: true }}
+    >
+      <Controls showInteractive={false} />
+      <MiniMap
+        nodeColor={(node) => {
+          if (node.data?.isInitial) return colors.ok;
+          if (node.data?.isDummy) return colors.warn;
+          return colors.rule;
+        }}
+        maskColor={`${colors.ink}1a`}
+      />
+      <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={colors.rule} />
+    </ReactFlow>
   );
 }
 
@@ -137,14 +152,18 @@ export default function ComparisonView({
   const improvementPct = metrics.improvement_percentage;
 
   const statsBadgeOriginal = (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-200 text-gray-600">
-      <span className="font-tabular">{originalFSM.state_count}</span> states
+    <span className="font-mono text-[0.62rem] uppercase tracking-[0.1em] border border-rule-strong text-ink-soft px-1.5 py-[0.05rem]">
+      <span className="font-tabular text-ink mr-1">
+        {originalFSM.state_count}
+      </span>
+      states
     </span>
   );
 
   const statsBadgeOptimized = (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700 font-medium">
-      <span className="font-tabular">{optimizedFSM.state_count}</span> states
+    <span className="font-mono text-[0.62rem] uppercase tracking-[0.1em] border border-ok text-ok px-1.5 py-[0.05rem]">
+      <span className="font-tabular mr-1">{optimizedFSM.state_count}</span>
+      states
     </span>
   );
 
@@ -152,24 +171,28 @@ export default function ComparisonView({
     <div className="flex flex-col gap-3 h-full" data-testid="comparison-view">
       {/* Controls bar */}
       <div className="flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-semibold text-gray-700">FSM Comparison</h3>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink">
+          FSM · Comparison
+        </h3>
+        <div className="flex border border-ink">
           <button
+            type="button"
             onClick={() => setViewMode('side-by-side')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1 font-mono text-[0.7rem] uppercase tracking-[0.1em] border-r border-ink transition-colors ${
               viewMode === 'side-by-side'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-accent text-paper'
+                : 'bg-paper text-ink-soft hover:text-ink hover:bg-paper-shade'
             }`}
           >
-            Side by Side
+            Side · by · Side
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('overlay')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1 font-mono text-[0.7rem] uppercase tracking-[0.1em] transition-colors ${
               viewMode === 'overlay'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-accent text-paper'
+                : 'bg-paper text-ink-soft hover:text-ink hover:bg-paper-shade'
             }`}
           >
             Overlay
@@ -177,56 +200,39 @@ export default function ComparisonView({
         </div>
       </div>
 
-      {/* Stats summary bar */}
-      <div className="grid grid-cols-3 gap-2 shrink-0">
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 text-center">
-          <div className="text-lg font-bold text-orange-700">
-            {statesAdded >= 0 ? `+${statesAdded}` : statesAdded}
-          </div>
-          <div className="text-xs text-orange-600">Dummy States Added</div>
-        </div>
-        <div
-          className={`border rounded-lg p-2 text-center ${
-            transitionsChanged >= 0
-              ? 'bg-blue-50 border-blue-200'
-              : 'bg-red-50 border-red-200'
-          }`}
-        >
-          <div
-            className={`text-lg font-bold ${
-              transitionsChanged >= 0 ? 'text-blue-700' : 'text-red-700'
-            }`}
-          >
-            {transitionsChanged >= 0 ? `+${transitionsChanged}` : transitionsChanged}
-          </div>
-          <div
-            className={`text-xs ${
-              transitionsChanged >= 0 ? 'text-blue-600' : 'text-red-600'
-            }`}
-          >
-            Transitions Changed
-          </div>
-        </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
-          <div className="text-lg font-bold text-green-700">
-            <span className="font-tabular">{improvementPct.toFixed(1)}</span>%
-          </div>
-          <div className="text-xs text-green-600">Improvement</div>
-        </div>
+      {/* Stats summary bar — datasheet field tiles */}
+      <div className="grid grid-cols-3 gap-px bg-rule border border-ink shrink-0">
+        <StatTile
+          label="Dummy states added"
+          value={statesAdded >= 0 ? `+${statesAdded}` : `${statesAdded}`}
+          tone="warn"
+        />
+        <StatTile
+          label="Transitions changed"
+          value={
+            transitionsChanged >= 0 ? `+${transitionsChanged}` : `${transitionsChanged}`
+          }
+          tone={transitionsChanged >= 0 ? 'accent' : 'err'}
+        />
+        <StatTile
+          label="Improvement"
+          value={`${improvementPct.toFixed(1)}%`}
+          tone="ok"
+        />
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-gray-500 shrink-0">
+      <div className="flex flex-wrap items-center gap-4 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-ink-faint shrink-0">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
+          <span className="w-2.5 h-2.5 inline-block bg-ok" />
           Initial state
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full border-2 border-dashed border-orange-400 bg-orange-50 inline-block" />
+          <span className="w-2.5 h-2.5 inline-block border-2 border-dashed border-warn" />
           Dummy state
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gray-300 inline-block" />
+          <span className="w-2.5 h-2.5 inline-block bg-rule-strong" />
           Regular state
         </span>
       </div>
@@ -234,40 +240,68 @@ export default function ComparisonView({
       {/* Canvas area */}
       {viewMode === 'side-by-side' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0">
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <ReactFlowProvider>
-              <StaticCanvas
-                fsm={originalFSM}
-                label="Original FSM"
-                badge={statsBadgeOriginal}
-              />
-            </ReactFlowProvider>
-          </div>
-          <div className="border border-green-200 rounded-lg overflow-hidden">
-            <ReactFlowProvider>
-              <StaticCanvas
-                fsm={optimizedFSM}
-                label="Optimized FSM"
-                badge={statsBadgeOptimized}
-              />
-            </ReactFlowProvider>
-          </div>
-        </div>
-      ) : (
-        /* Overlay mode: show optimized FSM full-width with a note */
-        <div className="flex-1 min-h-0 border border-green-200 rounded-lg overflow-hidden relative">
+          <ReactFlowProvider>
+            <StaticCanvas
+              fsm={originalFSM}
+              label="Original · before optimisation"
+              badge={statsBadgeOriginal}
+            />
+          </ReactFlowProvider>
           <ReactFlowProvider>
             <StaticCanvas
               fsm={optimizedFSM}
-              label="Optimized FSM (overlay mode — dummy states shown in orange)"
+              label="Optimised · after Gray-coding"
               badge={statsBadgeOptimized}
             />
           </ReactFlowProvider>
-          <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-500 shadow-sm">
-            Original: {originalFSM.state_count} states &rarr; Optimized: {optimizedFSM.state_count} states
+        </div>
+      ) : (
+        /* Overlay mode: show optimized FSM full-width with a note */
+        <div className="flex-1 min-h-0 border border-rule overflow-hidden relative">
+          <ReactFlowProvider>
+            <StaticCanvas
+              fsm={optimizedFSM}
+              label="Optimised · overlay (dummy states marked in warn)"
+              badge={statsBadgeOptimized}
+            />
+          </ReactFlowProvider>
+          <div className="absolute bottom-3 right-3 font-mono text-[0.65rem] uppercase tracking-[0.1em] text-ink-soft bg-paper/90 border border-rule px-2 py-1">
+            Original{' '}
+            <span className="font-tabular text-ink">{originalFSM.state_count}</span>{' '}
+            ›{' '}
+            <span className="font-tabular text-ok">{optimizedFSM.state_count}</span>{' '}
+            states
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** StatTile — datasheet field tile used in the ComparisonView stats bar. */
+function StatTile({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'accent' | 'ok' | 'warn' | 'err';
+}) {
+  const toneClass = {
+    accent: 'text-accent',
+    ok: 'text-ok',
+    warn: 'text-warn',
+    err: 'text-err',
+  }[tone];
+  return (
+    <div className="bg-paper p-2 text-center">
+      <div className={`font-mono font-tabular text-lg leading-none mb-1 ${toneClass}`}>
+        {value}
+      </div>
+      <div className="font-mono text-[0.6rem] uppercase tracking-[0.12em] text-ink-faint">
+        {label}
+      </div>
     </div>
   );
 }
