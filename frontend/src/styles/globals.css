@@ -2,28 +2,167 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================== *
+ * GrayFSM design system — datasheet brutalism                     *
+ * ============================================================== *
+ *                                                                 *
+ * Tokens are CSS custom properties so:                            *
+ *   - dark mode flips one class on <html>                         *
+ *   - Tailwind utilities can read them via theme() in the config  *
+ *   - components read raw values via `var(--token)` when needed   *
+ *                                                                 *
+ * `darkMode: 'class'` is preserved (ThemeProvider toggles `.dark` *
+ * on <html>). Light theme tokens live on `:root`; dark theme      *
+ * tokens are scoped under `:root.dark` so the cascade does the    *
+ * rest.                                                            *
+ * ============================================================== */
+
 @layer base {
+  :root {
+    /* Paper & ink */
+    --paper:        #f7f4ec;
+    --paper-shade:  #ede8d8;
+    --paper-deep:   #e3ddc8;
+    --ink:          #14110d;
+    --ink-soft:     #4a4338;
+    --ink-faint:    #8c8474;
+
+    /* Rules / hairlines */
+    --rule:         #c9c0a8;
+    --rule-strong:  #8c8474;
+
+    /* Accent — electric blue (datasheet blueprint) */
+    --accent:       #0c5ce8;
+    --accent-soft:  #4d8df0;
+    --accent-tint:  #e0eaff;
+
+    /* Status */
+    --ok:           #2a6e3f;
+    --warn:         #c47a00;
+    --err:          #c12a2a;
+
+    /* Type stacks */
+    --font-sans:    "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-serif:   "IBM Plex Serif", "Iowan Old Style", "Charter", Georgia, serif;
+    --font-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  :root.dark {
+    --paper:        #0f0e0b;
+    --paper-shade:  #1a1814;
+    --paper-deep:   #25221c;
+    --ink:          #f0ebd9;
+    --ink-soft:     #b8b09c;
+    --ink-faint:    #6a6354;
+
+    --rule:         #3a3528;
+    --rule-strong:  #6a6354;
+
+    --accent:       #6ba0ff;
+    --accent-soft:  #4d8df0;
+    --accent-tint:  rgba(107, 160, 255, 0.12);
+
+    --ok:           #6ec089;
+    --warn:         #e4a44a;
+    --err:          #e57272;
+  }
+
+  /* Use system preference as the initial theme until ThemeProvider
+   * mounts (prevents a flash-of-light when stored preference is dark). */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --paper:        #0f0e0b;
+      --paper-shade:  #1a1814;
+      --paper-deep:   #25221c;
+      --ink:          #f0ebd9;
+      --ink-soft:     #b8b09c;
+      --ink-faint:    #6a6354;
+      --rule:         #3a3528;
+      --rule-strong:  #6a6354;
+      --accent:       #6ba0ff;
+      --accent-soft:  #4d8df0;
+      --accent-tint:  rgba(107, 160, 255, 0.12);
+      --ok:           #6ec089;
+      --warn:         #e4a44a;
+      --err:          #e57272;
+    }
+  }
+
   * {
-    @apply border-gray-200 dark:border-gray-700;
+    border-color: var(--rule);
   }
 
   html {
     @apply h-full;
+    background-color: var(--paper);
+    color-scheme: light dark;
   }
 
   body {
-    @apply h-full bg-white text-gray-900 antialiased;
-    @apply dark:bg-gray-900 dark:text-gray-100;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    @apply h-full antialiased;
+    background-color: var(--paper);
+    color: var(--ink);
+    /* Default to Plex Sans for now — matches the existing UI's expectation
+     * that body text is sans-serif. Pages designed around prose (About,
+     * future redesigned HomePage) opt into Plex Serif via the `font-serif`
+     * utility on their prose containers. */
+    font-family: var(--font-sans);
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   #root {
     @apply h-full;
   }
+
+  /* Headings carry sans by default — Plex Sans, geometric, datasheet-feeling. */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  /* Tabular lining figures wherever numerals must align */
+  .tabular,
+  .font-mono,
+  code, kbd, samp, pre {
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  /* Selection picks up the accent */
+  ::selection {
+    background: var(--accent);
+    color: var(--paper);
+  }
 }
 
 @layer utilities {
-  /* Screen reader only */
+  /* Token-backed utilities — these mirror Tailwind's color/font scale but
+   * read directly from CSS vars so dark mode is automatic. Components in
+   * later phases will use these (`bg-paper`, `text-ink`, `border-rule`,
+   * `text-accent`); existing pages keep their `bg-white dark:bg-gray-900`
+   * classes until they're redesigned in their own phase. */
+  .bg-paper        { background-color: var(--paper); }
+  .bg-paper-shade  { background-color: var(--paper-shade); }
+  .bg-paper-deep   { background-color: var(--paper-deep); }
+  .bg-accent       { background-color: var(--accent); }
+  .bg-accent-tint  { background-color: var(--accent-tint); }
+
+  .text-ink        { color: var(--ink); }
+  .text-ink-soft   { color: var(--ink-soft); }
+  .text-ink-faint  { color: var(--ink-faint); }
+  .text-accent     { color: var(--accent); }
+  .text-ok         { color: var(--ok); }
+  .text-warn       { color: var(--warn); }
+  .text-err        { color: var(--err); }
+
+  .border-rule         { border-color: var(--rule); }
+  .border-rule-strong  { border-color: var(--rule-strong); }
+  .border-ink          { border-color: var(--ink); }
+  .border-accent       { border-color: var(--accent); }
+
+  /* Screen-reader only */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -36,88 +175,91 @@
     border-width: 0;
   }
 
-  /* Focus visible styles */
+  /* Focus ring driven by --accent so it follows the theme */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
-  /* Scrollbar styles */
+  /* Scrollbar — minimal, theme-aware */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: theme('colors.gray.400') theme('colors.gray.100');
+    scrollbar-color: var(--rule-strong) transparent;
   }
-
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
+    background: transparent;
   }
-
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+    background: var(--rule-strong);
+    border-radius: 0; /* no rounded corners — datasheet aesthetic */
   }
-
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500 dark:bg-gray-500;
+    background: var(--ink-faint);
   }
 }
 
-/* React Flow custom styles */
+/* ============================================================== *
+ * React Flow — token integration                                  *
+ * Phase 5 will fully redesign nodes/edges; for now point the      *
+ * surface and selection styles at the new tokens so the editor    *
+ * feels coherent with the rest of the app.                        *
+ * ============================================================== */
 .react-flow {
-  @apply bg-gray-50 dark:bg-gray-900;
+  background-color: var(--paper-shade);
 }
-
 .react-flow__node {
-  @apply cursor-pointer;
+  cursor: pointer;
 }
-
 .react-flow__node.selected {
-  @apply ring-2 ring-primary-500 ring-offset-2;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
-
 .react-flow__edge.selected .react-flow__edge-path {
-  @apply stroke-primary-500;
+  stroke: var(--accent);
   stroke-width: 2;
 }
-
 .react-flow__controls {
-  @apply rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  box-shadow: 0 1px 0 var(--rule);
 }
-
 .react-flow__controls button {
-  @apply border-b border-gray-200 dark:border-gray-700;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  background: var(--paper);
 }
-
 .react-flow__controls button:hover {
-  @apply bg-gray-50 dark:bg-gray-700;
+  background: var(--paper-shade);
 }
-
 .react-flow__minimap {
-  @apply rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
 }
 
-/* Animation classes */
+/* Skeleton shimmer — toned down, theme-aware */
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+  0%   { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
 }
-
 .skeleton {
-  @apply animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700;
+  background: linear-gradient(
+    90deg,
+    var(--paper-shade) 0%,
+    var(--paper-deep) 50%,
+    var(--paper-shade) 100%
+  );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
 }
 
-/* Print styles */
+/* Print — no chrome */
 @media print {
-  .no-print {
-    display: none !important;
-  }
+  .no-print { display: none !important; }
 }
