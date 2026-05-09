@@ -48,19 +48,21 @@
   }
 
   :root.dark {
+    /* Phase 6: nudged --paper-shade up so cards stand out from the page,
+     * and --rule up so card outlines aren't lost against the new shade. */
     --paper:        #0f0e0b;
-    --paper-shade:  #1a1814;
-    --paper-deep:   #25221c;
-    --ink:          #f0ebd9;
-    --ink-soft:     #b8b09c;
-    --ink-faint:    #6a6354;
+    --paper-shade:  #1f1c15;
+    --paper-deep:   #2a261d;
+    --ink:          #f2ecd8;
+    --ink-soft:     #c0b89e;
+    --ink-faint:    #7a7260;
 
-    --rule:         #3a3528;
-    --rule-strong:  #6a6354;
+    --rule:         #443d2e;
+    --rule-strong:  #7a7260;
 
-    --accent:       #6ba0ff;
+    --accent:       #79a8ff;
     --accent-soft:  #4d8df0;
-    --accent-tint:  rgba(107, 160, 255, 0.12);
+    --accent-tint:  rgba(121, 168, 255, 0.14);
 
     --ok:           #6ec089;
     --warn:         #e4a44a;
@@ -68,20 +70,21 @@
   }
 
   /* Use system preference as the initial theme until ThemeProvider
-   * mounts (prevents a flash-of-light when stored preference is dark). */
+   * mounts (prevents a flash-of-light when stored preference is dark).
+   * Values mirror :root.dark above. */
   @media (prefers-color-scheme: dark) {
     :root:not(.light) {
       --paper:        #0f0e0b;
-      --paper-shade:  #1a1814;
-      --paper-deep:   #25221c;
-      --ink:          #f0ebd9;
-      --ink-soft:     #b8b09c;
-      --ink-faint:    #6a6354;
-      --rule:         #3a3528;
-      --rule-strong:  #6a6354;
-      --accent:       #6ba0ff;
+      --paper-shade:  #1f1c15;
+      --paper-deep:   #2a261d;
+      --ink:          #f2ecd8;
+      --ink-soft:     #c0b89e;
+      --ink-faint:    #7a7260;
+      --rule:         #443d2e;
+      --rule-strong:  #7a7260;
+      --accent:       #79a8ff;
       --accent-soft:  #4d8df0;
-      --accent-tint:  rgba(107, 160, 255, 0.12);
+      --accent-tint:  rgba(121, 168, 255, 0.14);
       --ok:           #6ec089;
       --warn:         #e4a44a;
       --err:          #e57272;

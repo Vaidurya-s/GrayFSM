@@ -11,28 +11,30 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'
   onDismiss?: () => void;
 }
 
+// Phase 6: retokenised. Each variant is a tinted-paper background with a
+// status-tone border + heading. Reads cleanly in both themes.
 const variantConfig: Record<
   AlertVariant,
   { wrapper: string; icon: ReactNode; iconColor: string }
 > = {
   info: {
-    wrapper: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300',
-    iconColor: 'text-blue-500 dark:text-blue-400',
+    wrapper:   'bg-accent-tint border-accent text-ink',
+    iconColor: 'text-accent',
     icon: <Info className="h-5 w-5" />,
   },
   success: {
-    wrapper: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-300',
-    iconColor: 'text-green-500 dark:text-green-400',
+    wrapper:   'bg-paper-shade border-ok text-ink',
+    iconColor: 'text-ok',
     icon: <CheckCircle className="h-5 w-5" />,
   },
   warning: {
-    wrapper: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300',
-    iconColor: 'text-yellow-500 dark:text-yellow-400',
+    wrapper:   'bg-paper-shade border-warn text-ink',
+    iconColor: 'text-warn',
     icon: <AlertTriangle className="h-5 w-5" />,
   },
   error: {
-    wrapper: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-300',
-    iconColor: 'text-red-500 dark:text-red-400',
+    wrapper:   'bg-paper-shade border-err text-ink',
+    iconColor: 'text-err',
     icon: <XCircle className="h-5 w-5" />,
   },
 };

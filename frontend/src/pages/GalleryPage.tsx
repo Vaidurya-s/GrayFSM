@@ -61,16 +61,16 @@ function formatDate(iso?: string) {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+    <div className="animate-pulse bg-paper rounded-lg border border-rule shadow-sm p-6">
       <div className="flex items-center justify-between mb-3">
-        <div className="h-4 bg-gray-200 rounded w-3/5" />
-        <div className="h-5 bg-gray-200 rounded-full w-14" />
+        <div className="h-4 bg-rule rounded w-3/5" />
+        <div className="h-5 bg-rule rounded-full w-14" />
       </div>
-      <div className="h-3 bg-gray-200 rounded w-full mb-2" />
-      <div className="h-3 bg-gray-200 rounded w-4/5 mb-4" />
+      <div className="h-3 bg-rule rounded w-full mb-2" />
+      <div className="h-3 bg-rule rounded w-4/5 mb-4" />
       <div className="flex gap-3">
-        <div className="h-3 bg-gray-200 rounded w-16" />
-        <div className="h-3 bg-gray-200 rounded w-20" />
+        <div className="h-3 bg-rule rounded w-16" />
+        <div className="h-3 bg-rule rounded w-20" />
       </div>
     </div>
   );
@@ -160,7 +160,7 @@ export default function GalleryPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
+      <div className="bg-paper rounded-xl border border-rule shadow-sm p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           {/* Search */}
           <div className="sm:col-span-6">
@@ -177,12 +177,12 @@ export default function GalleryPage() {
           {/* Type filter */}
           <div className="sm:col-span-3">
             <div className="relative">
-              <SlidersHorizontal className="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
+              <SlidersHorizontal className="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-ink-faint" />
               <select
                 value={fsmType}
                 onChange={(e) => setFsmType(e.target.value)}
                 data-testid="gallery-type-filter"
-                className="block w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-md border border-rule-strong bg-paper py-2 pl-9 pr-3 text-sm text-ink shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {FSM_TYPE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -199,7 +199,7 @@ export default function GalleryPage() {
               value={sortValue}
               onChange={(e) => setSortValue(e.target.value)}
               data-testid="gallery-sort"
-              className="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full rounded-md border border-rule-strong bg-paper py-2 px-3 text-sm text-ink shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -236,13 +236,13 @@ export default function GalleryPage() {
       {/* Empty state */}
       {!isLoading && !error && fsms.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
-            <LayoutGrid className="h-8 w-8 text-gray-400" />
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-paper-shade">
+            <LayoutGrid className="h-8 w-8 text-ink-faint" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-ink mb-2">
             {hasFilters ? 'No FSMs match your filters' : 'No public FSMs yet'}
           </h3>
-          <p className="text-sm text-gray-500 max-w-sm mb-6">
+          <p className="text-sm text-ink-soft max-w-sm mb-6">
             {hasFilters
               ? 'Try removing some filters or broadening your search.'
               : 'Be the first to share a finite state machine with the community.'}
@@ -270,7 +270,7 @@ export default function GalleryPage() {
       {/* FSM grid */}
       {!isLoading && fsms.length > 0 && (
         <>
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-ink-faint mb-4">
             Showing {fsms.length} FSM{fsms.length !== 1 ? 's' : ''}
             {hasFilters ? ' matching your filters' : ''}
             {totalItems > PAGE_SIZE && ` (${totalItems} total)`}
@@ -287,7 +287,7 @@ export default function GalleryPage() {
                   <CardBody className="pt-5">
                     {/* Title row */}
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-700 transition-colors">
+                      <h3 className="text-sm font-semibold text-ink leading-tight line-clamp-2 group-hover:text-blue-700 transition-colors">
                         {fsm.name}
                       </h3>
                       <Badge variant={FSMTypeVariant(fsm.fsm_type as string)} className="flex-shrink-0 capitalize">
@@ -297,20 +297,20 @@ export default function GalleryPage() {
 
                     {/* Description */}
                     {fsm.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2 mb-3">
+                      <p className="text-xs text-ink-soft line-clamp-2 mb-3">
                         {fsm.description}
                       </p>
                     )}
 
                     {/* Stats row */}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
+                    <div className="flex items-center gap-3 text-xs text-ink-faint mb-3">
                       <span className="flex items-center gap-1">
-                        <span className="font-medium text-gray-600">{fsm.state_count}</span>
+                        <span className="font-medium text-ink-soft">{fsm.state_count}</span>
                         {' '}states
                       </span>
                       <span className="text-gray-200">|</span>
                       <span className="flex items-center gap-1">
-                        <span className="font-medium text-gray-600">{fsm.transition_count}</span>
+                        <span className="font-medium text-ink-soft">{fsm.transition_count}</span>
                         {' '}transitions
                       </span>
                       {typeof fsm.view_count === 'number' && (
@@ -336,13 +336,13 @@ export default function GalleryPage() {
                         {fsm.tags.slice(0, 3).map((tag, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center rounded px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600"
+                            className="inline-flex items-center rounded px-1.5 py-0.5 text-xs bg-paper-shade text-ink-soft"
                           >
                             {tag}
                           </span>
                         ))}
                         {fsm.tags.length > 3 && (
-                          <span className="text-xs text-gray-400">+{fsm.tags.length - 3}</span>
+                          <span className="text-xs text-ink-faint">+{fsm.tags.length - 3}</span>
                         )}
                       </div>
                     )}
@@ -361,7 +361,7 @@ export default function GalleryPage() {
 
                     {/* Date */}
                     {fsm.created_at && (
-                      <span className="text-xs text-gray-400">{formatDate(fsm.created_at)}</span>
+                      <span className="text-xs text-ink-faint">{formatDate(fsm.created_at)}</span>
                     )}
                   </CardFooter>
                 </Card>
@@ -381,7 +381,7 @@ export default function GalleryPage() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-ink-soft dark:text-ink-faint">
                 Page {page} of {totalPages}
               </span>
               <Button

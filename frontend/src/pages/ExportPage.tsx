@@ -76,7 +76,7 @@ function OptionsPanel({
   return (
     <Card className="sticky top-4">
       <CardHeader>
-        <h2 className="text-sm font-semibold text-gray-900">Export Options</h2>
+        <h2 className="text-sm font-semibold text-ink">Export Options</h2>
       </CardHeader>
       <CardBody className="space-y-4">
         {/* Module / entity name — only for HDL-family */}
@@ -84,7 +84,7 @@ function OptionsPanel({
           <div>
             <label
               htmlFor="module-name"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="block text-xs font-medium text-ink mb-1"
             >
               {format === 'vhdl' ? 'Entity name' : 'Module name'}
             </label>
@@ -95,7 +95,7 @@ function OptionsPanel({
               onChange={(e) => onChange({ moduleName: e.target.value })}
               data-testid="export-module-name"
               placeholder="fsm_module"
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-rule-strong rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         )}
@@ -109,9 +109,9 @@ function OptionsPanel({
               checked={options.includeComments}
               onChange={(e) => onChange({ includeComments: e.target.checked })}
               data-testid="export-include-comments"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-rule-strong text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="include-comments" className="text-sm text-gray-700">
+            <label htmlFor="include-comments" className="text-sm text-ink">
               Include comments
             </label>
           </div>
@@ -122,7 +122,7 @@ function OptionsPanel({
           <div>
             <label
               htmlFor="code-style"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="block text-xs font-medium text-ink mb-1"
             >
               Code style
             </label>
@@ -133,7 +133,7 @@ function OptionsPanel({
                 onChange({ style: e.target.value as FormatOptions['style'] })
               }
               data-testid="export-style"
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-rule-strong rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="standard">Standard</option>
               <option value="compact">Compact</option>
@@ -144,19 +144,19 @@ function OptionsPanel({
 
         {/* Format-specific notes */}
         {format === 'testbench' && (
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             Generates a Verilog testbench that exercises all state transitions
             with automatic pass/fail assertions.
           </p>
         )}
         {format === 'json' && (
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             Machine-readable JSON definition suitable for re-import or
             processing with other tools.
           </p>
         )}
         {format === 'csv' && (
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-ink-soft leading-relaxed">
             State transition table in CSV format — open directly in Excel or
             any spreadsheet application.
           </p>
@@ -193,9 +193,9 @@ function CodePreview({ content }: CodePreviewProps) {
       <table className="w-full border-collapse">
         <tbody>
           {lines.map((line, idx) => (
-            <tr key={idx} className="hover:bg-gray-800/40 group">
+            <tr key={idx} className="hover:bg-paper-shade/40 group">
               <td
-                className="select-none text-right pr-4 pl-4 py-0 text-gray-500 text-xs w-12 shrink-0 border-r border-gray-700"
+                className="select-none text-right pr-4 pl-4 py-0 text-ink-soft text-xs w-12 shrink-0 border-r border-rule"
                 aria-hidden="true"
               >
                 {idx + 1}
@@ -330,7 +330,7 @@ export default function ExportPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center gap-4">
         <Spinner size="lg" />
-        <p className="text-sm text-gray-500">Loading FSM…</p>
+        <p className="text-sm text-ink-soft">Loading FSM…</p>
       </div>
     );
   }
@@ -419,8 +419,8 @@ export default function ExportPage() {
               {EXPORT_FORMATS.map((fmt) => (
                 <TabPanel key={fmt.value} value={fmt.value} activeValue={activeFormat}>
                   {/* Preview toolbar */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50">
-                    <span className="text-xs text-gray-500 font-mono">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-paper-deep">
+                    <span className="text-xs text-ink-soft font-mono">
                       {exportResult
                         ? exportResult.file_name
                         : `output${fmt.extension}`}
@@ -485,7 +485,7 @@ export default function ExportPage() {
                     {exportResult ? (
                       <CodePreview content={exportResult.content} />
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-3">
+                      <div className="flex flex-col items-center justify-center h-64 text-ink-soft gap-3">
                         <svg
                           className="h-12 w-12 opacity-40"
                           fill="none"
@@ -499,7 +499,7 @@ export default function ExportPage() {
                             d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                           />
                         </svg>
-                        <p className="text-sm text-gray-400 text-center px-6">
+                        <p className="text-sm text-ink-faint text-center px-6">
                           Configure options and click{' '}
                           <span className="font-semibold text-gray-300">
                             Generate Export
@@ -536,8 +536,8 @@ export default function ExportPage() {
 
           {/* Quick tips */}
           <Card className="mt-4">
-            <p className="text-xs font-semibold text-gray-700 mb-1">Tips</p>
-            <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside leading-relaxed">
+            <p className="text-xs font-semibold text-ink mb-1">Tips</p>
+            <ul className="text-xs text-ink-soft space-y-1 list-disc list-inside leading-relaxed">
               <li>Use <strong>Verilog</strong> for Xilinx / Vivado synthesis.</li>
               <li>Use <strong>VHDL</strong> for Intel Quartus or GHDL simulation.</li>
               <li><strong>Testbench</strong> wires up your module and auto-checks transitions.</li>

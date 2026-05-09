@@ -9,10 +9,19 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   footer?: ReactNode;
 }
 
+/* -------------------------------------------------------------------------- *
+ * Card — legacy shell, retokenised in Phase 6.                               *
+ * -------------------------------------------------------------------------- *
+ * The aesthetic stays soft (light shadow / rounded) for the legacy pages     *
+ * that haven't been redesigned yet, but the colours are now design tokens    *
+ * so dark mode reads as a well-considered layer rather than a "lighter       *
+ * grey on near-black" mistake.                                                *
+ * -------------------------------------------------------------------------- */
+
 const variantClasses: Record<CardVariant, string> = {
-  default: 'bg-white shadow rounded-lg dark:bg-gray-800 dark:shadow-gray-900/40',
-  bordered: 'bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700',
-  elevated: 'bg-white shadow-md rounded-lg dark:bg-gray-800 dark:shadow-gray-900/40',
+  default:  'bg-paper-shade rounded-lg border border-rule shadow-sm dark:shadow-none',
+  bordered: 'bg-paper-shade rounded-lg border border-rule-strong',
+  elevated: 'bg-paper-shade rounded-lg border border-rule shadow-md dark:shadow-none',
 };
 
 export function Card({
@@ -24,9 +33,9 @@ export function Card({
   ...props
 }: CardProps) {
   return (
-    <div className={cn(variantClasses[variant], 'overflow-hidden', className)} {...props}>
+    <div className={cn(variantClasses[variant], 'overflow-hidden text-ink', className)} {...props}>
       {header && (
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-rule">
           {header}
         </div>
       )}
@@ -36,7 +45,7 @@ export function Card({
         </div>
       )}
       {footer && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50">
+        <div className="px-6 py-4 border-t border-rule bg-paper-deep/60">
           {footer}
         </div>
       )}
@@ -48,7 +57,7 @@ export function Card({
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('px-6 py-4 border-b border-gray-200 dark:border-gray-700', className)}
+      className={cn('px-6 py-4 border-b border-rule', className)}
       {...props}
     />
   );
@@ -61,7 +70,7 @@ export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>
 export function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('px-6 py-4 border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50', className)}
+      className={cn('px-6 py-4 border-t border-rule bg-paper-deep/60', className)}
       {...props}
     />
   );

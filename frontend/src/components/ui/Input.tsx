@@ -33,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="text-sm font-medium text-ink-soft"
           >
             {label}
           </label>
@@ -41,7 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-faint">
               {leftIcon}
             </div>
           )}
@@ -51,15 +51,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             disabled={disabled}
             className={cn(
-              'block w-full rounded-md border border-gray-300 bg-white py-2 text-sm text-gray-900',
-              'placeholder:text-gray-400',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-              'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
+              'block w-full rounded-md border border-rule-strong bg-paper py-2 text-sm text-ink',
+              'placeholder:text-ink-faint',
+              'focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent',
+              'disabled:bg-paper-shade disabled:text-ink-faint disabled:cursor-not-allowed',
               'transition-colors',
-              'dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500',
-              'dark:focus:ring-blue-400 dark:focus:border-blue-400',
-              'dark:disabled:bg-gray-700 dark:disabled:text-gray-500',
-              error && 'border-red-400 focus:ring-red-400 focus:border-red-400 dark:border-red-500 dark:focus:ring-red-400',
+              error && 'border-err focus:ring-err focus:border-err',
               leftIcon ? 'pl-9' : 'pl-3',
               rightIcon ? 'pr-9' : 'pr-3',
               className
@@ -68,19 +65,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
 
           {rightIcon && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-ink-faint">
               {rightIcon}
             </div>
           )}
         </div>
 
         {error && (
-          <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+          <p className="text-xs text-err" role="alert">
             {error}
           </p>
         )}
         {!error && hint && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
+          <p className="text-xs text-ink-faint">{hint}</p>
         )}
       </div>
     );
