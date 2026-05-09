@@ -130,6 +130,8 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         for trans in transitions:
             from_state = trans.get("from_state")
             to_state = trans.get("to_state")
+            if not isinstance(from_state, str) or not isinstance(to_state, str):
+                continue
             if from_state == to_state:
                 continue
             enc_from = assignment.get(from_state)

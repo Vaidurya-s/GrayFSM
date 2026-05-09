@@ -111,7 +111,7 @@ async def login(
         }
     )
 
-    response = JSONResponse(content={"access_token": token, "token_type": "bearer"})
+    response: JSONResponse = JSONResponse(content={"access_token": token, "token_type": "bearer"})
     response.set_cookie(
         key="access_token",
         value=token,
@@ -120,7 +120,7 @@ async def login(
         samesite="lax",
         max_age=settings.access_token_expire_minutes * 60,
     )
-    return response
+    return response  # type: ignore[return-value]
 
 
 @router.get("/me", response_model=UserResponse)
@@ -151,6 +151,11 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # `is_active` and `created_at` are ORM-nullable but always populated at
+    # runtime (server defaults). Coerce to satisfy mypy without changing
+    # behaviour.
+    assert user.is_active is not None
+    assert user.created_at is not None
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -161,15 +166,19 @@ async def get_current_user(
 
 @router.post("/logout")
 async def logout(
+    request: Request,
     current_user: UserToken = Depends(get_required_current_user),
-    request: Request = None,
 ) -> dict:
     """
     Logout the current user by blacklisting their token.
 
+    FastAPI auto-injects ``request`` from the active HTTP context, so it
+    is required (no default). Reordered before ``current_user`` because
+    parameters with defaults must come after positional ones.
+
     Args:
-        current_user: Current user from token (ensures authentication required)
         request: HTTP request to extract token from Authorization header
+        current_user: Current user from token (ensures authentication required)
 
     Returns:
         Logout confirmation message

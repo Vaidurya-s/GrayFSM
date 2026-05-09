@@ -2,6 +2,8 @@
 Example FSM endpoints
 """
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 
 from app.services.example_service import ExampleService
@@ -17,7 +19,7 @@ _example_service = ExampleService()
 
 
 @router.get("")
-async def list_examples():
+async def list_examples() -> Any:
     """
     List all example FSMs.
 
@@ -32,7 +34,7 @@ async def list_examples():
 
 
 @router.get("/{example_name}")
-async def get_example(example_name: str):
+async def get_example(example_name: str) -> Any:
     """
     Get a single example FSM by name.
 

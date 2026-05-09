@@ -86,9 +86,9 @@ class SVAExporter:
         lines.append(f"    input  logic [{state_bits - 1}:0] current_state")
         if fsm_type == "mealy":
             # Collect unique inputs for Mealy coverage
-            inputs = sorted({t.get("input") for t in transitions if t.get("input")})
-            for inp in inputs:
-                lines.append(f"    , input  logic {self._sanitize_name(inp)}")
+            mealy_inputs: list[str] = sorted({t["input"] for t in transitions if t.get("input")})
+            for mealy_inp in mealy_inputs:
+                lines.append(f"    , input  logic {self._sanitize_name(mealy_inp)}")
         lines.append(");")
         lines.append("")
 

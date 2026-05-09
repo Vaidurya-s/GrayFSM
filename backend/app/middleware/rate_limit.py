@@ -16,6 +16,7 @@ Adapted from security/fixes/03_rate_limiting.py
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import status
 from starlette.requests import Request
@@ -114,6 +115,7 @@ class RedisRateLimitStore:
                 decode_responses=True,
             )
             # Ping to verify connectivity
+            assert self._redis is not None
             await self._redis.ping()
             logger.info("Rate limiter connected to Redis")
             return True
@@ -365,7 +367,7 @@ def _too_many(rule: RateLimitRule, info: dict) -> JSONResponse:
 # ---------------------------------------------------------------------------
 
 
-async def rate_limit_middleware(request: Request, call_next):
+async def rate_limit_middleware(request: Request, call_next: Any) -> Any:
     """Per-IP sliding-window rate limiter.
 
     - Disabled entirely when ``settings.rate_limit_enabled`` is ``False``.

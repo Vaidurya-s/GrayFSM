@@ -4,6 +4,7 @@ Request/Response logging middleware
 
 import time
 import uuid
+from typing import Any
 
 from starlette.requests import Request
 
@@ -12,7 +13,7 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def logging_middleware(request: Request, call_next):
+async def logging_middleware(request: Request, call_next: Any) -> Any:
     """
     Log all requests and responses.
 

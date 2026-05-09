@@ -38,7 +38,7 @@ async def cache_get(key: str) -> dict | None:
         return None
 
 
-async def cache_set(key: str, value: dict, ttl: int = None) -> bool:
+async def cache_set(key: str, value: dict, ttl: int | None = None) -> bool:
     """Set cached value, returns False on error"""
     client = await get_redis()
     if not client:

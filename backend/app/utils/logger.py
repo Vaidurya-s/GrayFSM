@@ -32,4 +32,5 @@ def get_logger(name: str) -> structlog.BoundLogger:
         cache_logger_on_first_use=True,
     )
 
-    return structlog.get_logger(name)
+    log: structlog.BoundLogger = structlog.get_logger(name)
+    return log

@@ -3,6 +3,7 @@ Global error handling middleware
 """
 
 import traceback
+from typing import Any
 
 from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
@@ -14,7 +15,7 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def error_handler_middleware(request: Request, call_next):
+async def error_handler_middleware(request: Request, call_next: Any) -> Any:
     """
     Catch and handle all exceptions.
 

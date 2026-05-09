@@ -3,6 +3,7 @@ FSM CRUD API endpoints
 """
 
 import math
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -28,7 +29,7 @@ async def create_fsm(
     fsm_data: FSMCreate,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """Create a new FSM."""
     service = FSMService(db)
     try:
@@ -45,7 +46,7 @@ async def get_fsm(
     fsm_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken | None = Depends(get_optional_current_user),
-):
+) -> Any:
     """Get FSM by ID. Public FSMs are visible to anyone; private only to owner."""
     service = FSMService(db)
     try:
@@ -62,7 +63,7 @@ async def update_fsm(
     update_data: FSMUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """Update an existing FSM."""
     service = FSMService(db)
     try:
@@ -80,7 +81,7 @@ async def fork_fsm(
     fork_data: FSMFork,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """Fork an existing FSM into a new copy. Public FSMs may be forked by anyone;
     private FSMs only by their owner. The fork is owned by the caller."""
     service = FSMService(db)
@@ -103,7 +104,7 @@ async def list_fsms(
     sort_order: str | None = Query("desc"),
     db: AsyncSession = Depends(get_db),
     current_user: UserToken | None = Depends(get_optional_current_user),
-):
+) -> Any:
     """
     List FSMs with pagination.
 
@@ -118,8 +119,8 @@ async def list_fsms(
         visibility=visibility,
         fsm_type=fsm_type,
         search=search,
-        sort_by=sort_by,
-        sort_order=sort_order,
+        sort_by=sort_by or "created_at",
+        sort_order=sort_order or "desc",
     )
     return JSONResponse(
         content=jsonable_encoder(
@@ -142,7 +143,7 @@ async def delete_fsm(
     fsm_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> None:
     """Delete FSM by ID."""
     service = FSMService(db)
     try:

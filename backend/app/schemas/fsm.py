@@ -35,7 +35,7 @@ class FSMCreate(BaseModel):
 
     @field_validator("initial_state")
     @classmethod
-    def validate_initial_state(cls, v: str, info) -> str:
+    def validate_initial_state(cls, v: str, info: Any) -> str:
         """Validate initial state is in states list"""
         if "states" in info.data and v not in info.data["states"]:
             raise ValueError(f"Initial state '{v}' not in states list")

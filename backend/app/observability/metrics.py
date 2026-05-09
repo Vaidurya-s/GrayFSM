@@ -171,7 +171,7 @@ class GrayFSMMetrics:
             self.optimization_duration.labels(algorithm=algorithm).observe(duration_s)
 
     @asynccontextmanager
-    async def track_optimization(self, algorithm: str):
+    async def track_optimization(self, algorithm: str) -> Any:
         """Context manager to track optimization metrics."""
         self.record_optimization_started(algorithm)
         start = time.monotonic()

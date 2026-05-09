@@ -25,7 +25,7 @@ class ExportService:
         self,
         fsm_id: UUID,
         format_name: str,
-        options: dict = None,
+        options: dict | None = None,
         user_id: UUID | None = None,
     ) -> dict:
         """

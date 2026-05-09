@@ -71,7 +71,7 @@ FORMAT_INFO = {
 }
 
 
-def get_exporter(format_name: str):
+def get_exporter(format_name: str) -> Any:
     """
     Get an exporter instance by format name.
 
