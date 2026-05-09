@@ -23,7 +23,12 @@ import type { State, Transition } from '../../types/fsm';
 const nodeTypes = { stateNode: StateNode };
 const edgeTypes = { transitionEdge: TransitionEdge };
 
-function statesToNodes(states: State[], initialState: string, fsmType: 'moore' | 'mealy'): Node[] {
+function statesToNodes(
+  states: State[],
+  initialState: string,
+  fsmType: 'moore' | 'mealy',
+  encoding: Record<string, string>,
+): Node[] {
   return states.map((s, i) => ({
     id: s.id,
     type: 'stateNode',
@@ -37,6 +42,10 @@ function statesToNodes(states: State[], initialState: string, fsmType: 'moore' |
       isInitial: s.id === initialState || s.name === initialState,
       isDummy: s.is_dummy,
       fsmType,
+      // Encoding subtitle ("011") rendered below the state label inside
+      // the StateNode. Look up by state name; fall back to id; else undef
+      // (StateNode then falls back to Moore output as the subtitle).
+      encoding: encoding[s.name] ?? encoding[s.id],
     },
   }));
 }
@@ -67,6 +76,7 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
     draftTransitions,
     draftInitialState,
     draftFsmType,
+    draftEncoding,
     setSelectedNode,
     setSelectedEdge,
     updateState,
@@ -74,8 +84,8 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
   } = useFSMStore();
 
   const initialNodes = useMemo(
-    () => statesToNodes(draftStates, draftInitialState, draftFsmType),
-    [draftStates, draftInitialState, draftFsmType]
+    () => statesToNodes(draftStates, draftInitialState, draftFsmType, draftEncoding),
+    [draftStates, draftInitialState, draftFsmType, draftEncoding]
   );
   const initialEdges = useMemo(
     () => transitionsToEdges(draftTransitions, draftFsmType),
