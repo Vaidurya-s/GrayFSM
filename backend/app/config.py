@@ -6,9 +6,10 @@ Configuration is loaded from environment variables with validation.
 """
 
 import logging
+from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _config_logger = logging.getLogger(__name__)
 
@@ -77,7 +78,10 @@ class Settings(BaseSettings):
     # to set X-Forwarded-For. When empty (default), XFF is ignored and the
     # direct connection IP is used for rate limiting and logging.
     # Example: TRUSTED_PROXIES=10.0.0.1,10.0.0.2
-    trusted_proxies: list[str] = Field(
+    # `NoDecode` skips pydantic-settings' built-in JSON decoding so the
+    # `parse_trusted_proxies` validator below sees the raw env string. Without
+    # it, a literal `TRUSTED_PROXIES=` (empty) blows up trying to JSON-decode "".
+    trusted_proxies: Annotated[list[str], NoDecode] = Field(
         default=[],
         description="IPs of trusted reverse proxies that may set X-Forwarded-For",
     )
