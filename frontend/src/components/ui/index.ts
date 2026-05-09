@@ -37,3 +37,37 @@ export type { Toast, ToastType } from './toast-context';
 
 export { Tooltip } from './Tooltip';
 export type { TooltipProps, TooltipPlacement } from './Tooltip';
+
+// Datasheet-brutalism primitives (Phase 2 of the redesign).
+export { Kicktitle } from './Kicktitle';
+export type { KicktitleProps } from './Kicktitle';
+
+export { TypedSection } from './TypedSection';
+export type { TypedSectionProps } from './TypedSection';
+
+export { MarginalNote } from './MarginalNote';
+export type { MarginalNoteProps } from './MarginalNote';
+
+export { DataBlock } from './DataBlock';
+export type { DataBlockProps, DataItem, DataTone } from './DataBlock';
+
+export { RuledTable } from './RuledTable';
+export type {
+  RuledTableProps,
+  RuledColumn,
+  RuledColumnAlign,
+} from './RuledTable';
+
+export { SpecField } from './SpecField';
+export type { SpecFieldProps } from './SpecField';
+
+export { PullFigure } from './PullFigure';
+export type { PullFigureProps } from './PullFigure';
+
+export { CommandKey, CommandKeyRow } from './CommandKey';
+export type {
+  CommandKeyProps,
+  CommandKeyButtonProps,
+  CommandKeyLinkProps,
+  CommandKeyRowProps,
+} from './CommandKey';
