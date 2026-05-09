@@ -4,17 +4,24 @@ Pytest configuration and fixtures for GrayFSM backend tests.
 All core algorithm tests are pure functions with no database dependency.
 """
 
-import json
 import os
-import sys
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+
+# Pin ENVIRONMENT=test BEFORE the first `app.*` import so config.py's
+# runtime validator skips the placeholder-URL check. Without this, a
+# fresh clone without backend/.env would fail at `from app.config import
+# settings` (transitively imported by app.middleware.token_blacklist
+# and others). Matches the env var the CI workflows already export.
+os.environ.setdefault("ENVIRONMENT", "test")
+
+import json  # noqa: E402
+import sys  # noqa: E402
+
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
 # Ensure 'backend/' is on the import path so 'app.*' imports work
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from app.core.fsm_model import FSMType, Transition, State
 
 
 # ---------------------------------------------------------------------------
@@ -55,8 +62,9 @@ def vending_machine_fsm_data():
     return _load_example("vending_machine.json")
 
 
-@pytest.fixture(params=["elevator.json", "traffic_light.json",
-                         "sequence_detector.json", "vending_machine.json"])
+@pytest.fixture(
+    params=["elevator.json", "traffic_light.json", "sequence_detector.json", "vending_machine.json"]
+)
 def any_example_fsm_data(request):
     """Parametrized fixture that yields each example FSM in turn."""
     return _load_example(request.param)
@@ -65,6 +73,7 @@ def any_example_fsm_data(request):
 # ---------------------------------------------------------------------------
 # Pre-built dictionaries suitable for the optimizer APIs
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def simple_moore_2state():
@@ -101,6 +110,7 @@ async def client():
 # Sample FSM payload helpers used by integration tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_fsm_payload():
     """Minimal valid FSM creation payload (3-state Moore)."""
@@ -124,9 +134,11 @@ def sample_fsm_payload():
 def four_state_moore_with_gap():
     """4-state Moore FSM where some transitions have Hamming distance > 1."""
     import math
+
     states = ["A", "B", "C", "D"]
     n_bits = math.ceil(math.log2(len(states)))  # 2 bits
     from app.core.gray_code import int_to_gray
+
     encodings = {s: int_to_gray(i, n_bits) for i, s in enumerate(states)}
     # A=00, B=01, C=11, D=10
     return {

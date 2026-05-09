@@ -32,13 +32,14 @@ class Settings(BaseSettings):
     # Database. The defaults are obvious placeholders, NOT real connection
     # strings — they exist only so module imports don't fail when the env
     # isn't set yet (e.g. test collection time, `python -c "import app"`).
-    # `validate_production_settings` rejects any URL containing the
-    # `_placeholder_` sentinel when ENVIRONMENT=production, so a deployer
-    # who forgets to set DATABASE_URL fails fast instead of silently
-    # connecting to localhost (the previous default).
+    # `validate_runtime_settings` rejects any URL containing the
+    # `_placeholder_` sentinel for every environment except `test` and
+    # `ci`, so a developer or deployer who forgets to set DATABASE_URL
+    # fails fast at startup instead of dying inside SQLAlchemy at the
+    # first query.
     database_url: str = Field(
         default="postgresql+asyncpg://_placeholder_:_placeholder_@127.0.0.1:5432/_placeholder_db_",
-        description="PostgreSQL database URL (required in production)",
+        description="PostgreSQL database URL (required outside ENVIRONMENT=test|ci)",
     )
     database_pool_size: int = 20
     database_max_overflow: int = 10
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     # Redis — same placeholder-default policy as database_url.
     redis_url: str = Field(
         default="redis://_placeholder_:0/0",
-        description="Redis URL (required in production)",
+        description="Redis URL (required outside ENVIRONMENT=test|ci)",
     )
     redis_cache_ttl: int = 3600  # seconds
     redis_max_connections: int = 50
@@ -126,25 +127,38 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def validate_production_settings(self) -> "Settings":
-        """Enforce secure defaults when running in production."""
-        if self.environment.lower() != "production":
+    def validate_runtime_settings(self) -> "Settings":
+        """Enforce config sanity by environment.
+
+        - `test` / `ci`: skip all checks. Tests run with placeholder URLs
+          and never connect to real backends.
+        - Every other environment (development, staging, production): reject
+          placeholder DATABASE_URL / REDIS_URL so a missing env var fails
+          fast at `Settings()` instantiation with a clear message instead
+          of dying inside SQLAlchemy on the first query.
+        - `production`: additional hardening (real SECRET_KEY, DEBUG=False,
+          no dev-default DB credentials).
+        """
+        env = self.environment.lower()
+        if env in ("test", "ci"):
             return self
 
-        # The defaults are placeholders containing "_placeholder_". Reject
-        # them in prod so a missing DATABASE_URL/REDIS_URL fails fast with
-        # a clear message instead of dying later inside SQLAlchemy.
         if not self.database_url or "_placeholder_" in self.database_url:
             raise ValueError(
-                "DATABASE_URL must be set to a real connection string in "
-                "production. The placeholder default is rejected."
+                "DATABASE_URL must be set to a real connection string. "
+                "Copy backend/.env.example to backend/.env and edit, or "
+                "export DATABASE_URL=... in your shell. (Set ENVIRONMENT=test "
+                "to skip this check when running unit tests.)"
             )
         if not self.redis_url or "_placeholder_" in self.redis_url:
             raise ValueError(
-                "REDIS_URL must be set to a real connection string in "
-                "production. The placeholder default is rejected."
+                "REDIS_URL must be set to a real connection string. See backend/.env.example."
             )
 
+        if env != "production":
+            return self
+
+        # Production-only hardening below.
         if not self.secret_key or "change-in-production" in self.secret_key:
             raise ValueError(
                 "SECRET_KEY must be set to a strong, unique value in production. "
