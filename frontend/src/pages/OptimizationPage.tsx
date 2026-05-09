@@ -97,7 +97,7 @@ export default function OptimizationPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Spinner size="lg" className="mx-auto" />
-            <p className="mt-4 text-sm text-gray-600">Loading FSM...</p>
+            <p className="mt-4 text-sm text-ink-soft">Loading FSM...</p>
           </div>
         </div>
       </div>
@@ -165,9 +165,9 @@ export default function OptimizationPage() {
             </Card>
           ) : (
             /* After optimization: tabbed interface */
-            <div className="bg-white rounded-lg shadow border border-gray-200 flex flex-col">
+            <div className="bg-paper rounded-lg shadow border border-rule flex flex-col">
               {/* Tab bar */}
-              <div className="flex border-b border-gray-200 shrink-0">
+              <div className="flex border-b border-rule shrink-0">
                 {(
                   [
                     { id: 'comparison', label: 'Comparison' },
@@ -182,7 +182,7 @@ export default function OptimizationPage() {
                     className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                       activeTab === tab.id
                         ? 'text-blue-700 border-b-2 border-blue-500 bg-blue-50'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        : 'text-ink-soft hover:text-ink hover:bg-paper-deep'
                     }`}
                   >
                     {tab.label}
@@ -205,7 +205,7 @@ export default function OptimizationPage() {
                       </ErrorBoundary>
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <div className="text-center text-gray-400">
+                        <div className="text-center text-ink-faint">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3" />
                           <p className="text-sm">Loading optimized FSM...</p>
                         </div>
@@ -231,7 +231,7 @@ export default function OptimizationPage() {
                         fallback={
                           <div className="flex items-center justify-center h-full">
                             <Spinner />
-                            <p className="ml-3 text-sm text-gray-500">Loading 3D visualization…</p>
+                            <p className="ml-3 text-sm text-ink-soft">Loading 3D visualization…</p>
                           </div>
                         }
                       >
@@ -259,7 +259,7 @@ export default function OptimizationPage() {
           <Card
             variant="bordered"
             header={
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-ink">
                 Optimization Settings
               </h2>
             }
@@ -283,15 +283,15 @@ export default function OptimizationPage() {
           {result && (
             <Card
               variant="bordered"
-              header={<h2 className="text-lg font-semibold text-gray-900">Results</h2>}
+              header={<h2 className="text-lg font-semibold text-ink">Results</h2>}
             >
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-gray-500">Algorithm:</span>
+                <span className="text-xs text-ink-soft">Algorithm:</span>
                 <Badge variant="info" size="sm">{result.algorithm}</Badge>
               </div>
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-gray-500">Execution time:</span>
-                <span className="text-xs font-medium text-gray-900">
+                <span className="text-xs text-ink-soft">Execution time:</span>
+                <span className="text-xs font-medium text-ink">
                   {result.execution_time_ms}ms
                 </span>
               </div>
@@ -305,7 +305,7 @@ export default function OptimizationPage() {
               />
 
               {/* Export + Back to Editor buttons */}
-              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+              <div className="mt-4 pt-4 border-t border-rule space-y-2">
                 <Link
                   to={`/export/${id}?optimized=true`}
                   data-testid="optimization-export-link"

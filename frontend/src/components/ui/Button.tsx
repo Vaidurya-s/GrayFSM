@@ -13,17 +13,21 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
 }
 
+// Phase 6: retokenised. Each variant follows the design system —
+// `--accent` for primary, `--paper-shade` for secondary, hairline outline
+// for outline, transparent for ghost, `--err` for danger. Light + dark
+// inherit automatically via the CSS variables.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 border border-transparent dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-400',
+    'bg-accent text-paper hover:bg-ink focus:ring-accent border border-transparent',
   secondary:
-    'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-400 border border-transparent dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:focus:ring-gray-500',
+    'bg-paper-shade text-ink hover:bg-paper-deep focus:ring-rule-strong border border-rule',
   outline:
-    'bg-transparent text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-400 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white',
+    'bg-transparent text-ink border border-rule-strong hover:bg-paper-shade focus:ring-accent',
   ghost:
-    'bg-transparent text-gray-600 border border-transparent hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-400 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white',
+    'bg-transparent text-ink-soft border border-transparent hover:bg-paper-shade hover:text-ink focus:ring-accent',
   danger:
-    'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-transparent dark:bg-red-500 dark:hover:bg-red-400 dark:focus:ring-red-400',
+    'bg-err text-paper hover:bg-ink focus:ring-err border border-transparent',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

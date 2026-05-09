@@ -57,9 +57,9 @@ export function Modal({
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
     >
-      {/* Backdrop */}
+      {/* Backdrop — semitransparent ink, no blur to keep the datasheet feel */}
       <div
-        className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink/60"
         onClick={disableBackdropClose ? undefined : onClose}
         aria-hidden="true"
       />
@@ -67,17 +67,16 @@ export function Modal({
       {/* Panel */}
       <div
         className={cn(
-          'relative z-10 w-full bg-white rounded-lg shadow-xl',
-          'dark:bg-gray-800 dark:text-gray-100',
+          'relative z-10 w-full bg-paper rounded-lg shadow-xl border border-rule-strong text-ink',
           'flex flex-col max-h-[90vh]',
           sizeClasses[size],
           className
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rule shrink-0">
           {title ? (
-            <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="modal-title" className="text-lg font-semibold text-ink">
               {title}
             </h2>
           ) : (
@@ -86,7 +85,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-md p-1 text-ink-faint hover:text-ink hover:bg-paper-shade transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

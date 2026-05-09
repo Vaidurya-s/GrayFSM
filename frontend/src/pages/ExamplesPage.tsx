@@ -103,8 +103,8 @@ function difficultyVariant(d: string) {
 function StatCount({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
-      <p className="text-lg font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-lg font-bold text-ink">{value}</p>
+      <p className="text-xs text-ink-soft">{label}</p>
     </div>
   );
 }
@@ -119,24 +119,24 @@ function StaticExampleCard({ example }: { example: StaticExample }) {
       <CardBody className="pt-5 flex-1">
         {/* Title + difficulty */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 leading-tight">{example.name}</h3>
+          <h3 className="text-sm font-semibold text-ink leading-tight">{example.name}</h3>
           <Badge variant={difficultyVariant(example.difficulty)} className="flex-shrink-0 capitalize">
             {example.difficulty}
           </Badge>
         </div>
 
         {/* Description */}
-        <p className="text-xs text-gray-500 line-clamp-3 mb-4">{example.description}</p>
+        <p className="text-xs text-ink-soft line-clamp-3 mb-4">{example.description}</p>
 
         {/* Stats */}
-        <div className="flex justify-around rounded-lg bg-gray-50 py-3 mb-3">
+        <div className="flex justify-around rounded-lg bg-paper-deep py-3 mb-3">
           <StatCount label="States" value={example.stateCount} />
-          <div className="w-px bg-gray-200" />
+          <div className="w-px bg-rule" />
           <StatCount label="Transitions" value={example.transitionCount} />
-          <div className="w-px bg-gray-200" />
+          <div className="w-px bg-rule" />
           <div className="text-center">
-            <p className="text-xs font-semibold text-gray-700">{example.fsmType}</p>
-            <p className="text-xs text-gray-500">Type</p>
+            <p className="text-xs font-semibold text-ink">{example.fsmType}</p>
+            <p className="text-xs text-ink-soft">Type</p>
           </div>
         </div>
 
@@ -195,7 +195,7 @@ function ApiExampleCard({ example }: { example: Example }) {
       <CardBody className="pt-5 flex-1">
         {/* Title + difficulty */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 leading-tight">{example.name}</h3>
+          <h3 className="text-sm font-semibold text-ink leading-tight">{example.name}</h3>
           <Badge variant={difficultyVariant(example.difficulty)} className="flex-shrink-0 capitalize">
             {example.difficulty}
           </Badge>
@@ -205,13 +205,13 @@ function ApiExampleCard({ example }: { example: Example }) {
         <p className="text-xs text-blue-600 font-medium mb-1">{example.category}</p>
 
         {/* Description */}
-        <p className="text-xs text-gray-500 line-clamp-3 mb-4">{example.description}</p>
+        <p className="text-xs text-ink-soft line-clamp-3 mb-4">{example.description}</p>
 
         {/* Stats */}
         {(stateCount > 0 || transitionCount > 0) && (
-          <div className="flex justify-around rounded-lg bg-gray-50 py-3 mb-3">
+          <div className="flex justify-around rounded-lg bg-paper-deep py-3 mb-3">
             {stateCount > 0 && <StatCount label="States" value={stateCount} />}
-            {stateCount > 0 && transitionCount > 0 && <div className="w-px bg-gray-200" />}
+            {stateCount > 0 && transitionCount > 0 && <div className="w-px bg-rule" />}
             {transitionCount > 0 && <StatCount label="Transitions" value={transitionCount} />}
           </div>
         )}
@@ -335,7 +335,7 @@ export default function ExamplesPage() {
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Spinner size="lg" />
-          <p className="text-sm text-gray-500">Loading examples…</p>
+          <p className="text-sm text-ink-soft">Loading examples…</p>
         </div>
       )}
 
@@ -354,7 +354,7 @@ export default function ExamplesPage() {
                 <>
                   {t.label}
                   {byCategory[t.value as Category].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
+                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
                       {byCategory[t.value as Category].length}
                     </span>
                   )}
@@ -368,7 +368,7 @@ export default function ExamplesPage() {
             {CATEGORY_TABS.map((cat) => (
               <TabPanel key={cat} value={cat} activeValue={activeTab}>
                 {byCategory[cat].length === 0 ? (
-                  <div className="py-12 text-center text-sm text-gray-400">
+                  <div className="py-12 text-center text-sm text-ink-faint">
                     No {cat.toLowerCase()} examples available.
                   </div>
                 ) : (
@@ -388,7 +388,7 @@ export default function ExamplesPage() {
       {!isLoading && !error && apiExamples.length > 0 && (
         <>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-ink-faint">
               {apiExamples.length} example{apiExamples.length !== 1 ? 's' : ''} available
             </p>
           </div>
@@ -399,7 +399,7 @@ export default function ExamplesPage() {
                 <>
                   {t.label}
                   {byDifficulty[t.value].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
+                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
                       {byDifficulty[t.value].length}
                     </span>
                   )}
@@ -412,7 +412,7 @@ export default function ExamplesPage() {
             {CATEGORY_TABS.map((cat) => (
               <TabPanel key={cat} value={cat} activeValue={activeTab}>
                 {byDifficulty[cat].length === 0 ? (
-                  <div className="py-12 text-center text-sm text-gray-400">
+                  <div className="py-12 text-center text-sm text-ink-faint">
                     No {cat.toLowerCase()} examples available yet.
                   </div>
                 ) : (
@@ -431,7 +431,7 @@ export default function ExamplesPage() {
       {/* API returned empty — show static examples as fallback content */}
       {!isLoading && !error && apiExamples.length === 0 && (
         <>
-          <div className="mb-6 flex items-center gap-2 text-sm text-gray-500">
+          <div className="mb-6 flex items-center gap-2 text-sm text-ink-soft">
             <Layers className="h-4 w-4" />
             <span>Showing built-in examples — live examples will appear here once published.</span>
           </div>
@@ -443,7 +443,7 @@ export default function ExamplesPage() {
                 <>
                   {t.label}
                   {byCategory[t.value as Category].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 text-[10px] font-semibold text-gray-600">
+                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
                       {byCategory[t.value as Category].length}
                     </span>
                   )}
@@ -457,7 +457,7 @@ export default function ExamplesPage() {
             {CATEGORY_TABS.map((cat) => (
               <TabPanel key={cat} value={cat} activeValue={activeTab}>
                 {byCategory[cat].length === 0 ? (
-                  <div className="py-12 text-center text-sm text-gray-400">
+                  <div className="py-12 text-center text-sm text-ink-faint">
                     No {cat.toLowerCase()} examples available.
                   </div>
                 ) : (
