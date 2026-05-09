@@ -95,7 +95,7 @@ async def optimize_fsm(
         try:
             await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
         except FSMNotFoundException:
-            raise HTTPException(status_code=404, detail="FSM not found")
+            raise HTTPException(status_code=404, detail="FSM not found") from None
 
         task_id = str(uuid.uuid4())
         create_task(task_id, str(fsm_id), user_id=str(user_id))
@@ -123,14 +123,14 @@ async def optimize_fsm(
         result = await service.optimize_fsm(fsm_id, request, user_id=user_id)
         return result
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
     except FSMValidationException as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from None
     except AlgorithmException:
         # AlgorithmException messages can wrap arbitrary inner errors; log
         # the full chain and return a generic message.
         logger.exception("algorithm_failed", extra={"fsm_id": str(fsm_id)})
-        raise HTTPException(status_code=400, detail="Algorithm execution failed")
+        raise HTTPException(status_code=400, detail="Algorithm execution failed") from None
 
 
 @router.get("/{fsm_id}/results")
@@ -151,7 +151,7 @@ async def get_optimization_results(
     try:
         await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
 
     query = select(AlgorithmResult).where(AlgorithmResult.original_fsm_id == fsm_id)
     if algorithm:
@@ -212,12 +212,14 @@ async def compare_algorithms(
     options: dict = compare_request.get("options", {})
 
     if not algorithms:
-        raise HTTPException(status_code=422, detail="At least one algorithm must be specified")
+        raise HTTPException(
+            status_code=422, detail="At least one algorithm must be specified"
+        ) from None
 
     valid = {"greedy", "bfs_optimal", "global_sa", "global_ga"}
     invalid = [a for a in algorithms if a not in valid]
     if invalid:
-        raise HTTPException(status_code=422, detail=f"Unknown algorithms: {invalid}")
+        raise HTTPException(status_code=422, detail=f"Unknown algorithms: {invalid}") from None
 
     user_id = UUID(current_user["user_id"])
     service = OptimizationService(db)
@@ -231,7 +233,7 @@ async def compare_algorithms(
             result = await service.optimize_fsm(fsm_id, req, user_id=user_id)
             results.append(result.model_dump(mode="json"))
         except FSMNotFoundException:
-            raise HTTPException(status_code=404, detail="FSM not found")
+            raise HTTPException(status_code=404, detail="FSM not found") from None
         except (AlgorithmException, FSMValidationException):
             logger.exception(
                 "compare_algorithm_failed",

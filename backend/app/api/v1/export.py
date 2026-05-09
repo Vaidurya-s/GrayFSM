@@ -89,10 +89,10 @@ async def export_fsm(
             },
         }
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
     except ExportException:
         logger.exception("export_failed", extra={"fsm_id": str(fsm_id)})
-        raise HTTPException(status_code=400, detail="Export failed")
+        raise HTTPException(status_code=400, detail="Export failed") from None
 
 
 @router.get("/{fsm_id}/export/{format_name}")
@@ -120,7 +120,7 @@ async def get_cached_export(
     """
     valid_formats = {"verilog", "vhdl", "json", "csv", "testbench"}
     if format_name not in valid_formats:
-        raise HTTPException(status_code=400, detail="Unsupported format")
+        raise HTTPException(status_code=400, detail="Unsupported format") from None
 
     service = ExportService(db)
     user_id = UUID(current_user["user_id"])
@@ -134,10 +134,10 @@ async def get_cached_export(
         )
         return PlainTextResponse(content=result.get("content", ""))
     except FSMNotFoundException:
-        raise HTTPException(status_code=404, detail="FSM not found")
+        raise HTTPException(status_code=404, detail="FSM not found") from None
     except ExportException:
         logger.exception("export_failed", extra={"fsm_id": str(fsm_id)})
-        raise HTTPException(status_code=400, detail="Export failed")
+        raise HTTPException(status_code=400, detail="Export failed") from None
 
 
 @router.get("/formats")
