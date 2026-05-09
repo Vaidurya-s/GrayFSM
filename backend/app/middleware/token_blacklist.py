@@ -115,7 +115,7 @@ def _build_default_redis() -> redis_pkg.Redis | None:
     try:
         import redis  # noqa: WPS433 — lazy
 
-        client = redis.from_url(
+        client: redis_pkg.Redis = redis.from_url(
             settings.redis_url,
             decode_responses=True,
             socket_connect_timeout=0.5,

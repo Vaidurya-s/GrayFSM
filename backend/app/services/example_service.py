@@ -19,7 +19,7 @@ EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "examples"
 class ExampleService:
     """Service for loading and serving example FSMs"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: list[dict[str, Any]] | None = None
 
     async def list_examples(self) -> list[dict[str, Any]]:
@@ -32,7 +32,7 @@ class ExampleService:
         if self._cache is not None:
             return self._cache
 
-        examples = []
+        examples: list[dict[str, Any]] = []
         if not EXAMPLES_DIR.exists():
             logger.warning(
                 "Examples directory not found",

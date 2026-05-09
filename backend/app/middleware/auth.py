@@ -143,11 +143,12 @@ def create_access_token(
         }
     )
 
-    return jwt.encode(
+    encoded: str = jwt.encode(
         to_encode,
         settings.secret_key,
         algorithm=settings.algorithm,
     )
+    return encoded
 
 
 # ---------------------------------------------------------------------------

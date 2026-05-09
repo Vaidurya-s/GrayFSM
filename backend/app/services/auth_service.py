@@ -39,7 +39,8 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password string
     """
-    return pwd_context.hash(password)
+    hashed: str = pwd_context.hash(password)
+    return hashed
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -53,7 +54,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    matches: bool = pwd_context.verify(plain_password, hashed_password)
+    return matches
 
 
 class AuthService:

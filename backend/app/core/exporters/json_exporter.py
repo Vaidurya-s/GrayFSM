@@ -6,6 +6,7 @@ Strips internal metadata and produces a standardized format.
 """
 
 import json
+from typing import Any
 
 from app.utils.exceptions import ExportException
 
@@ -71,7 +72,7 @@ class JSONExporter:
         encodings: dict,
     ) -> str:
         """Standard JSON format -- matches the input format for round-tripping."""
-        export_data = {
+        export_data: dict[str, Any] = {
             "name": name,
             "type": fsm_type,
             "states": states,
@@ -106,7 +107,7 @@ class JSONExporter:
         encodings: dict,
     ) -> str:
         """Compact JSON -- minimal whitespace."""
-        export_data = {
+        export_data: dict[str, Any] = {
             "name": name,
             "type": fsm_type,
             "states": states,

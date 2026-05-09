@@ -2,6 +2,7 @@
 Category endpoints
 """
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -20,7 +21,7 @@ router = APIRouter()
 async def list_categories(
     parent_id: UUID | None = Query(None, description="Filter by parent category ID"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Any:
     """
     List all categories.
 
@@ -55,7 +56,7 @@ async def list_categories(
 async def get_category(
     category_id: UUID,
     db: AsyncSession = Depends(get_db),
-):
+) -> Any:
     """
     Get a single category by ID.
 

@@ -107,7 +107,7 @@ class FSMService:
                 raise FSMNotFoundException(str(fsm_id))
 
         # Increment view count
-        fsm.view_count += 1
+        fsm.view_count = (fsm.view_count or 0) + 1
         await self.db.commit()
         await self.db.refresh(fsm)
 

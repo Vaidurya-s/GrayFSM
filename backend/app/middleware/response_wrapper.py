@@ -13,6 +13,7 @@ Skipped for:
 """
 
 import json
+from typing import Any
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -21,7 +22,7 @@ from starlette.responses import JSONResponse, Response
 _SKIP_PATHS = frozenset({"/", "/docs", "/redoc", "/openapi.json"})
 
 
-async def response_wrapper_middleware(request: Request, call_next):
+async def response_wrapper_middleware(request: Request, call_next: Any) -> Any:
     """
     Wrap successful JSON responses in {"success": true, "data": ...}.
     """

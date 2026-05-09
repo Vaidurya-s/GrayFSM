@@ -3,6 +3,7 @@ Algorithm optimization endpoints
 """
 
 import uuid
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -66,7 +67,7 @@ async def optimize_fsm(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """
     Optimize an FSM using the specified algorithm.
 
@@ -139,7 +140,7 @@ async def get_optimization_results(
     algorithm: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """
     List optimization results for a given FSM. Strict-ownership.
 
@@ -194,7 +195,7 @@ async def compare_algorithms(
     compare_request: dict,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """
     Compare multiple optimization algorithms on a single FSM.
 
@@ -253,7 +254,7 @@ async def compare_algorithms(
 @router.get("/algorithms")
 async def get_available_algorithms(
     current_user: UserToken | None = Depends(get_optional_current_user),
-):
+) -> Any:
     """
     List all available optimization algorithms.
 

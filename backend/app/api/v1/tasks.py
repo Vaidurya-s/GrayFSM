@@ -25,7 +25,7 @@ router = APIRouter()
 _task_store: dict[str, Any] = {}
 
 
-def create_task(task_id: str, fsm_id: str, user_id: str = None) -> dict:
+def create_task(task_id: str, fsm_id: str, user_id: str | None = None) -> dict:
     """Register a new task and return its initial state.
 
     user_id is the owner; /tasks/{task_id} only returns tasks for their
@@ -43,13 +43,13 @@ def create_task(task_id: str, fsm_id: str, user_id: str = None) -> dict:
     return state
 
 
-def update_task(task_id: str, **kwargs) -> None:
+def update_task(task_id: str, **kwargs: Any) -> None:
     """Update task state fields."""
     if task_id in _task_store:
         _task_store[task_id].update(kwargs)
 
 
-def get_task(task_id: str) -> dict:
+def get_task(task_id: str) -> dict | None:
     """Return task state or None if not found."""
     return _task_store.get(task_id)
 
@@ -58,7 +58,7 @@ def get_task(task_id: str) -> dict:
 async def get_task_status(
     task_id: str,
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """Get the status of an async optimization task. Owner-only."""
     task = get_task(task_id)
     # Treat "task does not exist" and "not yours" identically so a caller

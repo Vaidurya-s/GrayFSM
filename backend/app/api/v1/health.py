@@ -3,6 +3,7 @@ Health check and system status endpoints
 """
 
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
@@ -15,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
+async def health_check(db: AsyncSession = Depends(get_db)) -> Any:
     """System health check"""
     # Test database connection
     try:
@@ -46,7 +47,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/metrics")
-async def get_metrics():
+async def get_metrics() -> Any:
     """System metrics"""
     return {
         "request_count": 0,  # TODO: Implement metrics collection

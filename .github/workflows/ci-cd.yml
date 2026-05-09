@@ -119,10 +119,7 @@ jobs:
           ruff format --check app
 
       - name: Run type checking (mypy)
-        # NOTE: `|| true` kept for now — making mypy strict surfaces ~50
-        # pre-existing type issues. Tracked for a dedicated mypy-cleanup
-        # PR; not part of the lint-tightening scope.
-        run: mypy backend/app --ignore-missing-imports || true
+        run: mypy backend/app --ignore-missing-imports
 
       - name: Run unit tests with coverage
         env:

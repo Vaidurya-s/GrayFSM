@@ -3,12 +3,14 @@ SQLAlchemy ORM Models for FSM entities
 """
 
 import uuid
+from datetime import datetime
+from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import (
     ARRAY,
     DECIMAL,
     Boolean,
-    Column,
     DateTime,
     ForeignKey,
     Index,
@@ -18,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -29,19 +31,24 @@ class Category(Base):
 
     __tablename__ = "categories"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100), unique=True, nullable=False)
-    slug = Column(String(100), unique=True, nullable=False)
-    description = Column(Text)
-    parent_category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"))
-    level = Column(Integer, default=0)
-    display_order = Column(Integer, default=0)
-    fsm_count = Column(Integer, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    parent_category_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("categories.id")
+    )
+    level: Mapped[int | None] = mapped_column(Integer, default=0)
+    display_order: Mapped[int | None] = mapped_column(Integer, default=0)
+    fsm_count: Mapped[int | None] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now()
+    )
 
-    # Relationships
-    fsms = relationship("FSM", back_populates="category")
+    fsms: Mapped[list["FSM"]] = relationship("FSM", back_populates="category")
 
 
 class FSM(Base):
@@ -49,64 +56,73 @@ class FSM(Base):
 
     __tablename__ = "fsms"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    description = Column(Text)
-    fsm_type = Column(SQLEnum("moore", "mealy", name="fsm_type"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    fsm_type: Mapped[str] = mapped_column(
+        SQLEnum("moore", "mealy", name="fsm_type"), nullable=False
+    )
 
     # FSM Definition stored as JSONB
-    definition = Column(JSONB, nullable=False)
+    definition: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
 
     # Metadata
-    state_count = Column(Integer, nullable=False)
-    transition_count = Column(Integer, nullable=False)
-    initial_state = Column(String(100), nullable=False)
-    bit_width = Column(Integer, nullable=False)
-    encoding_type = Column(String(50), default="binary")
+    state_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    transition_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    initial_state: Mapped[str] = mapped_column(String(100), nullable=False)
+    bit_width: Mapped[int] = mapped_column(Integer, nullable=False)
+    encoding_type: Mapped[str | None] = mapped_column(String(50), default="binary")
 
     # Classification
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"))
-    tags = Column(ARRAY(String))
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("categories.id")
+    )
+    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String))
 
     # Ownership
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    visibility = Column(
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    visibility: Mapped[str | None] = mapped_column(
         SQLEnum("private", "public", "unlisted", "example", name="fsm_visibility"),
         default="private",
     )
 
     # Optimization
-    is_optimized = Column(Boolean, default=False)
-    optimization_algorithm = Column(String(100))
-    dummy_state_count = Column(Integer, default=0)
-    avg_hamming_distance = Column(DECIMAL(5, 2))
+    is_optimized: Mapped[bool | None] = mapped_column(Boolean, default=False)
+    optimization_algorithm: Mapped[str | None] = mapped_column(String(100))
+    dummy_state_count: Mapped[int | None] = mapped_column(Integer, default=0)
+    avg_hamming_distance: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
 
     # Statistics
-    view_count = Column(Integer, default=0)
-    fork_count = Column(Integer, default=0)
-    export_count = Column(Integer, default=0)
+    view_count: Mapped[int | None] = mapped_column(Integer, default=0)
+    fork_count: Mapped[int | None] = mapped_column(Integer, default=0)
+    export_count: Mapped[int | None] = mapped_column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now()
+    )
 
     # Relationships
-    category = relationship("Category", back_populates="fsms")
-
-    @property
-    def states(self):
-        """Convenience accessor for state list stored in definition JSONB."""
-        if self.definition and isinstance(self.definition, dict):
-            return self.definition.get("states", [])
-        return []
-
-    algorithm_results = relationship(
+    category: Mapped["Category | None"] = relationship("Category", back_populates="fsms")
+    algorithm_results: Mapped[list["AlgorithmResult"]] = relationship(
         "AlgorithmResult",
         back_populates="original_fsm",
         foreign_keys="[AlgorithmResult.original_fsm_id]",
     )
 
-    # Indexes
+    @property
+    def states(self) -> list[Any]:
+        """Convenience accessor for state list stored in definition JSONB."""
+        if self.definition and isinstance(self.definition, dict):
+            states_raw: list[Any] = self.definition.get("states", [])
+            return states_raw
+        return []
+
     __table_args__ = (
         Index("idx_fsms_type", "fsm_type"),
         Index("idx_fsms_category", "category_id"),
@@ -120,33 +136,39 @@ class AlgorithmResult(Base):
 
     __tablename__ = "algorithm_results"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    original_fsm_id = Column(UUID(as_uuid=True), ForeignKey("fsms.id"), nullable=False)
-    optimized_fsm_id = Column(UUID(as_uuid=True), ForeignKey("fsms.id"))
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    original_fsm_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("fsms.id"), nullable=False
+    )
+    optimized_fsm_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("fsms.id")
+    )
 
-    algorithm = Column(
+    algorithm: Mapped[str] = mapped_column(
         SQLEnum("greedy", "bfs_optimal", "global_sa", "global_ga", "hybrid", name="algorithm_name"),
         nullable=False,
     )
-    algorithm_version = Column(String(50))
-    algorithm_parameters = Column(JSONB)
+    algorithm_version: Mapped[str | None] = mapped_column(String(50))
+    algorithm_parameters: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
     # Results
-    dummy_states_added = Column(Integer, default=0)
-    total_states_final = Column(Integer, nullable=False)
-    avg_hamming_before = Column(DECIMAL(5, 2))
-    avg_hamming_after = Column(DECIMAL(5, 2))
-    improvement_percentage = Column(DECIMAL(5, 2))
+    dummy_states_added: Mapped[int | None] = mapped_column(Integer, default=0)
+    total_states_final: Mapped[int] = mapped_column(Integer, nullable=False)
+    avg_hamming_before: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
+    avg_hamming_after: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
+    improvement_percentage: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
 
     # Performance
-    execution_time_ms = Column(Integer, nullable=False)
-    memory_used_mb = Column(DECIMAL(10, 2))
+    execution_time_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    memory_used_mb: Mapped[Decimal | None] = mapped_column(DECIMAL(10, 2))
 
     # Status
-    success = Column(Boolean, default=True)
-    error_message = Column(Text)
+    success: Mapped[bool | None] = mapped_column(Boolean, default=True)
+    error_message: Mapped[str | None] = mapped_column(Text)
 
-    executed_at = Column(DateTime(timezone=True), server_default=func.now())
+    executed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     # Relationships
-    original_fsm = relationship("FSM", foreign_keys=[original_fsm_id])
+    original_fsm: Mapped["FSM"] = relationship("FSM", foreign_keys=[original_fsm_id])

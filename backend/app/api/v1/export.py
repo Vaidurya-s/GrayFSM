@@ -2,6 +2,7 @@
 Export endpoints for HDL generation
 """
 
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -43,7 +44,8 @@ class ExportRequest(BaseModel):
         ..., pattern="^(verilog|vhdl|json|csv|testbench)$", description="Export format"
     )
     options: ExportOptions = Field(
-        default_factory=ExportOptions, description="Format-specific options"
+        default_factory=ExportOptions,  # type: ignore[arg-type]
+        description="Format-specific options",
     )
 
 
@@ -53,7 +55,7 @@ async def export_fsm(
     request: ExportRequest,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """
     Export FSM to the specified format (Verilog, VHDL, JSON).
 
@@ -101,7 +103,7 @@ async def get_cached_export(
     format_name: str,
     db: AsyncSession = Depends(get_db),
     current_user: UserToken = Depends(get_required_current_user),
-):
+) -> Any:
     """
     Retrieve a previously generated (cached) export for an FSM.
 
@@ -141,7 +143,7 @@ async def get_cached_export(
 
 
 @router.get("/formats")
-async def get_available_formats():
+async def get_available_formats() -> Any:
     """
     List all available export formats.
 
