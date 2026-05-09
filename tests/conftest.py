@@ -6,23 +6,27 @@ This module provides shared fixtures and configuration for all test suites.
 
 import asyncio
 import os
-from typing import AsyncGenerator, Dict, Generator, List
+import sys
+from typing import AsyncGenerator, Dict
 from uuid import uuid4
 
-import httpx
-import pytest
-from faker import Faker
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+# Pin ENVIRONMENT=test BEFORE any `app.*` import — config.py's runtime
+# validator rejects placeholder URLs in dev/staging/prod, but skips the
+# check for test/ci. CI workflows already export ENVIRONMENT=test;
+# this setdefault makes local pytest runs work without that.
+os.environ.setdefault("ENVIRONMENT", "test")
+
+import httpx  # noqa: E402
+import pytest  # noqa: E402
+from faker import Faker  # noqa: E402
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
 
 # Import backend modules
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
-from app.config import Settings
-from app.db.base import Base
-from app.main import app
+from app.db.base import Base  # noqa: E402
+from app.main import app  # noqa: E402
 
 # Initialize Faker
 fake = Faker()
@@ -31,7 +35,7 @@ Faker.seed(12345)
 # Test database URL
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test"
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/grayfsm_test",
 )
 
 # Test Redis URL
@@ -82,9 +86,7 @@ async def client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Create an async HTTP client for testing (unauthenticated)."""
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
-        transport=transport,
-        base_url="http://testserver/api/v1",
-        timeout=30.0
+        transport=transport, base_url="http://testserver/api/v1", timeout=30.0
     ) as client:
         yield client
 
@@ -94,16 +96,13 @@ async def auth_client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Create an authenticated HTTP client for testing."""
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
-        transport=transport,
-        base_url="http://testserver/api/v1",
-        timeout=30.0
+        transport=transport, base_url="http://testserver/api/v1", timeout=30.0
     ) as client:
         # Register a test user and get token
         test_email = f"test_{uuid4().hex[:8]}@example.com"
-        register_resp = await client.post("/auth/register", json={
-            "email": test_email,
-            "password": "TestPass123!"
-        })
+        register_resp = await client.post(
+            "/auth/register", json={"email": test_email, "password": "TestPass123!"}
+        )
         if register_resp.status_code in (200, 201):
             resp_json = register_resp.json()
             # response_wrapper_middleware wraps responses: {"success": true, "data": {...}}
@@ -133,16 +132,11 @@ def sample_fsm_moore() -> Dict:
             {"from_state": "Red", "to_state": "RedYellow", "input": "timer"},
             {"from_state": "RedYellow", "to_state": "Green", "input": "timer"},
             {"from_state": "Green", "to_state": "Yellow", "input": "timer"},
-            {"from_state": "Yellow", "to_state": "Red", "input": "timer"}
+            {"from_state": "Yellow", "to_state": "Red", "input": "timer"},
         ],
-        "outputs": {
-            "Red": "100",
-            "RedYellow": "110",
-            "Green": "001",
-            "Yellow": "010"
-        },
+        "outputs": {"Red": "100", "RedYellow": "110", "Green": "001", "Yellow": "010"},
         "visibility": "public",
-        "tags": ["example", "traffic", "control"]
+        "tags": ["example", "traffic", "control"],
     }
 
 
@@ -165,10 +159,10 @@ def sample_fsm_mealy() -> Dict:
             {"from_state": "S3", "to_state": "S4", "input": "1", "output": "1"},
             {"from_state": "S3", "to_state": "S2", "input": "0", "output": "0"},
             {"from_state": "S4", "to_state": "S1", "input": "1", "output": "0"},
-            {"from_state": "S4", "to_state": "S2", "input": "0", "output": "0"}
+            {"from_state": "S4", "to_state": "S2", "input": "0", "output": "0"},
         ],
         "visibility": "public",
-        "tags": ["example", "detector", "mealy"]
+        "tags": ["example", "detector", "mealy"],
     }
 
 
@@ -181,18 +175,22 @@ def sample_fsm_complex() -> Dict:
     transitions = []
     for i in range(num_states):
         # Create transitions to multiple states
-        transitions.append({
-            "from_state": f"S{i}",
-            "to_state": f"S{(i + 1) % num_states}",
-            "input": "next"
-        })
-        transitions.append({
-            "from_state": f"S{i}",
-            "to_state": f"S{(i + 3) % num_states}",
-            "input": "skip"
-        })
+        transitions.append(
+            {
+                "from_state": f"S{i}",
+                "to_state": f"S{(i + 1) % num_states}",
+                "input": "next",
+            }
+        )
+        transitions.append(
+            {
+                "from_state": f"S{i}",
+                "to_state": f"S{(i + 3) % num_states}",
+                "input": "skip",
+            }
+        )
 
-    outputs = {f"S{i}": format(i, '04b') for i in range(num_states)}
+    outputs = {f"S{i}": format(i, "04b") for i in range(num_states)}
 
     return {
         "name": "Complex FSM",
@@ -203,20 +201,14 @@ def sample_fsm_complex() -> Dict:
         "transitions": transitions,
         "outputs": outputs,
         "visibility": "private",
-        "tags": ["test", "performance", "complex"]
+        "tags": ["test", "performance", "complex"],
     }
 
 
 @pytest.fixture
 def optimization_request_greedy() -> Dict:
     """Create a greedy optimization request."""
-    return {
-        "algorithm": "greedy",
-        "async": False,
-        "options": {
-            "timeout_ms": 5000
-        }
-    }
+    return {"algorithm": "greedy", "async": False, "options": {"timeout_ms": 5000}}
 
 
 @pytest.fixture
@@ -225,11 +217,7 @@ def optimization_request_global() -> Dict:
     return {
         "algorithm": "global_sa",
         "async": False,
-        "options": {
-            "timeout_ms": 30000,
-            "max_iterations": 1000,
-            "temperature": 100.0
-        }
+        "options": {"timeout_ms": 30000, "max_iterations": 1000, "temperature": 100.0},
     }
 
 
@@ -241,8 +229,8 @@ def export_request_verilog() -> Dict:
         "options": {
             "module_name": "fsm_optimized",
             "include_comments": True,
-            "style": "standard"
-        }
+            "style": "standard",
+        },
     }
 
 
@@ -254,8 +242,8 @@ def export_request_vhdl() -> Dict:
         "options": {
             "module_name": "fsm_optimized",
             "include_comments": True,
-            "style": "standard"
-        }
+            "style": "standard",
+        },
     }
 
 
@@ -273,8 +261,7 @@ async def optimized_fsm(auth_client, created_fsm, optimization_request_greedy) -
     """Create and optimize an FSM (requires auth)."""
     fsm_id = created_fsm["id"]
     response = await auth_client.post(
-        f"/fsms/{fsm_id}/optimize",
-        json=optimization_request_greedy
+        f"/fsms/{fsm_id}/optimize", json=optimization_request_greedy
     )
     assert response.status_code == 200
     data = response.json()
@@ -285,45 +272,30 @@ async def optimized_fsm(auth_client, created_fsm, optimization_request_greedy) -
 def pytest_configure(config):
     """Configure custom pytest markers."""
     config.addinivalue_line(
-        "markers", "contract: marks tests as contract tests (deselect with '-m \"not contract\"')"
+        "markers",
+        "contract: marks tests as contract tests (deselect with '-m \"not contract\"')",
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "load: marks tests as load tests"
-    )
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "database: marks tests that require database"
-    )
-    config.addinivalue_line(
-        "markers", "redis: marks tests that require Redis"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "load: marks tests as load tests")
+    config.addinivalue_line("markers", "slow: marks tests as slow running")
+    config.addinivalue_line("markers", "database: marks tests that require database")
+    config.addinivalue_line("markers", "redis: marks tests that require Redis")
 
 
 # Add custom command line options
 def pytest_addoption(parser):
     """Add custom command line options."""
     parser.addoption(
-        "--run-slow",
-        action="store_true",
-        default=False,
-        help="Run slow tests"
+        "--run-slow", action="store_true", default=False, help="Run slow tests"
     )
     parser.addoption(
-        "--run-load",
-        action="store_true",
-        default=False,
-        help="Run load tests"
+        "--run-load", action="store_true", default=False, help="Run load tests"
     )
     parser.addoption(
         "--api-url",
         action="store",
         default="http://localhost:8000",
-        help="API base URL for testing"
+        help="API base URL for testing",
     )
 
 
