@@ -20,7 +20,7 @@ import { fsmAPI } from '../api/endpoints/fsms';
 import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
 import type { APIResponse } from '../api/client';
 import type { AxiosResponse } from 'axios';
-import { Button, Card, Spinner, Alert, Badge } from '../components/ui';
+import { Button, Card, Spinner, Alert, Badge, Kicktitle } from '../components/ui';
 
 type ResultTab = 'comparison' | 'metrics' | 'hypercube';
 
@@ -120,26 +120,36 @@ export default function OptimizationPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="optimization-page">
+    <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-paper text-ink min-h-screen" data-testid="optimization-page">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <Link to={ROUTES.HOME} className="hover:text-gray-700">
-            Home
+      <div className="mb-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint mb-3"
+        >
+          <Link to={ROUTES.HOME} className="hover:text-accent transition-colors">
+            Catalog
           </Link>
-          <span>/</span>
+          <span>›</span>
           <Link
             to={generateRoute(ROUTES.EDITOR_EDIT, { id })}
-            className="hover:text-gray-700"
+            className="hover:text-accent transition-colors"
           >
             Editor
           </Link>
-          <span>/</span>
-          <span className="text-gray-900">Optimize</span>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900">Optimize FSM</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Apply Gray code optimization to minimize glitches and race conditions.
+          <span>›</span>
+          <span className="text-ink">Optimise</span>
+        </nav>
+        <Kicktitle number="2" className="mb-2">
+          Optimisation
+        </Kicktitle>
+        <h1 className="font-sans text-3xl sm:text-4xl font-semibold tracking-tight text-ink mb-2 pb-3 border-b-[2px] border-ink">
+          A Lab Report.
+        </h1>
+        <p className="font-serif italic text-ink-soft text-base leading-relaxed mt-3 max-w-[44rem]">
+          Apply Gray-code optimisation to minimise adjacent-state Hamming
+          distance &mdash; eliminating output glitches caused by multi-bit
+          register transitions during a single clock edge.
         </p>
       </div>
 

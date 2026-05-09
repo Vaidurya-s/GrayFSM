@@ -11,6 +11,7 @@ import {
   CardFooter,
   Input,
   Alert,
+  Kicktitle,
 } from '../components/ui';
 import type { FSMListParams } from '../types/api';
 import type { FSMType } from '../types/fsm';
@@ -124,23 +125,32 @@ export default function GalleryPage() {
   const totalItems = pagination?.total ?? fsms.length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="gallery-page">
+    <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-paper text-ink min-h-screen" data-testid="gallery-page">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
-        <Link to={ROUTES.HOME} className="hover:text-gray-700 dark:hover:text-gray-300">Home</Link>
-        <span>/</span>
-        <span className="text-gray-900 dark:text-white font-medium">Gallery</span>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint mb-3"
+      >
+        <Link to={ROUTES.HOME} className="hover:text-accent transition-colors">
+          Catalog
+        </Link>
+        <span>›</span>
+        <span className="text-ink">Gallery</span>
       </nav>
 
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <LayoutGrid className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            <h1 className="text-2xl font-bold text-gray-900">FSM Gallery</h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            Browse publicly shared finite state machines from the community.
+          <Kicktitle number="3" className="mb-2">
+            Gallery
+          </Kicktitle>
+          <h1 className="font-sans text-3xl sm:text-4xl font-semibold tracking-tight text-ink mb-2 pb-3 border-b-[2px] border-ink">
+            Specifications, publicly shared.
+          </h1>
+          <p className="font-serif italic text-ink-soft text-base leading-relaxed mt-3 max-w-[44rem]">
+            Finite-state machines contributed to the public catalog by other
+            users &mdash; browsable, searchable, freely forkable into your own
+            workspace.
           </p>
         </div>
         <Button onClick={() => navigate(ROUTES.EDITOR_NEW)} size="md">

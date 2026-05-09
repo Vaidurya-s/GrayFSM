@@ -14,7 +14,7 @@ import {
   TabPanel,
   Alert,
   Spinner,
-  Badge,
+  Kicktitle,
 } from '../components/ui';
 import type { ExportFormat, ExportResponse } from '../types/fsm';
 import type { APIResponse } from '../api/client';
@@ -35,10 +35,6 @@ interface FormatOptions {
 // ------------------------------------------------------------------ //
 // Helpers
 // ------------------------------------------------------------------ //
-
-function fsmTypeBadgeVariant(type: string) {
-  return type === 'moore' ? ('info' as const) : ('default' as const);
-}
 
 function fileExtension(format: FormatId): string {
   return EXPORT_FORMATS.find((f) => f.value === format)?.extension ?? `.${format}`;
@@ -365,37 +361,46 @@ export default function ExportPage() {
 
   return (
     <div
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-paper text-ink min-h-screen"
       data-testid="export-page"
     >
       {/* ---- Header ---- */}
-      <div className="mb-6">
+      <div className="mb-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
-          <Link to={ROUTES.HOME} className="hover:text-gray-700 transition-colors">
-            Home
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint mb-3"
+        >
+          <Link to={ROUTES.HOME} className="hover:text-accent transition-colors">
+            Catalog
           </Link>
-          <span aria-hidden="true">/</span>
-          <Link to={editorHref} className="hover:text-gray-700 transition-colors">
+          <span>›</span>
+          <Link to={editorHref} className="hover:text-accent transition-colors">
             Editor
           </Link>
-          <span aria-hidden="true">/</span>
-          <span className="text-gray-900 font-medium">Export</span>
+          <span>›</span>
+          <span className="text-ink">Export</span>
         </nav>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {fsmName || 'Export FSM'}
+        <Kicktitle number="6" className="mb-2">
+          Export
+        </Kicktitle>
+        <div className="flex flex-wrap items-center gap-3 pb-3 border-b-[2px] border-ink">
+          <h1 className="font-sans text-3xl sm:text-4xl font-semibold tracking-tight text-ink">
+            {fsmName || 'Export specification'}
           </h1>
-          <Badge variant={fsmTypeBadgeVariant(fsmType)}>
-            {fsmType === 'moore' ? 'Moore' : 'Mealy'}
-          </Badge>
+          <span className="font-mono text-[0.78rem] uppercase tracking-[0.05em] text-accent">
+            {fsmType.toUpperCase()}
+          </span>
           {optimized && (
-            <Badge variant="success">Optimized</Badge>
+            <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] border border-ok text-ok px-2 py-[0.1rem]">
+              OPTIMISED
+            </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          Export to Verilog, VHDL, JSON, CSV, or a Verilog testbench.
+        <p className="mt-3 font-serif italic text-ink-soft text-base leading-relaxed max-w-[44rem]">
+          Emit Verilog, VHDL, JSON, CSV, or a Verilog testbench. The
+          optimised state encoding is preserved exactly.
         </p>
       </div>
 
