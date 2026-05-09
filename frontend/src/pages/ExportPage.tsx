@@ -189,18 +189,18 @@ function CodePreview({ content }: CodePreviewProps) {
   const lines = content.split('\n');
 
   return (
-    <div className="relative font-mono text-sm leading-relaxed overflow-x-auto">
+    <div className="relative font-mono text-sm leading-relaxed overflow-x-auto bg-paper-deep">
       <table className="w-full border-collapse">
         <tbody>
           {lines.map((line, idx) => (
             <tr key={idx} className="hover:bg-paper-shade/40 group">
               <td
-                className="select-none text-right pr-4 pl-4 py-0 text-ink-soft text-xs w-12 shrink-0 border-r border-rule"
+                className="select-none text-right pr-4 pl-4 py-0 text-ink-faint font-tabular text-xs w-12 shrink-0 border-r border-rule"
                 aria-hidden="true"
               >
                 {idx + 1}
               </td>
-              <td className="pl-4 pr-4 py-0 text-green-300 whitespace-pre">
+              <td className="pl-4 pr-4 py-0 text-ink whitespace-pre">
                 {line || ' '}
               </td>
             </tr>
@@ -418,13 +418,18 @@ export default function ExportPage() {
               {/* Preview area — shared across all tab panels */}
               {EXPORT_FORMATS.map((fmt) => (
                 <TabPanel key={fmt.value} value={fmt.value} activeValue={activeFormat}>
-                  {/* Preview toolbar */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-paper-deep">
-                    <span className="text-xs text-ink-soft font-mono">
-                      {exportResult
-                        ? exportResult.file_name
-                        : `output${fmt.extension}`}
-                    </span>
+                  {/* Preview toolbar — datasheet status bar */}
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-rule bg-paper-shade">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-ink-faint">
+                        File
+                      </span>
+                      <span className="text-xs text-ink font-mono">
+                        {exportResult
+                          ? exportResult.file_name
+                          : `output${fmt.extension}`}
+                      </span>
+                    </div>
                     {exportResult && (
                       <div className="flex items-center gap-2">
                         <Button
@@ -477,34 +482,24 @@ export default function ExportPage() {
                     )}
                   </div>
 
-                  {/* Code preview */}
+                  {/* Code preview — datasheet code pane */}
                   <div
-                    className="bg-gray-900 rounded-b-lg min-h-[420px] overflow-auto"
+                    className="bg-paper-deep min-h-[420px] overflow-auto"
                     data-testid="export-preview"
                   >
                     {exportResult ? (
                       <CodePreview content={exportResult.content} />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-64 text-ink-soft gap-3">
-                        <svg
-                          className="h-12 w-12 opacity-40"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                          />
-                        </svg>
-                        <p className="text-sm text-ink-faint text-center px-6">
-                          Configure options and click{' '}
-                          <span className="font-semibold text-gray-300">
+                        <span className="font-mono text-[0.65rem] uppercase tracking-[0.2em] text-ink-faint">
+                          ⚐ pre-emit
+                        </span>
+                        <p className="font-serif italic text-sm text-ink-soft text-center px-6 max-w-md">
+                          Configure options on the right and click{' '}
+                          <span className="font-mono not-italic font-medium text-accent">
                             Generate Export
                           </span>{' '}
-                          to preview the {fmt.label} code.
+                          to emit the {fmt.label} preview.
                         </p>
                       </div>
                     )}
@@ -534,21 +529,36 @@ export default function ExportPage() {
             isGenerating={exportMutation.isPending}
           />
 
-          {/* Quick tips */}
-          <Card className="mt-4">
-            <p className="text-xs font-semibold text-ink mb-1">Tips</p>
-            <ul className="text-xs text-ink-soft space-y-1 list-disc list-inside leading-relaxed">
-              <li>Use <strong>Verilog</strong> for Xilinx / Vivado synthesis.</li>
-              <li>Use <strong>VHDL</strong> for Intel Quartus or GHDL simulation.</li>
-              <li><strong>Testbench</strong> wires up your module and auto-checks transitions.</li>
-              <li><strong>JSON</strong> lets you re-import or diff versions.</li>
+          {/* Quick tips — datasheet annotated list */}
+          <div className="mt-4 border border-rule bg-paper p-4">
+            <h3 className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-ink pb-1.5 border-b border-ink mb-3">
+              Notes
+            </h3>
+            <ul className="font-serif text-[0.88rem] text-ink-soft leading-relaxed space-y-2 list-none">
+              <li>
+                <span className="font-mono not-italic text-accent mr-2">›</span>
+                Use <strong className="font-mono not-italic font-medium">Verilog</strong> for Xilinx / Vivado synthesis.
+              </li>
+              <li>
+                <span className="font-mono not-italic text-accent mr-2">›</span>
+                Use <strong className="font-mono not-italic font-medium">VHDL</strong> for Intel Quartus or GHDL simulation.
+              </li>
+              <li>
+                <span className="font-mono not-italic text-accent mr-2">›</span>
+                <strong className="font-mono not-italic font-medium">Testbench</strong> wires up your module and auto-checks transitions.
+              </li>
+              <li>
+                <span className="font-mono not-italic text-accent mr-2">›</span>
+                <strong className="font-mono not-italic font-medium">JSON</strong> lets you re-import or diff versions.
+              </li>
               {optimized && (
-                <li className="text-green-600">
-                  Exporting the <strong>optimized</strong> variant (Gray code encoding applied).
+                <li className="text-ok">
+                  <span className="font-mono not-italic mr-2">‡</span>
+                  Exporting the <strong className="font-mono not-italic font-medium">optimised</strong> variant — Gray code encoding applied.
                 </li>
               )}
             </ul>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

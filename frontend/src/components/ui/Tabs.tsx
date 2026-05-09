@@ -37,13 +37,15 @@ export function Tabs({
 }: TabsProps) {
   return (
     <div className={cn('flex flex-col', className)}>
-      {/* Tab strip */}
+      {/* Tab strip — retokenised in Phase 6/7 follow-up. Underline
+       *  variant gets the datasheet bottom-rule treatment; pill variant
+       *  becomes a hairline-bordered group. */}
       <div
         role="tablist"
         className={cn(
           variant === 'underline'
-            ? 'flex border-b border-gray-200 gap-0'
-            : 'flex gap-1 bg-gray-100 p-1 rounded-lg'
+            ? 'flex border-b border-rule gap-0'
+            : 'flex gap-1 bg-paper-shade p-1 border border-rule'
         )}
       >
         {tabs.map((tab) => {
@@ -60,12 +62,12 @@ export function Tabs({
                 disabled={tab.disabled}
                 onClick={() => !tab.disabled && onChange(tab.value)}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+                  'px-4 py-2 font-mono text-[0.78rem] font-medium uppercase tracking-[0.1em] border-b-2 -mb-px transition-colors',
+                  'focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset',
                   'disabled:opacity-40 disabled:cursor-not-allowed',
                   isActive
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-accent text-ink'
+                    : 'border-transparent text-ink-soft hover:text-ink hover:border-rule-strong'
                 )}
               >
                 {tab.label}
@@ -83,12 +85,12 @@ export function Tabs({
               disabled={tab.disabled}
               onClick={() => !tab.disabled && onChange(tab.value)}
               className={cn(
-                'flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500',
+                'flex-1 px-3 py-1.5 font-mono text-[0.78rem] font-medium uppercase tracking-[0.08em] transition-colors',
+                'focus:outline-none focus:ring-2 focus:ring-accent',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
                 isActive
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-paper text-ink border border-ink'
+                  : 'text-ink-soft hover:text-ink'
               )}
             >
               {tab.label}
