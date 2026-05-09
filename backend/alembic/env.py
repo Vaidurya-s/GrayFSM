@@ -59,6 +59,7 @@ PG_ONLY_INDEXES: frozenset[str] = frozenset(
         "idx_fsms_definition_transitions",
         "idx_fsms_is_optimized_algorithm_created",
         "idx_fsms_list_covering",
+        "idx_fsms_name_trgm",
         "idx_fsms_popular",
         "idx_fsms_recently_updated",
         "idx_fsms_search_text",
