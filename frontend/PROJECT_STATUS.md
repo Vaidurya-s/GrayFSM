@@ -193,12 +193,7 @@ Component library to build:
    - [ ] Component tests
    - [ ] Integration tests
 
-2. **Storybook**
-   - [ ] Storybook configuration
-   - [ ] Stories for all components
-   - [ ] Documentation pages
-
-3. **Accessibility**
+2. **Accessibility**
    - [ ] ARIA labels
    - [ ] Keyboard navigation
    - [ ] Screen reader testing
@@ -327,7 +322,6 @@ All dependencies are specified in package.json:
 ### Development
 - Vite 5.0.8
 - Vitest 1.0.4
-- Storybook 7.6.4
 - Testing Library
 
 ---
@@ -378,7 +372,6 @@ All dependencies are specified in package.json:
 1. **Polish & Testing**
    - Unit tests
    - Integration tests
-   - Storybook stories
 
 2. **Advanced Features**
    - 3D hypercube

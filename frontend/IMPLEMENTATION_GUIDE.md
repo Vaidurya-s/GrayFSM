@@ -138,7 +138,6 @@ This guide provides step-by-step instructions for implementing the complete Gray
 - [ ] **TODO**: E2E tests (optional)
 
 #### 6.4 Documentation
-- [ ] **TODO**: Storybook stories for all components
 - [ ] **TODO**: Component documentation
 - [ ] **TODO**: User guide
 - [ ] **TODO**: Developer documentation
@@ -240,9 +239,6 @@ Work through the checklist above, implementing one component at a time.
 ```bash
 # Start dev server
 npm run dev
-
-# In another terminal, start Storybook
-npm run storybook
 ```
 
 ### 2. Write Tests
@@ -289,25 +285,6 @@ export const MyComponent = forwardRef<HTMLDivElement, MyComponentProps>(
 );
 
 MyComponent.displayName = 'MyComponent';
-```
-
-```tsx
-// src/components/ui/MyComponent/MyComponent.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { MyComponent } from './MyComponent';
-
-const meta: Meta<typeof MyComponent> = {
-  title: 'UI/MyComponent',
-  component: MyComponent,
-  tags: ['autodocs'],
-};
-
-export default meta;
-type Story = StoryObj<typeof MyComponent>;
-
-export const Default: Story = {
-  args: {},
-};
 ```
 
 ```tsx

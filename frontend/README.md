@@ -16,7 +16,6 @@ A modern, interactive web application for optimizing finite state machines using
 - **Forms**: React Hook Form + Zod
 - **Animation**: Framer Motion
 - **Testing**: Vitest + React Testing Library
-- **Documentation**: Storybook
 
 ## Project Structure
 
@@ -43,7 +42,6 @@ frontend/
 │   ├── config/           # Configuration files
 │   ├── App.tsx           # Root component
 │   └── main.tsx          # Application entry point
-├── .storybook/           # Storybook configuration
 ├── tests/                # Test files
 ├── package.json
 ├── tsconfig.json
@@ -80,9 +78,6 @@ npm test
 
 # Run tests with UI
 npm run test:ui
-
-# Run Storybook
-npm run storybook
 
 # Lint code
 npm run lint
