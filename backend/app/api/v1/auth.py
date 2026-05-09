@@ -186,12 +186,18 @@ async def logout(
     Raises:
         HTTP 401: Authentication required
     """
-    # Extract token from Authorization header
+    # Blacklist token from Authorization header (Bearer auth)
     auth_header = request.headers.get("Authorization", "")
-    token = auth_header.replace("Bearer ", "")
+    bearer_token = auth_header.replace("Bearer ", "").strip()
+    if bearer_token:
+        blacklist_token(bearer_token)
 
-    if token:
-        blacklist_token(token)
-        logger.info(f"User {current_user['user_id']} logged out")
+    # Also blacklist the httpOnly cookie token so cookie-auth sessions are
+    # invalidated — without this, users who logged in via the cookie flow
+    # keep a valid token after logout.
+    cookie_token = request.cookies.get("access_token", "").strip()
+    if cookie_token and cookie_token != bearer_token:
+        blacklist_token(cookie_token)
 
+    logger.info(f"User {current_user['user_id']} logged out")
     return {"message": "Logged out successfully"}

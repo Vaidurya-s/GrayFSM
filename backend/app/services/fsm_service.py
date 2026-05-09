@@ -19,6 +19,13 @@ from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Allowlist for caller-supplied sort_by values. Using getattr(FSM, sort_by)
+# without a guard lets callers probe any column by name (e.g. hashed_password)
+# via ordering side-channels. Only columns that are safe to expose are listed.
+_SORTABLE_FIELDS: frozenset[str] = frozenset(
+    {"created_at", "updated_at", "name", "view_count", "fork_count"}
+)
+
 
 class FSMService:
     """Service for FSM CRUD operations"""
@@ -143,8 +150,11 @@ class FSMService:
             query = query.where(FSM.name.ilike(like))
             count_query = count_query.where(FSM.name.ilike(like))
 
-        # Sorting
-        sort_col = getattr(FSM, sort_by, FSM.created_at)
+        # Sorting — only allow columns in the explicit allowlist to prevent
+        # callers from probing arbitrary column existence via ordering.
+        if sort_by not in _SORTABLE_FIELDS:
+            sort_by = "created_at"
+        sort_col = getattr(FSM, sort_by)
         if sort_order == "asc":
             query = query.order_by(sort_col.asc())
         else:

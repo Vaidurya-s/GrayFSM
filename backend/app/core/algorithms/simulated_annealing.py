@@ -188,17 +188,16 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
             i, j = self._rng.sample(range(n_states), 2)
             s1, s2 = state_ids[i], state_ids[j]
 
-            neighbour = dict(current)
-            neighbour[s1], neighbour[s2] = current[s2], current[s1]
+            # In-place swap — no dict copy. Evaluate, then swap back if rejected.
+            current[s1], current[s2] = current[s2], current[s1]
 
             # --- Evaluate neighbour ------------------------------------
-            neighbour_cost = self._compute_cost(neighbour, transitions)
+            neighbour_cost = self._compute_cost(current, transitions)
             delta = neighbour_cost - current_cost
 
             # --- Accept / reject ---------------------------------------
             if delta < 0:
                 # Improvement: always accept
-                current = neighbour
                 current_cost = neighbour_cost
             else:
                 # Degradation: accept with Boltzmann probability
@@ -207,8 +206,10 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
                 except OverflowError:
                     prob = 0.0
                 if self._rng.random() < prob:
-                    current = neighbour
                     current_cost = neighbour_cost
+                else:
+                    # Rejected — undo the swap
+                    current[s1], current[s2] = current[s2], current[s1]
 
             # --- Track global best -------------------------------------
             if current_cost < best_cost:

@@ -2,6 +2,8 @@
 Export Service - Orchestrates FSM export to various formats (Verilog, VHDL, JSON)
 """
 
+import hashlib
+import json
 from uuid import UUID
 
 from sqlalchemy import select
@@ -49,7 +51,10 @@ class ExportService:
 
         from app.cache import cache_get, cache_set
 
-        cache_key = f"export:{fsm_id}:{format_name}"
+        options_hash = hashlib.sha256(
+            json.dumps(sorted(options.items()), default=str).encode()
+        ).hexdigest()[:8]
+        cache_key = f"export:{fsm_id}:{format_name}:{options_hash}"
         cached = await cache_get(cache_key)
         if cached:
             logger.info(f"Cache hit for {cache_key}")

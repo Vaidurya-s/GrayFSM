@@ -127,6 +127,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
         )
 
+        # Cross-Origin isolation headers (production only — COEP breaks some
+        # dev-tools extensions and local API mocking setups)
+        if settings.is_production:
+            response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+            response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+
         # Remove server header to reduce information leakage
         if "server" in response.headers:
             del response.headers["server"]
