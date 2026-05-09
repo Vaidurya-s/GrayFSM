@@ -56,13 +56,6 @@ DOCUMENTATION SUITE (7 Documents, ~200 Pages)
    • Deployment procedures
    └─→ READ THIS to build the application
 
-📖 FRONTEND-STORYBOOK-GUIDE.md          [Storybook Guide - 25 pages]
-   • Storybook setup & configuration
-   • Writing component stories
-   • Interactive testing
-   • Documentation patterns
-   └─→ READ THIS for component documentation
-
 📝 FRONTEND-CHEATSHEET.md               [Quick Reference - 20 pages]
    • Common patterns & snippets
    • React hooks examples
@@ -109,7 +102,6 @@ DOCUMENTATION SUITE (7 Documents, ~200 Pages)
 🎨 UI/UX DESIGNER (35 min)
    └─→ FRONTEND-ARCHITECTURE.md (Design System)
    └─→ FRONTEND-COMPONENTS.md
-   └─→ FRONTEND-STORYBOOK-GUIDE.md
 
 ================================================================================
                          TECHNOLOGY STACK
@@ -408,7 +400,6 @@ Documents Created:
 ✓ FRONTEND-ARCHITECTURE.md            [Main architecture]
 ✓ FRONTEND-COMPONENTS.md              [Component library]
 ✓ FRONTEND-IMPLEMENTATION-GUIDE.md    [Build guide]
-✓ FRONTEND-STORYBOOK-GUIDE.md        [Storybook setup]
 ✓ FRONTEND-CHEATSHEET.md             [Quick reference]
 
 Total Pages: ~200

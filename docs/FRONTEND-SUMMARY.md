@@ -35,14 +35,7 @@ The complete frontend documentation consists of the following files:
    - Deployment procedures
    - Best practices
 
-4. **[FRONTEND-STORYBOOK-GUIDE.md](./FRONTEND-STORYBOOK-GUIDE.md)** (Storybook)
-   - Storybook setup and configuration
-   - Writing component stories
-   - Interactive testing
-   - Documentation patterns
-   - Addons configuration
-
-5. **[FRONTEND-README.md](./FRONTEND-README.md)** (Quick Start)
+4. **[FRONTEND-README.md](./FRONTEND-README.md)** (Quick Start)
    - Getting started guide
    - Available scripts
    - Project structure

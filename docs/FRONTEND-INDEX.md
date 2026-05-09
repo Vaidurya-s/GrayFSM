@@ -263,69 +263,8 @@ Week 7-8:  Polish (animations, examples, accessibility)
 
 ---
 
-### 6. FRONTEND-STORYBOOK-GUIDE.md
-**Size**: ~17KB | **Pages**: ~25 | **Read Time**: 15 minutes
 
-**Purpose**: Complete guide for Storybook setup and component documentation.
-
-**Contents**:
-- **Installation & Setup**:
-  - Install Storybook
-  - Additional addons
-  - Configuration files
-  - Preview configuration
-  - Custom theme
-- **Writing Stories**:
-  - Basic story structure
-  - Complex component stories
-  - Interactive stories with play functions
-  - MDX documentation
-- **Addons Configuration**:
-  - Accessibility testing (a11y)
-  - Viewport testing
-  - Actions testing
-  - Themes
-- **Advanced Features**:
-  - Global decorators
-  - Mock Service Worker (MSW)
-  - Custom addons
-- **Best Practices**:
-  - Story organization
-  - Naming conventions
-  - Documentation patterns
-  - Testing in Storybook
-
-**Best for**:
-- Component documentation
-- Visual testing
-- Design system maintenance
-- UI development
-
-**Read this when**:
-- Setting up Storybook
-- Writing component stories
-- Creating documentation
-- Adding interactive tests
-
-**Storybook Features**:
-```
-Addons:
-├── Essentials (controls, docs, actions)
-├── A11y (accessibility testing)
-├── Interactions (play functions)
-├── Themes (light/dark mode)
-└── Viewport (responsive testing)
-
-Story Types:
-├── Default stories (basic examples)
-├── Variant stories (all variants)
-├── State stories (loading, error, empty)
-└── Interactive stories (with play functions)
-```
-
----
-
-### 7. FRONTEND-CHEATSHEET.md
+### 6. FRONTEND-CHEATSHEET.md
 **Size**: ~14KB | **Pages**: ~20 | **Read Time**: Quick reference
 
 **Purpose**: Quick reference for common patterns, commands, and code snippets.
@@ -390,8 +329,6 @@ FRONTEND-SUMMARY.md (Overview)
         ├─→ FRONTEND-ARCHITECTURE.md (Deep Dive)
         │           │
         │           └─→ FRONTEND-COMPONENTS.md (Component Details)
-        │
-        ├─→ FRONTEND-STORYBOOK-GUIDE.md (Documentation)
         │
         └─→ FRONTEND-CHEATSHEET.md (Quick Reference)
 ```
@@ -468,8 +405,6 @@ FRONTEND-SUMMARY.md (Overview)
    └─→ Colors, typography, theme
 2. FRONTEND-COMPONENTS.md
    └─→ Component specifications
-3. FRONTEND-STORYBOOK-GUIDE.md
-   └─→ Interactive component documentation
 ```
 
 ---
@@ -481,7 +416,6 @@ FRONTEND-SUMMARY.md (Overview)
 **Components**:
 - Component hierarchy: `FRONTEND-ARCHITECTURE.md` § Component Hierarchy
 - Component details: `FRONTEND-COMPONENTS.md`
-- Component stories: `FRONTEND-STORYBOOK-GUIDE.md`
 
 **State Management**:
 - Architecture: `FRONTEND-ARCHITECTURE.md` § State Management
@@ -585,7 +519,6 @@ FRONTEND-SUMMARY.md (Overview)
 - ✅ Zod
 - ✅ Vitest
 - ✅ Playwright
-- ✅ Storybook
 
 ---
 

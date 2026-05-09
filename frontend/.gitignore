@@ -25,6 +25,3 @@ dist-ssr
 
 # Testing
 coverage
-
-# Storybook
-storybook-static
