@@ -80,7 +80,9 @@ function StateNode({ data, selected }: NodeProps<StateNodeData>) {
 
       {/* main label area */}
       <div className="flex-1 px-3 py-2 flex flex-col items-center justify-center">
-        <div className="font-mono font-semibold uppercase tracking-[0.06em] text-[0.95rem] text-ink truncate max-w-full">
+        {/* tabular figures so digits in state names ("S0", "S10") line
+         *  up vertically with the encoding subtitle below. */}
+        <div className="font-mono font-tabular font-semibold uppercase tracking-[0.06em] text-[0.95rem] text-ink truncate max-w-full">
           {data.label}
         </div>
         {subtitle && (

@@ -138,13 +138,13 @@ export default function ComparisonView({
 
   const statsBadgeOriginal = (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-200 text-gray-600">
-      {originalFSM.state_count} states
+      <span className="font-tabular">{originalFSM.state_count}</span> states
     </span>
   );
 
   const statsBadgeOptimized = (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700 font-medium">
-      {optimizedFSM.state_count} states
+      <span className="font-tabular">{optimizedFSM.state_count}</span> states
     </span>
   );
 
@@ -209,7 +209,7 @@ export default function ComparisonView({
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
           <div className="text-lg font-bold text-green-700">
-            {improvementPct.toFixed(1)}%
+            <span className="font-tabular">{improvementPct.toFixed(1)}</span>%
           </div>
           <div className="text-xs text-green-600">Improvement</div>
         </div>

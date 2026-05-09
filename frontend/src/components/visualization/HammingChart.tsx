@@ -54,7 +54,7 @@ export default function HammingChart({
       {/* Improvement banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
         <div className="text-3xl font-bold" style={{ color: '#0072B2' }}>
-          {improvementPct.toFixed(1)}%
+          <span className="font-tabular">{improvementPct.toFixed(1)}</span>%
         </div>
         <div className="text-sm" style={{ color: '#0072B2' }}>Improvement</div>
       </div>
@@ -94,11 +94,11 @@ export default function HammingChart({
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-gray-900">{avgBefore.toFixed(2)}</div>
+          <div className="text-lg font-bold font-tabular text-ink">{avgBefore.toFixed(2)}</div>
           <div className="text-xs text-gray-500">Avg Hamming Before</div>
         </div>
         <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-gray-900">{avgAfter.toFixed(2)}</div>
+          <div className="text-lg font-bold font-tabular text-ink">{avgAfter.toFixed(2)}</div>
           <div className="text-xs text-gray-500">Avg Hamming After</div>
         </div>
         <div className="bg-gray-50 rounded-lg p-3 text-center">

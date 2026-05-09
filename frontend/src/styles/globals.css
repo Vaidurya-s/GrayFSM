@@ -108,11 +108,19 @@
     /* Default to Plex Sans for now — matches the existing UI's expectation
      * that body text is sans-serif. Pages designed around prose (About,
      * future redesigned HomePage) opt into Plex Serif via the `font-serif`
-     * utility on their prose containers. */
+     * utility on their prose containers; the `.font-serif` rule below
+     * adds old-style figures so prose numerals don't read as monospaced. */
     font-family: var(--font-sans);
     font-feature-settings: "kern" 1, "liga" 1;
     text-rendering: optimizeLegibility;
     transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  /* Prose serif → old-style figures + ligatures. Phase 7 adds this so the
+   * AboutPage essay reads with proportional, lowercase-style numerals
+   * instead of the lining figures the body inherits by default. */
+  .font-serif {
+    font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
   }
 
   #root {
