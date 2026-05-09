@@ -1,464 +1,308 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Tabs,
-  TabPanel,
-  Card,
-  Badge,
-  Button,
+  CommandKey,
+  CommandKeyRow,
+  Kicktitle,
+  MarginalNote,
+  TypedSection,
 } from '../components/ui';
 import { ROUTES } from '../config/routes';
-import { APP_NAME, APP_VERSION, APP_DESCRIPTION } from '../config/constants';
-import {
-  Zap,
-  Code2,
-  Box,
-  BarChart3,
-  Globe,
-  Layers,
-  BookOpen,
-  ArrowRight,
-  CheckCircle2,
-} from 'lucide-react';
 
-interface FeatureItem {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-interface TechItem {
-  category: string;
-  items: string[];
-}
-
-interface StepItem {
-  number: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-interface ApiEndpoint {
-  method: string;
-  path: string;
-  description: string;
-}
+/* -------------------------------------------------------------------------- *
+ * AboutPage — "§ 5 About"                                                    *
+ * -------------------------------------------------------------------------- *
+ * Long-form engineering essay. Single 36rem serif column with a drop cap;    *
+ * sidenotes via MarginalNote at md+ widths. The text is the primary           *
+ * artefact — no marketing tiles, no lucide icons. Real prose about Gray      *
+ * code, glitches, and the algorithms that ship in this repo.                 *
+ * -------------------------------------------------------------------------- */
 
 export default function AboutPage() {
-  const [activeTab, setActiveTab] = useState<string>('about');
-
-  const features: FeatureItem[] = [
-    {
-      title: 'Visual FSM Editor',
-      description: 'React Flow drag-and-drop interface for intuitive FSM design',
-      icon: <Layers className="w-6 h-6 text-blue-600" />,
-    },
-    {
-      title: 'Gray Code Optimization',
-      description: 'Minimize glitches and race conditions in hardware transitions',
-      icon: <Zap className="w-6 h-6 text-yellow-600" />,
-    },
-    {
-      title: 'HDL Export',
-      description: 'Export to Verilog, VHDL, testbenches, and other formats',
-      icon: <Code2 className="w-6 h-6 text-purple-600" />,
-    },
-    {
-      title: '3D Visualization',
-      description: 'Explore hypercube state space with Three.js rendering',
-      icon: <Box className="w-6 h-6 text-indigo-600" />,
-    },
-    {
-      title: 'Metrics Dashboard',
-      description: 'Before/after analysis with detailed optimization metrics',
-      icon: <BarChart3 className="w-6 h-6 text-green-600" />,
-    },
-    {
-      title: 'REST API',
-      description: 'Full REST API for programmatic access and integration',
-      icon: <Globe className="w-6 h-6 text-red-600" />,
-    },
-  ];
-
-  const techStack: TechItem[] = [
-    {
-      category: 'Frontend',
-      items: ['React 18', 'TypeScript', 'Tailwind CSS', 'React Flow', 'Three.js', 'Recharts'],
-    },
-    {
-      category: 'Backend',
-      items: ['FastAPI', 'SQLAlchemy', 'PostgreSQL', 'Alembic', 'Celery', 'Redis'],
-    },
-    {
-      category: 'Testing',
-      items: ['Pytest', 'Vitest', 'Playwright'],
-    },
-    {
-      category: 'Infrastructure',
-      items: ['Docker', 'Kubernetes', 'GitHub Actions', 'CI/CD'],
-    },
-  ];
-
-  const steps: StepItem[] = [
-    {
-      number: 1,
-      title: 'Design',
-      description:
-        'Create your FSM by defining states and transitions in the visual editor with drag-and-drop simplicity.',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-    {
-      number: 2,
-      title: 'Optimize',
-      description:
-        'Select from multiple algorithms (Greedy, BFS, Simulated Annealing) to apply Gray code encoding.',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-    {
-      number: 3,
-      title: 'Compare',
-      description:
-        'View before/after metrics and visualizations to understand the optimization impact.',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-    {
-      number: 4,
-      title: 'Export',
-      description:
-        'Download your optimized FSM in Verilog, VHDL, testbench, or other formats for synthesis.',
-      icon: <CheckCircle2 className="w-5 h-5" />,
-    },
-  ];
-
-  const apiEndpoints: ApiEndpoint[] = [
-    {
-      method: 'POST',
-      path: '/fsm',
-      description: 'Create a new FSM',
-    },
-    {
-      method: 'GET',
-      path: '/fsm/{id}',
-      description: 'Retrieve FSM details',
-    },
-    {
-      method: 'PUT',
-      path: '/fsm/{id}',
-      description: 'Update an FSM',
-    },
-    {
-      method: 'DELETE',
-      path: '/fsm/{id}',
-      description: 'Delete an FSM',
-    },
-    {
-      method: 'POST',
-      path: '/fsm/{id}/optimize',
-      description: 'Run optimization on an FSM',
-    },
-    {
-      method: 'POST',
-      path: '/fsm/{id}/export',
-      description: 'Export FSM to desired format',
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900" data-testid="about-page">
-      {/* Hero Section */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <span className="text-white font-bold text-3xl">G</span>
+    <div className="bg-paper text-ink min-h-screen" data-testid="page-about">
+      <main className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 pb-24">
+        {/* heading */}
+        <Kicktitle number="5" className="mb-2">
+          About
+        </Kicktitle>
+        <h1 className="font-sans text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-[-0.025em] leading-none text-ink mb-8 pb-4 border-b-[2px] border-ink">
+          Theory of Operation.
+        </h1>
+
+        {/* essay grid: prose + marginal sidenotes */}
+        <article className="grid lg:grid-cols-[minmax(0,1fr)_18rem] gap-12 lg:gap-16 items-start">
+          {/* ───── PROSE COLUMN ───── */}
+          <div className="font-serif max-w-[36rem] text-ink leading-[1.7] text-[1.05rem]">
+            {/* lead with drop cap */}
+            <p>
+              <span className="float-left font-sans font-semibold text-accent text-[5.2rem] leading-[0.85] pr-3 pt-1 -ml-1">
+                G
+              </span>
+              rayFSM is a tool for designers of synchronous digital hardware.
+              It takes a finite-state machine — a set of states, the transitions
+              between them, and the outputs they produce — and assigns to each
+              state a binary code such that adjacent states differ in as few
+              bits as possible. Where a single-bit transition is impossible
+              within a fixed encoding width, the tool inserts intermediate
+              dummy states to enforce one. The output is synthesisable Verilog
+              or VHDL.
+            </p>
+
+            <p className="mt-5">
+              The motivation is mundane and old.{' '}
+              <em className="text-ink-soft">Glitches</em> &mdash; transient
+              wrong values on combinational outputs &mdash; arise when more
+              than one bit of a state register changes during a transition,
+              because the bits do not switch at the same instant.{' '}
+              <span className="font-mono not-italic text-[0.95em] border-b border-accent">
+                Gray-coded
+              </span>{' '}
+              transitions, where adjacent codes differ in exactly one bit,
+              eliminate this class of fault by construction. Frank Gray
+              described the encoding in 1947 for use in pulse-code modulation;
+              the geometry of the underlying hypercube is older still.
+            </p>
+
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-ink mt-12 mb-3 pb-1 border-b border-rule-strong">
+              <span className="font-mono text-sm font-medium text-accent mr-3">
+                5.1
+              </span>
+              Why dummy states.
+            </h2>
+            <p>
+              Not every machine fits into a Gray-coded encoding of minimum
+              width. With <em>n</em> states one needs at least
+              <span className="font-mono not-italic"> ⌈log₂ n⌉</span> bits;
+              packed tightly, the codes form a Hamiltonian path through the
+              hypercube of that width, and there is no slack to route around a
+              transition that needs to skip over a missing edge.
+            </p>
+            <p className="mt-4">
+              Two answers exist. One is to widen the encoding &mdash; spend
+              another bit, gain twice the codes, accept the area cost. The
+              other is to interpose an unobservable{' '}
+              <em className="text-ink-soft">dummy state</em> whose only job is
+              to occupy a code adjacent to both endpoints, splitting a
+              two-bit jump into two one-bit hops. A dummy state lengthens the
+              transition by one clock; a glitch lengthens the transition by
+              forever. The trade is rarely close.
+            </p>
+
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-ink mt-12 mb-3 pb-1 border-b border-rule-strong">
+              <span className="font-mono text-sm font-medium text-accent mr-3">
+                5.2
+              </span>
+              The algorithms shipped here.
+            </h2>
+            <p>
+              Three optimisers are available; each operates on a copy of the
+              specification and never mutates the original.
+            </p>
+            <p className="mt-4">
+              The{' '}
+              <span className="font-mono not-italic font-medium">
+                Greedy
+              </span>{' '}
+              optimiser walks the transition list in order, inserting the
+              minimum number of dummy states for each problematic transition
+              independently. It is fast and locally optimal; on small machines
+              it often matches the global optimum.
+            </p>
+            <p className="mt-4">
+              The{' '}
+              <span className="font-mono not-italic font-medium">
+                BFS-optimal
+              </span>{' '}
+              optimiser is a breadth-first search over encoding-reuse
+              opportunities. It minimises the total dummy count across all
+              transitions simultaneously, at the cost of running time
+              proportional to states &times; transitions.
+            </p>
+            <p className="mt-4">
+              The{' '}
+              <span className="font-mono not-italic font-medium">
+                Simulated annealing
+              </span>{' '}
+              optimiser sidesteps the dummy-state question by reassigning
+              the encodings themselves. It begins with a random Gray-code
+              assignment, perturbs it by swapping pairs of codes, and accepts
+              worse configurations with a temperature-dependent probability
+              so it can escape local optima. When the temperature drops it
+              terminates with whatever assignment is best so far.
+            </p>
+
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-ink mt-12 mb-3 pb-1 border-b border-rule-strong">
+              <span className="font-mono text-sm font-medium text-accent mr-3">
+                5.3
+              </span>
+              What the tool will not do.
+            </h2>
+            <p>
+              The optimiser does not synthesise. It emits HDL; whatever
+              decisions a synthesis tool makes about register encoding,
+              don&rsquo;t-care minimisation, and retiming are downstream. The tool
+              also does not reason about asynchronous inputs or metastability:
+              the FSM is assumed to be clocked, with all inputs registered.
+              Hazard-free <em>combinational</em> output logic is a separate
+              optimisation problem the tool does not currently solve.
+            </p>
+            <p className="mt-4">
+              These omissions are deliberate. The scope is the encoding
+              question; everything else is left to the tools that already
+              do those things well.
+            </p>
+
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-ink mt-12 mb-3 pb-1 border-b border-rule-strong">
+              <span className="font-mono text-sm font-medium text-accent mr-3">
+                5.4
+              </span>
+              Implementation.
+            </h2>
+            <p>
+              The backend is FastAPI on Python 3.12 with SQLAlchemy 2.0 and
+              asyncpg; the optimisation algorithms are pure Python over
+              NetworkX graphs. The frontend is React 18 with Vite, ReactFlow
+              for the editor, three.js for the hypercube visualisation, and
+              the type system you are presently reading: IBM Plex, set
+              datasheet-style.
+            </p>
+            <p className="mt-4">
+              The repository is open. Specifications, optimised outputs, HDL
+              exports, and the full source are at the address in the colophon
+              below.
+            </p>
+
+            {/* CTA */}
+            <div className="mt-12 pt-6 border-t border-rule">
+              <CommandKeyRow>
+                <CommandKey primary keyGlyph="↳" to={ROUTES.EDITOR_NEW}>
+                  Begin a specification
+                </CommandKey>
+                <CommandKey keyGlyph="∅" to={ROUTES.EXAMPLES}>
+                  Browse examples
+                </CommandKey>
+              </CommandKeyRow>
+            </div>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-            {APP_NAME}
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">{APP_DESCRIPTION}</p>
-          <span className="inline-block text-sm text-gray-400 dark:text-gray-500">v{APP_VERSION}</span>
-        </div>
 
-        {/* Tabs */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg dark:shadow-gray-900/50 overflow-hidden">
-          <Tabs
-            tabs={[
-              { value: 'about', label: 'About' },
-              { value: 'tech', label: 'Tech Stack' },
-              { value: 'how', label: 'How It Works' },
-              { value: 'api', label: 'API' },
-            ]}
-            value={activeTab}
-            onChange={setActiveTab}
-            className="p-6"
-            variant="underline"
-          >
-            {/* TAB 1: About */}
-            <TabPanel value="about" activeValue={activeTab}>
-              <div className="space-y-10">
-                {/* Project Description */}
-                <section>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What is GrayFSM?</h2>
-                  <div className="space-y-3 text-gray-600 dark:text-gray-400">
-                    <p>
-                      GrayFSM is a full-stack web application for optimizing Finite State Machines
-                      using Gray code encoding. It minimizes glitches and race conditions in hardware
-                      FSM implementations by ensuring adjacent state transitions differ by only one
-                      bit.
-                    </p>
-                    <p>
-                      When state transitions require multi-bit changes, GrayFSM automatically inserts
-                      dummy states along hypercube shortest paths to guarantee single-bit transitions,
-                      making your digital circuits more robust and reliable.
-                    </p>
-                  </div>
-                </section>
+          {/* ───── MARGINAL SIDENOTES ───── */}
+          <MarginalNote heading="In the margin">
+            <ol className="list-none m-0 p-0 space-y-4 [counter-reset:fn]">
+              <li className="pl-7 relative [counter-increment:fn] before:content-[counter(fn)] before:absolute before:left-0 before:top-0 before:font-mono before:text-accent before:font-semibold before:text-[0.85rem] before:font-tabular">
+                <span className="font-serif italic">
+                  A Hamming distance of one between adjacent states is the
+                  textbook definition of a Gray code; the term is owed to
+                  Frank Gray&rsquo;s 1953 patent on pulse-code modulation.
+                </span>
+              </li>
+              <li className="pl-7 relative [counter-increment:fn] before:content-[counter(fn)] before:absolute before:left-0 before:top-0 before:font-mono before:text-accent before:font-semibold before:text-[0.85rem] before:font-tabular">
+                <span className="font-serif italic">
+                  The hypercube of dimension <em>n</em> has{' '}
+                  <span className="font-mono not-italic">2ⁿ</span> vertices and{' '}
+                  <span className="font-mono not-italic">n · 2ⁿ⁻¹</span> edges.
+                  A traversal that visits every vertex exactly once is a
+                  Hamiltonian path; the construction is what makes Gray
+                  codes work.
+                </span>
+              </li>
+              <li className="pl-7 relative [counter-increment:fn] before:content-[counter(fn)] before:absolute before:left-0 before:top-0 before:font-mono before:text-accent before:font-semibold before:text-[0.85rem] before:font-tabular">
+                <span className="font-serif italic">
+                  The simulated-annealing optimiser ships with a fixed
+                  cooling schedule. Custom schedules are accepted via the
+                  <span className="font-mono not-italic"> /optimize </span>
+                  endpoint.
+                </span>
+              </li>
+              <li className="pl-7 relative [counter-increment:fn] before:content-[counter(fn)] before:absolute before:left-0 before:top-0 before:font-mono before:text-accent before:font-semibold before:text-[0.85rem] before:font-tabular">
+                <span className="font-serif italic">
+                  HDL is emitted with synthesis pragmas opt-in. The default is
+                  unannotated; Vivado, Quartus, and Yosys read all three
+                  styles without complaint.
+                </span>
+              </li>
+            </ol>
 
-                {/* Features Grid */}
-                <section>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Core Features</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {features.map((feature) => (
-                      <Card
-                        key={feature.title}
-                        variant="bordered"
-                        className="hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">{feature.icon}</div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                              {feature.title}
-                            </h4>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                              {feature.description}
-                            </p>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
+            <div className="mt-8 pt-4 border-t border-rule">
+              <h4 className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-ink pb-1.5 border-b border-ink mb-3">
+                Reading further
+              </h4>
+              <ul className="space-y-2 not-italic">
+                <li>
+                  <a
+                    href="https://en.wikipedia.org/wiki/Gray_code"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[0.75rem] text-ink-soft hover:text-accent transition-colors"
+                  >
+                    <span className="text-ink-faint mr-2 inline-block w-4">
+                      ↗
+                    </span>
+                    Gray code (Wikipedia)
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://en.wikipedia.org/wiki/Hypercube_graph"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[0.75rem] text-ink-soft hover:text-accent transition-colors"
+                  >
+                    <span className="text-ink-faint mr-2 inline-block w-4">
+                      ↗
+                    </span>
+                    Hypercube graph
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://en.wikipedia.org/wiki/Simulated_annealing"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-[0.75rem] text-ink-soft hover:text-accent transition-colors"
+                  >
+                    <span className="text-ink-faint mr-2 inline-block w-4">
+                      ↗
+                    </span>
+                    Simulated annealing
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    to="/api/v1/openapi.json"
+                    className="font-mono text-[0.75rem] text-ink-soft hover:text-accent transition-colors"
+                  >
+                    <span className="text-ink-faint mr-2 inline-block w-4">
+                      ‡
+                    </span>
+                    REST API · openapi.json
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </MarginalNote>
+        </article>
 
-                {/* CTA Section */}
-                <section className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 rounded-lg p-8 border border-blue-200 dark:border-blue-800">
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      Ready to optimize your FSMs?
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Start by creating a new FSM or explore the gallery for inspiration.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                      <Link to={ROUTES.EDITOR_NEW} data-testid="about-create-fsm">
-                        <Button variant="primary" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                          Create FSM
-                        </Button>
-                      </Link>
-                      <Link to={ROUTES.GALLERY} data-testid="about-browse-gallery">
-                        <Button variant="outline" size="lg">
-                          Browse Gallery
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </TabPanel>
-
-            {/* TAB 2: Tech Stack */}
-            <TabPanel value="tech" activeValue={activeTab}>
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Technology Stack</h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8">
-                    GrayFSM is built with modern, production-grade technologies across the full stack.
-                  </p>
-                </div>
-
-                {techStack.map((category) => (
-                  <section key={category.category}>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      {category.category}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {category.items.map((tech) => (
-                        <Badge key={tech} variant="info" size="md">
-                          {tech}
-                        </Badge>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-
-                <Card variant="bordered" className="bg-gray-50 dark:bg-gray-800">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white">Want to learn more?</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Check out the full documentation and architecture guide.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </TabPanel>
-
-            {/* TAB 3: How It Works */}
-            <TabPanel value="how" activeValue={activeTab}>
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Workflow Overview</h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    GrayFSM simplifies FSM optimization into four intuitive steps.
-                  </p>
-                </div>
-
-                {/* Steps */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {steps.map((step) => (
-                    <Card key={step.number} variant="bordered">
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0">
-                          <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold">
-                            {step.number}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                            {step.title}
-                          </h4>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
-                            {step.description}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Gray Code Explanation */}
-                <Card variant="bordered" className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-600" />
-                    Understanding Gray Code Optimization
-                  </h3>
-                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                    <p>
-                      Gray code is a binary numeral system where two successive values differ in only
-                      one bit. In FSM design, this property is crucial because:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>Prevents race conditions from simultaneous bit changes</li>
-                      <li>Minimizes glitches and metastable state occurrences</li>
-                      <li>Improves circuit reliability and timing margins</li>
-                      <li>Reduces unnecessary dummy state insertions</li>
-                    </ul>
-                  </div>
-                </Card>
-              </div>
-            </TabPanel>
-
-            {/* TAB 4: API */}
-            <TabPanel value="api" activeValue={activeTab}>
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">REST API</h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    GrayFSM provides a comprehensive REST API for programmatic access to all features.
-                  </p>
-                </div>
-
-                {/* API Info Card */}
-                <Card variant="bordered" className="bg-gray-50 dark:bg-gray-800">
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>Base URL:</strong>{' '}
-                      <code className="bg-white dark:bg-gray-700 dark:text-gray-200 px-2 py-1 rounded text-xs">
-                        /api/v1
-                      </code>
-                    </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>Interactive Docs:</strong>{' '}
-                      <a href="/docs" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline">
-                        Swagger UI
-                      </a>
-                    </p>
-                  </div>
-                </Card>
-
-                {/* Endpoints Table */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Key Endpoints</h3>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                            Method
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                            Path
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                            Description
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                        {apiEndpoints.map((endpoint, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <td className="px-4 py-3 text-sm">
-                              <Badge
-                                variant={
-                                  endpoint.method === 'GET'
-                                    ? 'info'
-                                    : endpoint.method === 'POST'
-                                      ? 'success'
-                                      : endpoint.method === 'PUT'
-                                        ? 'warning'
-                                        : 'danger'
-                                }
-                                size="sm"
-                              >
-                                {endpoint.method}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-sm font-mono text-gray-700 dark:text-gray-300">
-                              {endpoint.path}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                              {endpoint.description}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Documentation Card */}
-                <Card variant="bordered" className="bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Full API Documentation</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Visit{' '}
-                        <a href="/docs" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium">
-                          /docs
-                        </a>
-                        {' '}for interactive Swagger UI with request/response examples and schema definitions.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </TabPanel>
-          </Tabs>
-        </div>
-      </div>
+        {/* colophon */}
+        <TypedSection number="5.5" title="Colophon">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-serif text-[0.95rem] leading-relaxed text-ink-soft">
+            <p>
+              Set in <em>IBM Plex Mono</em>, <em>Sans</em>, and{' '}
+              <em>Serif</em> — open-source typefaces commissioned by IBM and
+              designed by Mike Abbink with the Bold Monday foundry. The mono
+              variant carries data and numerals; the sans, headings; the
+              serif, prose.
+            </p>
+            <p>
+              The aesthetic is{' '}
+              <em>datasheet brutalism</em>. Hairline rules, no rounded corners,
+              one accent colour, asymmetric grids. References include the
+              technical reference manuals of Texas Instruments and Hewlett-
+              Packard from the late 1970s, and contemporary editorial
+              typography that takes the same documents seriously.
+            </p>
+          </div>
+        </TypedSection>
+      </main>
     </div>
   );
 }

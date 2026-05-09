@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Zap, ChevronRight, Layers, ArrowRight } from 'lucide-react';
+import { Zap, ChevronRight, Layers, ArrowRight } from 'lucide-react';
 import { examplesAPI } from '../api/endpoints/examples';
 import { ROUTES, generateRoute } from '../config/routes';
 import {
@@ -14,6 +14,7 @@ import {
   Spinner,
   Tabs,
   TabPanel,
+  Kicktitle,
 } from '../components/ui';
 import type { Example } from '../types/api';
 
@@ -293,23 +294,32 @@ export default function ExamplesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="examples-page">
+    <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-paper text-ink min-h-screen" data-testid="examples-page">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
-        <Link to={ROUTES.HOME} className="hover:text-gray-700 dark:hover:text-gray-300">Home</Link>
-        <span>/</span>
-        <span className="text-gray-900 dark:text-white font-medium">Examples</span>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint mb-3"
+      >
+        <Link to={ROUTES.HOME} className="hover:text-accent transition-colors">
+          Catalog
+        </Link>
+        <span>›</span>
+        <span className="text-ink">Examples</span>
       </nav>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            <h1 className="text-2xl font-bold text-gray-900">Example FSMs</h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            Learn from built-in examples. Open any in the editor and explore how it works.
+          <Kicktitle number="4" className="mb-2">
+            Examples
+          </Kicktitle>
+          <h1 className="font-sans text-3xl sm:text-4xl font-semibold tracking-tight text-ink mb-2 pb-3 border-b-[2px] border-ink">
+            Reference specifications.
+          </h1>
+          <p className="font-serif italic text-ink-soft text-base leading-relaxed mt-3 max-w-[44rem]">
+            Built-in finite-state machines, annotated for study. Open any in
+            the editor &mdash; transitions, encodings, and outputs are all
+            inspectable, and any can be forked into your own catalog.
           </p>
         </div>
         <Button

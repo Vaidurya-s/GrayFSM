@@ -1,109 +1,141 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
-import { APP_NAME } from '../../config/constants';
 import { useUIStore } from '../../store/uiStore';
 import { useTheme, type Theme } from '../providers/theme-context';
 import { cn } from '../../utils/cn';
 
-const navLinks = [
-  { to: ROUTES.HOME, label: 'Home' },
+/* -------------------------------------------------------------------------- *
+ * Navbar — datasheet-aesthetic top chrome.                                   *
+ * -------------------------------------------------------------------------- *
+ * Brand mark in mono uppercase tracking, current-page indicated by an        *
+ * accent bottom rule, theme toggle as a single icon-only square. No          *
+ * rounded corners. No shadows. Hairline rule under the bar.                  *
+ * -------------------------------------------------------------------------- */
+
+const NAV_LINKS: { to: string; label: string }[] = [
+  { to: ROUTES.HOME, label: 'Catalog' },
   { to: ROUTES.EDITOR, label: 'Editor' },
   { to: ROUTES.GALLERY, label: 'Gallery' },
   { to: ROUTES.EXAMPLES, label: 'Examples' },
   { to: ROUTES.ABOUT, label: 'About' },
 ];
 
-const themeOrder: Theme[] = ['light', 'dark', 'system'];
+const THEME_ORDER: Theme[] = ['light', 'dark', 'system'];
 
-const themeIcons: Record<Theme, React.ReactNode> = {
-  light: <Sun className="h-4 w-4" />,
-  dark: <Moon className="h-4 w-4" />,
-  system: <Monitor className="h-4 w-4" />,
+const THEME_ICON: Record<Theme, React.ReactNode> = {
+  light: <Sun className="h-3.5 w-3.5" strokeWidth={1.5} />,
+  dark: <Moon className="h-3.5 w-3.5" strokeWidth={1.5} />,
+  system: <Monitor className="h-3.5 w-3.5" strokeWidth={1.5} />,
 };
 
-const themeLabels: Record<Theme, string> = {
+const THEME_LABEL: Record<Theme, string> = {
   light: 'Light',
   dark: 'Dark',
   system: 'System',
 };
+
+const buildHash: string =
+  typeof import.meta.env.VITE_BUILD_HASH === 'string'
+    ? import.meta.env.VITE_BUILD_HASH
+    : 'dev';
 
 export default function Navbar() {
   const location = useLocation();
   const { mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { theme, setTheme } = useTheme();
 
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
+  const isActive = (path: string): boolean => {
+    if (path === ROUTES.HOME) return location.pathname === ROUTES.HOME;
     return location.pathname.startsWith(path);
   };
 
   const cycleTheme = () => {
-    const idx = themeOrder.indexOf(theme);
-    const next = themeOrder[(idx + 1) % themeOrder.length];
+    const idx = THEME_ORDER.indexOf(theme);
+    const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
     setTheme(next);
   };
 
   return (
     <nav
-      className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200"
+      className="bg-paper border-b border-ink sticky top-0 z-30"
       data-testid="navbar"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to={ROUTES.HOME} className="flex items-center gap-2" data-testid="navbar-logo">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">{APP_NAME}</span>
+      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center h-12 gap-4">
+          {/* Brand */}
+          <Link
+            to={ROUTES.HOME}
+            className="font-mono font-bold uppercase tracking-[0.18em] text-ink hover:text-accent transition-colors"
+            data-testid="navbar-logo"
+            aria-label="GrayFSM home"
+          >
+            GrayFSM
+            <span className="text-accent mx-1.5" aria-hidden>·</span>
+            <span className="font-medium text-ink-faint tracking-[0.12em] text-[0.72rem]">
+              v1.0
+            </span>
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                data-testid={`nav-link-${link.label.toLowerCase()}`}
-                className={cn(
-                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  isActive(link.to)
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Center nav (desktop) */}
+          <div className="hidden md:flex items-center justify-center gap-7 self-stretch">
+            {NAV_LINKS.map((link) => {
+              const active = isActive(link.to);
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  data-testid={`nav-link-${link.label.toLowerCase()}`}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'inline-flex items-center self-stretch px-1',
+                    'font-mono text-[0.78rem] uppercase tracking-[0.12em]',
+                    'border-b-2 -mb-[1px] transition-colors',
+                    active
+                      ? 'text-ink border-accent'
+                      : 'text-ink-soft border-transparent hover:text-ink hover:border-rule-strong',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right side: theme toggle + New FSM button (desktop) */}
-          <div className="hidden md:flex items-center gap-2">
-            {/* Theme toggle */}
+          {/* Right meta + actions (desktop) */}
+          <div className="hidden md:flex items-center gap-4">
+            <span className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint">
+              build <span className="text-accent">{buildHash}</span>
+            </span>
+
             <button
               type="button"
               onClick={cycleTheme}
-              title={`Current: ${themeLabels[theme]} — click to cycle`}
-              aria-label={`Switch theme (current: ${themeLabels[theme]})`}
+              title={`Theme: ${THEME_LABEL[theme]} — click to cycle`}
+              aria-label={`Switch theme (current: ${THEME_LABEL[theme]})`}
               className={cn(
-                'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium',
-                'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
-                'dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700',
-                'transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'
+                'inline-flex items-center justify-center h-7 w-7',
+                'border border-rule-strong text-ink-soft',
+                'hover:border-ink hover:text-ink',
+                'focus-ring transition-colors',
               )}
               data-testid="theme-toggle"
             >
-              {themeIcons[theme]}
-              <span>{themeLabels[theme]}</span>
+              {THEME_ICON[theme]}
             </button>
 
             <Link
               to={ROUTES.EDITOR_NEW}
               data-testid="nav-new-fsm"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+              className={cn(
+                'inline-flex items-center font-mono font-medium uppercase',
+                'text-[0.72rem] tracking-[0.1em] no-underline',
+                'border border-ink bg-accent text-paper',
+                'px-3 py-1.5 transition-colors',
+                'hover:bg-ink hover:text-paper focus-ring',
+              )}
             >
-              + New FSM
+              <span className="mr-1.5">↳</span>New
             </Link>
           </div>
 
@@ -112,29 +144,51 @@ export default function Navbar() {
             <button
               type="button"
               onClick={cycleTheme}
-              title={`Current: ${themeLabels[theme]} — click to cycle`}
-              aria-label={`Switch theme (current: ${themeLabels[theme]})`}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              title={`Theme: ${THEME_LABEL[theme]}`}
+              aria-label={`Switch theme (current: ${THEME_LABEL[theme]})`}
+              className="inline-flex items-center justify-center h-8 w-8 text-ink-soft hover:text-ink hover:bg-paper-shade focus-ring transition-colors"
               data-testid="theme-toggle-mobile"
             >
-              {themeIcons[theme]}
+              {THEME_ICON[theme]}
             </button>
 
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
-              data-testid="mobile-menu-button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
+              className="inline-flex items-center justify-center h-8 w-8 text-ink-soft hover:text-ink hover:bg-paper-shade focus-ring transition-colors"
+              data-testid="mobile-menu-button"
             >
               <span className="sr-only">Open main menu</span>
               {mobileMenuOpen ? (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
@@ -142,34 +196,38 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu drawer */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+          className="md:hidden border-t border-rule bg-paper"
           data-testid="mobile-menu"
         >
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  'block px-3 py-2 rounded-md text-base font-medium',
-                  isActive(link.to)
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="px-2 py-2 space-y-0">
+            {NAV_LINKS.map((link) => {
+              const active = isActive(link.to);
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'block px-3 py-2.5 font-mono text-[0.82rem] uppercase tracking-[0.12em]',
+                    'border-b border-rule transition-colors',
+                    active
+                      ? 'text-ink bg-accent-tint'
+                      : 'text-ink-soft hover:text-ink hover:bg-paper-shade',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             <Link
               to={ROUTES.EDITOR_NEW}
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600 text-center"
+              className="block mt-2 px-3 py-2.5 text-center font-mono text-[0.82rem] uppercase tracking-[0.1em] bg-accent text-paper border border-ink"
             >
-              + New FSM
+              ↳ New FSM
             </Link>
           </div>
         </div>
