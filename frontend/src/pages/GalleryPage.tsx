@@ -5,10 +5,6 @@ import { useFSMs } from '../hooks/useFSM';
 import { ROUTES, generateRoute } from '../config/routes';
 import {
   Button,
-  Badge,
-  Card,
-  CardBody,
-  CardFooter,
   Input,
   Alert,
   Kicktitle,
@@ -46,10 +42,6 @@ const SORT_OPTIONS = [
   { value: 'view_count-desc', label: 'Most Viewed' },
 ] as const;
 
-function FSMTypeVariant(fsmType: string): 'default' | 'info' {
-  return fsmType === 'moore' ? 'default' : 'info';
-}
-
 function formatDate(iso?: string) {
   if (!iso) return null;
   return new Date(iso).toLocaleDateString(undefined, {
@@ -61,16 +53,17 @@ function formatDate(iso?: string) {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse bg-paper rounded-lg border border-rule shadow-sm p-6">
+    <div className="bg-paper border border-rule p-5 min-h-[12rem]">
       <div className="flex items-center justify-between mb-3">
-        <div className="h-4 bg-rule rounded w-3/5" />
-        <div className="h-5 bg-rule rounded-full w-14" />
+        <div className="skeleton h-3 w-16" />
+        <div className="skeleton h-3 w-12" />
       </div>
-      <div className="h-3 bg-rule rounded w-full mb-2" />
-      <div className="h-3 bg-rule rounded w-4/5 mb-4" />
-      <div className="flex gap-3">
-        <div className="h-3 bg-rule rounded w-16" />
-        <div className="h-3 bg-rule rounded w-20" />
+      <div className="skeleton h-5 w-3/5 mb-3" />
+      <div className="skeleton h-3 w-full mb-1" />
+      <div className="skeleton h-3 w-4/5 mb-6" />
+      <div className="flex gap-3 pt-3 border-t border-rule">
+        <div className="skeleton h-3 w-16" />
+        <div className="skeleton h-3 w-20" />
       </div>
     </div>
   );
@@ -275,96 +268,99 @@ export default function GalleryPage() {
             {hasFilters ? ' matching your filters' : ''}
             {totalItems > PAGE_SIZE && ` (${totalItems} total)`}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {fsms.map((fsm) => (
+          {/* Datasheet entry grid — each card is a numbered specification
+           *  entry. No rounded corners, no shadows, hairline rules; the
+           *  entire card is a single anchor with focus-ring on the row. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-rule border border-ink">
+            {fsms.map((fsm, idx) => (
               <Link
                 key={fsm.id}
                 to={generateRoute(ROUTES.EDITOR_EDIT, { id: fsm.id })}
                 data-testid={`gallery-card-${fsm.id}`}
-                className="group block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl"
+                className="group flex flex-col bg-paper hover:bg-accent-tint focus:outline-none focus:bg-accent-tint focus-ring transition-colors p-5 min-h-[12rem]"
               >
-                <Card className="h-full rounded-xl transition-all group-hover:border-blue-200">
-                  <CardBody className="pt-5">
-                    {/* Title row */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-sm font-semibold text-ink leading-tight line-clamp-2 group-hover:text-blue-700 transition-colors">
-                        {fsm.name}
-                      </h3>
-                      <Badge variant={FSMTypeVariant(fsm.fsm_type as string)} className="flex-shrink-0 capitalize">
-                        {fsm.fsm_type}
-                      </Badge>
-                    </div>
+                {/* Index + type kicker */}
+                <div className="flex items-baseline justify-between mb-2 font-mono text-[0.65rem] uppercase tracking-[0.18em]">
+                  <span className="text-ink-faint font-tabular">
+                    No. {String(idx + 1).padStart(3, '0')}
+                  </span>
+                  <span className="text-accent">{fsm.fsm_type}</span>
+                </div>
 
-                    {/* Description */}
-                    {fsm.description && (
-                      <p className="text-xs text-ink-soft line-clamp-2 mb-3">
-                        {fsm.description}
-                      </p>
-                    )}
+                {/* Title */}
+                <h3 className="font-sans text-lg font-semibold text-ink leading-tight line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
+                  {fsm.name}
+                </h3>
 
-                    {/* Stats row */}
-                    <div className="flex items-center gap-3 text-xs text-ink-faint mb-3">
+                {/* Description */}
+                {fsm.description && (
+                  <p className="font-serif italic text-[0.88rem] leading-snug text-ink-soft line-clamp-2 mb-3">
+                    {fsm.description}
+                  </p>
+                )}
+
+                {/* Spacer pushes meta to bottom of card */}
+                <div className="flex-1" />
+
+                {/* Stats row — mono, tabular, hairline-divided */}
+                <div className="flex items-center gap-2 text-[0.7rem] font-mono uppercase tracking-[0.08em] text-ink-faint mt-3 pt-3 border-t border-rule">
+                  <span>
+                    <span className="font-tabular text-ink">{fsm.state_count}</span>
+                    {' '}st
+                  </span>
+                  <span className="text-rule">·</span>
+                  <span>
+                    <span className="font-tabular text-ink">{fsm.transition_count}</span>
+                    {' '}tr
+                  </span>
+                  {typeof fsm.view_count === 'number' && (
+                    <>
+                      <span className="text-rule">·</span>
                       <span className="flex items-center gap-1">
-                        <span className="font-medium font-tabular text-ink-soft">{fsm.state_count}</span>
-                        {' '}states
+                        <Eye className="h-3 w-3" aria-hidden />
+                        <span className="font-tabular text-ink">{fsm.view_count}</span>
                       </span>
-                      <span className="text-gray-200">|</span>
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium font-tabular text-ink-soft">{fsm.transition_count}</span>
-                        {' '}transitions
+                    </>
+                  )}
+                  {typeof fsm.fork_count === 'number' && fsm.fork_count > 0 && (
+                    <span className="flex items-center gap-1">
+                      <GitFork className="h-3 w-3" aria-hidden />
+                      <span className="font-tabular text-ink">{fsm.fork_count}</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Tags + status footer */}
+                <div className="flex items-center justify-between gap-2 mt-2">
+                  <div className="flex flex-wrap gap-1 min-w-0">
+                    {fsm.tags?.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-mono text-[0.62rem] uppercase tracking-[0.08em] border border-rule-strong text-ink-soft px-1.5 py-[0.05rem]"
+                      >
+                        {tag}
                       </span>
-                      {typeof fsm.view_count === 'number' && (
-                        <>
-                          <span className="text-gray-200">|</span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            {fsm.view_count}
-                          </span>
-                        </>
-                      )}
-                      {typeof fsm.fork_count === 'number' && fsm.fork_count > 0 && (
-                        <span className="flex items-center gap-1">
-                          <GitFork className="h-3 w-3" />
-                          {fsm.fork_count}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Tags */}
-                    {fsm.tags && fsm.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {fsm.tags.slice(0, 3).map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center rounded px-1.5 py-0.5 text-xs bg-paper-shade text-ink-soft"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {fsm.tags.length > 3 && (
-                          <span className="text-xs text-ink-faint">+{fsm.tags.length - 3}</span>
-                        )}
-                      </div>
+                    ))}
+                    {fsm.tags && fsm.tags.length > 3 && (
+                      <span className="font-mono text-[0.62rem] text-ink-faint">
+                        +{fsm.tags.length - 3}
+                      </span>
                     )}
-                  </CardBody>
+                  </div>
+                  {fsm.is_optimized && (
+                    <span className="flex items-center gap-1 font-mono text-[0.62rem] uppercase tracking-[0.08em] border border-ok text-ok px-1.5 py-[0.05rem] flex-shrink-0">
+                      <CheckCircle2 className="h-2.5 w-2.5" aria-hidden />
+                      Optimised
+                    </span>
+                  )}
+                </div>
 
-                  <CardFooter className="pt-0 pb-4 justify-between">
-                    {/* Optimized badge */}
-                    {fsm.is_optimized ? (
-                      <Badge variant="success" className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Optimized
-                      </Badge>
-                    ) : (
-                      <span />
-                    )}
-
-                    {/* Date */}
-                    {fsm.created_at && (
-                      <span className="text-xs text-ink-faint">{formatDate(fsm.created_at)}</span>
-                    )}
-                  </CardFooter>
-                </Card>
+                {/* Date */}
+                {fsm.created_at && (
+                  <div className="mt-2 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-ink-faint font-tabular">
+                    {formatDate(fsm.created_at)}
+                  </div>
+                )}
               </Link>
             ))}
           </div>
