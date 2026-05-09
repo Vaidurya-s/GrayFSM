@@ -20,6 +20,11 @@ interface FSMStore {
   draftDescription: string;
   draftFsmType: 'moore' | 'mealy';
   draftInitialState: string;
+  /** Map from state name → encoding string (e.g. "S0" → "011"). Populated
+   *  from `fsm.encoding` on load; consumed by FSMCanvas to render the
+   *  encoding subtitle on each StateNode. Empty when no encoding is
+   *  attached to the FSM. */
+  draftEncoding: Record<string, string>;
 
   // Undo/redo cursor mirror — kept in store state because React components
   // subscribe to canUndo/canRedo to disable buttons. The actual stack lives
@@ -68,6 +73,7 @@ const initialDraftState = {
   draftDescription: '',
   draftFsmType: 'moore' as const,
   draftInitialState: '',
+  draftEncoding: {} as Record<string, string>,
 };
 
 function makeSnapshot(s: {
@@ -220,6 +226,9 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
           position: { x: 150 + (i % 4) * 200, y: 100 + Math.floor(i / 4) * 150 },
         })),
       draftTransitions: fsm.transitions || [],
+      // Encoding map is optional on the FSM payload — fall back to {} so
+      // the StateNode renders without an encoding subtitle when missing.
+      draftEncoding: fsm.encoding ?? {},
       isEditing: true,
       canUndo: false,
       canRedo: false,
