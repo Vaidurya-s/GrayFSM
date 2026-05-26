@@ -1,6 +1,5 @@
 from logging.config import fileConfig
 import asyncio
-import os
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -15,10 +14,12 @@ from app.models import user  # User model for auth
 # this is the Alembic Config object
 config = context.config
 
-# Override sqlalchemy.url from DATABASE_URL env var if available
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    config.set_main_option("sqlalchemy.url", database_url)
+# Use the app's settings for the DB URL. settings normalizes the scheme to
+# the asyncpg driver (hosts inject postgres://, postgresql://, or +psycopg2
+# forms, but the async engine below requires postgresql+asyncpg://).
+from app.config import settings
+
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
