@@ -368,6 +368,130 @@ def _too_many(rule: RateLimitRule, info: dict) -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# Rate-limit rule abstraction
+# ---------------------------------------------------------------------------
+#
+# The middleware previously had two near-identical 50-line blocks: one
+# for auth-path-specific limits, one for the global per-IP limit. Each
+# ran its own Redis-or-memory fallback and built its own 429 response.
+# Adding a new tier (e.g. per-user premium) meant a third copy.
+#
+# The strategy below collapses those into a single dispatch loop. A
+# `RateLimitRule` describes "for requests matching this predicate,
+# enforce N hits per W seconds, keyed by F(request)". The middleware
+# evaluates rules in order; first match wins.
+
+@dataclass(frozen=True)
+class RateLimitRule:
+    """One rate-limit policy.
+
+    matches:    predicate against the Request — first match wins
+    key_for:    derives the bucket key (per-IP, per-user, etc.)
+    limit/window: late-bound via factories so settings reloads are picked up
+    name:       short label for logs / X-RateLimit-* response headers
+    """
+    name: str
+    matches: Callable[[Request], bool]
+    key_for: Callable[[Request], str]
+    limit_factory: Callable[[], int]
+    window_factory: Callable[[], int]
+
+    @property
+    def limit(self) -> int:
+        return self.limit_factory()
+
+    @property
+    def window(self) -> int:
+        return self.window_factory()
+
+
+def _path_matches(*paths: str) -> Callable[[Request], bool]:
+    target = frozenset(paths)
+    return lambda req: req.url.path in target
+
+
+def _bucket(prefix: str) -> Callable[[Request], str]:
+    return lambda req: f"{prefix}:{_get_client_ip(req)}:{req.url.path}"
+
+
+def _build_rules() -> list[RateLimitRule]:
+    """Construct the active rule list. Order matters — auth-specific rules
+    must come BEFORE the catch-all so the stricter limits take precedence."""
+    return [
+        RateLimitRule(
+            name="auth_login",
+            matches=_path_matches("/api/v1/auth/login"),
+            key_for=_bucket("rl:auth"),
+            limit_factory=lambda: settings.rate_limit_login,
+            window_factory=lambda: settings.rate_limit_login_window,
+        ),
+        RateLimitRule(
+            name="auth_register",
+            matches=_path_matches("/api/v1/auth/register"),
+            key_for=_bucket("rl:auth"),
+            limit_factory=lambda: settings.rate_limit_register,
+            window_factory=lambda: settings.rate_limit_register_window,
+        ),
+        RateLimitRule(
+            name="anonymous_global",
+            matches=lambda req: True,  # catch-all
+            key_for=lambda req: f"rl:ip:{_get_client_ip(req)}",
+            limit_factory=lambda: settings.rate_limit_anonymous,
+            window_factory=lambda: settings.rate_limit_window,
+        ),
+    ]
+
+
+async def _check(rule: RateLimitRule, request: Request) -> Tuple[bool, Dict]:
+    """Apply a single rule. Returns (allowed, info-dict).
+
+    Centralises the Redis-then-memory fallback that was duplicated
+    across the two original blocks. Always returns (True, {}) on
+    internal error so a misconfigured rate limiter never blocks
+    legitimate traffic — fail-open is the deliberate policy.
+    """
+    try:
+        redis = await _get_redis_store()
+        if redis and redis.available:
+            return await redis.is_allowed(rule.key_for(request), rule.limit, rule.window)
+        return _memory_store.is_allowed(rule.key_for(request), rule.limit, rule.window)
+    except Exception as exc:
+        logger.error(
+            "Rate limiter error, allowing request through",
+            extra={
+                "error": str(exc),
+                "rule": rule.name,
+                "client_ip": _get_client_ip(request),
+            },
+        )
+        return True, {}
+
+
+def _too_many(rule: RateLimitRule, info: Dict) -> JSONResponse:
+    """Build the 429 response. Single source of truth for the envelope."""
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "success": False,
+            "error": {
+                "code": "RATE_LIMIT_EXCEEDED",
+                "message": "Too many requests. Please try again later.",
+                "details": {
+                    "limit": info.get("limit"),
+                    "reset": info.get("reset"),
+                },
+            },
+        },
+        headers={
+            "Retry-After": str(rule.window),
+            "X-RateLimit-Limit": str(info.get("limit", rule.limit)),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": str(info.get("reset", "")),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Middleware function
 # ---------------------------------------------------------------------------
 
