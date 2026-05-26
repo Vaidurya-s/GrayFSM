@@ -41,6 +41,11 @@ ENV PATH=/home/appuser/.local/bin:$PATH \
 COPY backend/app ./app
 COPY backend/.env.example ./.env.example
 
+# Copy Alembic config + migration scripts so `alembic upgrade head` can run
+# at deploy time (script_location in alembic.ini is relative to /app).
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/alembic ./alembic
+
 # Create logs directory (referenced by LOGGING_CONFIG)
 RUN mkdir -p /app/logs
 
