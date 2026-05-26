@@ -177,7 +177,7 @@ docker run -d --name grayfsm-redis -p 6379:6379 redis:7-alpine
 # the first SQL query)
 cp .env.example .env
 
-# Apply migrations (required on first clone)
+# Apply database migrations (required on first clone)
 alembic upgrade head
 
 # Run server
