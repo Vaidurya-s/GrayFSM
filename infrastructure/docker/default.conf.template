@@ -20,13 +20,20 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    # API proxy configuration
+    # API proxy configuration. The upstream is env-driven so the same image
+    # works behind docker-compose (default http://backend:8000) and on hosts
+    # where the backend is a separate service reached over its public HTTPS
+    # URL (set BACKEND_PROXY_PASS + BACKEND_HOST). Rendered at container start
+    # by the nginx image's envsubst step (NGINX_ENVSUBST_FILTER=BACKEND_).
     location /api {
-        proxy_pass http://backend:8000;
+        proxy_pass ${BACKEND_PROXY_PASS};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
+        # Send the upstream's own host so name-based routing + TLS SNI work
+        # when proxying to an external HTTPS backend.
+        proxy_set_header Host ${BACKEND_HOST};
+        proxy_ssl_server_name on;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;

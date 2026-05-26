@@ -32,9 +32,17 @@ FROM nginx:alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy nginx configuration
+# Copy nginx configuration. default.conf is rendered from a template at
+# container start: the nginx entrypoint runs envsubst on /etc/nginx/templates/*.
+# Only BACKEND_* vars are substituted (NGINX_ENVSUBST_FILTER) so nginx's own
+# $host/$uri/etc. are left intact. Defaults target docker-compose; override
+# BACKEND_PROXY_PASS + BACKEND_HOST when the backend is a separate service.
 COPY infrastructure/docker/nginx.conf /etc/nginx/nginx.conf
-COPY infrastructure/docker/default.conf /etc/nginx/conf.d/default.conf
+COPY infrastructure/docker/default.conf.template /etc/nginx/templates/default.conf.template
+
+ENV BACKEND_PROXY_PASS=http://backend:8000 \
+    BACKEND_HOST=backend \
+    NGINX_ENVSUBST_FILTER=BACKEND_
 
 # Copy built application from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
