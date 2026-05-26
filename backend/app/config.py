@@ -131,6 +131,22 @@ class Settings(BaseSettings):
             raise ValueError(f"Log level must be one of {allowed}")
         return v.upper()
 
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def force_async_pg_driver(cls, v: str) -> str:
+        """Normalize the DB URL to the asyncpg driver.
+
+        Managed hosts (Railway/Render/Heroku) inject ``postgres://`` or
+        ``postgresql://``, which SQLAlchemy maps to the sync psycopg2 driver.
+        Both the app engine and Alembic use the async engine, which requires
+        ``postgresql+asyncpg://``. Non-postgres URLs (e.g. sqlite in tests)
+        are left untouched.
+        """
+        for sync_prefix in ("postgresql+psycopg2://", "postgresql://", "postgres://"):
+            if v.startswith(sync_prefix):
+                return "postgresql+asyncpg://" + v[len(sync_prefix):]
+        return v
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
