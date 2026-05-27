@@ -1,6 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
+import { authAPI } from '../../api/endpoints/auth';
+import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { useTheme, type Theme } from '../providers/theme-context';
 import { cn } from '../../utils/cn';
@@ -44,6 +46,14 @@ export default function Navbar() {
   const location = useLocation();
   const { mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { theme, setTheme } = useTheme();
+  const token = useAuthStore((s) => s.token);
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleLogout = async () => {
+    await authAPI.logout();
+    logout();
+    setMobileMenuOpen(false);
+  };
 
   const isActive = (path: string): boolean => {
     if (path === ROUTES.HOME) return location.pathname === ROUTES.HOME;
@@ -123,6 +133,25 @@ export default function Navbar() {
             >
               {THEME_ICON[theme]}
             </button>
+
+            {token ? (
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink-soft hover:text-ink transition-colors"
+                data-testid="nav-logout"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to={ROUTES.LOGIN}
+                className="font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink-soft hover:text-accent transition-colors"
+                data-testid="nav-login"
+              >
+                Sign in
+              </Link>
+            )}
 
             <Link
               to={ROUTES.EDITOR_NEW}
@@ -222,6 +251,23 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            {token ? (
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="block w-full text-left px-3 py-2.5 font-mono text-[0.82rem] uppercase tracking-[0.12em] text-ink-soft hover:text-ink hover:bg-paper-shade border-b border-rule"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to={ROUTES.LOGIN}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2.5 font-mono text-[0.82rem] uppercase tracking-[0.12em] text-ink-soft hover:text-ink hover:bg-paper-shade border-b border-rule"
+              >
+                Sign in
+              </Link>
+            )}
             <Link
               to={ROUTES.EDITOR_NEW}
               onClick={() => setMobileMenuOpen(false)}

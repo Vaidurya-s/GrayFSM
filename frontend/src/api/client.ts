@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { API_BASE_URL } from '@/config/constants';
+import { AUTH_TOKEN_KEY } from '@/store/authStore';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,7 +15,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Add auth token if available
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,9 +30,12 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Handle errors globally
     if (error.response?.status === 401) {
-      // Clear auth and redirect to login
-      localStorage.removeItem('auth_token');
-      // Optionally redirect: window.location.href = '/login';
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      const path = window.location.pathname;
+      if (!path.startsWith('/login') && !path.startsWith('/register')) {
+        const redirect = encodeURIComponent(path + window.location.search);
+        window.location.assign(`/login?redirect=${redirect}`);
+      }
     }
 
     // Re-throw error for individual handlers
