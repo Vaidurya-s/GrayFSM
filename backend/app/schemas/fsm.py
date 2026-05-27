@@ -92,6 +92,12 @@ class FSMUpdate(BaseModel):
     description: str | None = None
     tags: list[str] | None = None
     visibility: str | None = Field(None, pattern="^(private|public|unlisted)$")
+    # Definition edits so the editor's Save persists the actual FSM, not just
+    # metadata. All optional — omitted fields are left untouched.
+    states: list[str] | None = Field(None, min_length=1)
+    initial_state: str | None = None
+    transitions: list[dict[str, Any]] | None = None
+    outputs: dict[str, str] | None = None
 
 
 class FSMFork(BaseModel):
