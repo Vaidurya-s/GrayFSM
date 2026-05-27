@@ -108,6 +108,9 @@ class ExampleService:
         )
 
         return {
+            # `id` mirrors the slug so the frontend (which keys/links on
+            # example.id) can fetch /examples/<id> and load it in the editor.
+            "id": slug,
             "slug": slug,
             "name": name,
             "description": description,
