@@ -46,17 +46,25 @@ class FSMService:
         Raises:
             FSMValidationException: If validation fails
         """
+        # Moore machines require an output per state. A freshly-created FSM
+        # often has none yet, so default missing outputs to "0" (a valid HDL
+        # value) instead of rejecting the create with a 422.
+        outputs = dict(fsm_data.outputs or {})
+        if FSMType(fsm_data.fsm_type) == FSMType.MOORE:
+            for state in fsm_data.states:
+                outputs.setdefault(state, "0")
+
         # Validate FSM structure
         FSMValidator.validate_fsm_structure(
             fsm_type=FSMType(fsm_data.fsm_type),
             states=fsm_data.states,
             initial_state=fsm_data.initial_state,
             transitions=fsm_data.transitions,
-            outputs=fsm_data.outputs,
+            outputs=outputs,
         )
 
         # Calculate bit width
-        bit_width = math.ceil(math.log2(len(fsm_data.states)))
+        bit_width = math.ceil(math.log2(max(len(fsm_data.states), 2)))
 
         # Create FSM instance
         fsm = FSM(
@@ -67,7 +75,7 @@ class FSMService:
                 "states": fsm_data.states,
                 "initial_state": fsm_data.initial_state,
                 "transitions": fsm_data.transitions,
-                "outputs": fsm_data.outputs or {},
+                "outputs": outputs,
             },
             state_count=len(fsm_data.states),
             transition_count=len(fsm_data.transitions),
