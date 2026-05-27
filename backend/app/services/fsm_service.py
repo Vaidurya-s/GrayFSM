@@ -207,6 +207,32 @@ class FSMService:
         if update_data.visibility is not None:
             fsm.visibility = update_data.visibility
 
+        # Persist definition edits (states/transitions/initial_state/outputs).
+        # Reassign a new dict so SQLAlchemy detects the JSON change.
+        if any(
+            v is not None
+            for v in (
+                update_data.states,
+                update_data.transitions,
+                update_data.initial_state,
+                update_data.outputs,
+            )
+        ):
+            definition = dict(fsm.definition) if fsm.definition else {}
+            if update_data.states is not None:
+                definition["states"] = update_data.states
+                fsm.state_count = len(update_data.states)
+                fsm.bit_width = math.ceil(math.log2(max(len(update_data.states), 2)))
+            if update_data.transitions is not None:
+                definition["transitions"] = update_data.transitions
+                fsm.transition_count = len(update_data.transitions)
+            if update_data.initial_state is not None:
+                definition["initial_state"] = update_data.initial_state
+                fsm.initial_state = update_data.initial_state
+            if update_data.outputs is not None:
+                definition["outputs"] = update_data.outputs
+            fsm.definition = definition
+
         await self.db.commit()
         await self.db.refresh(fsm)
         return fsm

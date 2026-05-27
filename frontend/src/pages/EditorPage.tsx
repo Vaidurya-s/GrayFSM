@@ -119,7 +119,26 @@ export default function EditorPage() {
   const handleSave = useCallback(async () => {
     if (id) {
       try {
-        await updateMutation.mutateAsync({ id, data: { name: draftName } });
+        const stateNames = draftStates.map((s) => s.name);
+        const states = stateNames.length > 0 ? stateNames : ['S0'];
+        const initial_state =
+          draftInitialState && states.includes(draftInitialState)
+            ? draftInitialState
+            : states[0];
+        await updateMutation.mutateAsync({
+          id,
+          data: {
+            name: draftName,
+            states,
+            initial_state,
+            transitions: draftTransitions.map((t) => ({
+              from_state: t.from_state,
+              to_state: t.to_state,
+              input: t.input,
+              output: t.output,
+            })),
+          },
+        });
         toastSuccess('FSM saved successfully');
       } catch {
         toastError('Failed to save FSM');
@@ -127,7 +146,17 @@ export default function EditorPage() {
       return;
     }
     modals.openCreate();
-  }, [id, updateMutation, draftName, toastSuccess, toastError, modals]);
+  }, [
+    id,
+    updateMutation,
+    draftName,
+    draftStates,
+    draftTransitions,
+    draftInitialState,
+    toastSuccess,
+    toastError,
+    modals,
+  ]);
 
   const handleCreateSuccess = useCallback(
     (fsmId: string) => {
