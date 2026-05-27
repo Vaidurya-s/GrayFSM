@@ -34,7 +34,7 @@ services:
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "--no-auth-warning", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,9 +80,11 @@ services:
     build:
       context: ../..
       dockerfile: infrastructure/docker/frontend.Dockerfile
+      args:
+        # Vite inlines VITE_* at build time, so the API base must be a build
+        # arg, not a runtime env. Default to the same-origin nginx proxy path.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
     container_name: grayfsm-frontend
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:
