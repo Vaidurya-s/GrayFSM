@@ -3,6 +3,7 @@ export { fsmAPI } from './endpoints/fsms';
 export { algorithmAPI } from './endpoints/algorithms';
 export { exportAPI } from './endpoints/export';
 export { examplesAPI } from './endpoints/examples';
+export { authAPI } from './endpoints/auth';
 
 export { apiClient } from './client';
 export { apiClient as api } from './client'; // Alias for convenience

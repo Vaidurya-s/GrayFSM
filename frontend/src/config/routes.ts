@@ -12,6 +12,8 @@ export const ROUTES = {
   LEARN_TUTORIAL: '/learn/:tutorialId',
   ABOUT: '/about',
   DOCS: '/docs',
+  LOGIN: '/login',
+  REGISTER: '/register',
   NOT_FOUND: '*',
 } as const;
 

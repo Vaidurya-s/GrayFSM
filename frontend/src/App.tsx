@@ -8,6 +8,8 @@ import ExportPage from './pages/ExportPage'
 import GalleryPage from './pages/GalleryPage'
 import ExamplesPage from './pages/ExamplesPage'
 import AboutPage from './pages/AboutPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { ToastProvider, Spinner } from './components/ui'
 import { ThemeProvider } from './components/providers/ThemeProvider'
@@ -139,6 +141,24 @@ function App() {
           element={
             <AppLayout>
               <AboutPage />
+            </AppLayout>
+          }
+        />
+
+        {/* Auth */}
+        <Route
+          path={ROUTES.LOGIN}
+          element={
+            <AppLayout>
+              <LoginPage />
+            </AppLayout>
+          }
+        />
+        <Route
+          path={ROUTES.REGISTER}
+          element={
+            <AppLayout>
+              <RegisterPage />
             </AppLayout>
           }
         />

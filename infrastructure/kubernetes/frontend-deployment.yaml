@@ -42,12 +42,8 @@ spec:
         - name: http
           containerPort: 80
           protocol: TCP
-        env:
-        - name: VITE_API_URL
-          valueFrom:
-            configMapKeyRef:
-              name: frontend-config
-              key: API_URL
+        # API URL is baked in at image build time (VITE_API_BASE_URL build-arg).
+        # frontend-config documents the intended value for CI/build pipelines.
         resources:
           requests:
             memory: "128Mi"
@@ -137,7 +133,8 @@ metadata:
   name: frontend-config
   namespace: grayfsm
 data:
-  API_URL: "http://grayfsm-backend:8000/api"
+  # Build images with: --build-arg VITE_API_BASE_URL=/api/v1
+  API_BASE_URL: "/api/v1"
 
 ---
 # PodDisruptionBudget

@@ -1,6 +1,13 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 export const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
 
+/** OpenAPI schema — proxied at /openapi.json when using same-origin /api/v1. */
+export const OPENAPI_URL =
+  import.meta.env.VITE_OPENAPI_URL ||
+  (API_BASE_URL.startsWith('http')
+    ? `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}/openapi.json`
+    : '/openapi.json');
+
 export const APP_NAME = 'GrayFSM';
 export const APP_VERSION = '1.0.0';
 export const APP_DESCRIPTION = 'Automated FSM Optimization with Gray Code Encoding';

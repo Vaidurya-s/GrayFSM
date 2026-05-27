@@ -145,8 +145,10 @@ specification and never mutates the original.
 
 ```bash
 cd infrastructure/docker
-docker compose up -d
+docker compose up -d --build
 ```
+
+Compose sets `DATABASE_URL`, `REDIS_URL`, and builds the frontend with `VITE_API_BASE_URL=/api/v1` so the SPA talks to the API through nginx on the same origin. Default DB/Redis password is **`changeme`** (override with `DB_PASSWORD` / `REDIS_PASSWORD` in a `.env` file next to `docker-compose.yml`).
 
 | Service | URL |
 |---|---|
@@ -155,6 +157,12 @@ docker compose up -d
 | API docs (Swagger) | http://localhost:8000/docs |
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3001 |
+
+**Dev override** (Vite HMR on port 5173):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
 
 ### Option 2 &mdash; Manual development setup
 
@@ -166,21 +174,20 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# PostgreSQL + Redis
+# PostgreSQL + Redis (password must match backend/.env)
 docker run -d --name grayfsm-pg \
   -e POSTGRES_USER=grayfsm -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=grayfsm -p 5432:5432 postgres:15-alpine
 docker run -d --name grayfsm-redis -p 6379:6379 redis:7-alpine
 
-# Configure environment (REQUIRED — config defaults are runtime-rejected
-# placeholders so a missing DATABASE_URL fails fast at startup, not at
-# the first SQL query)
+# Configure environment (REQUIRED — placeholder DATABASE_URL / REDIS_URL are
+# rejected at startup outside test/ci)
 cp .env.example .env
 
 # Apply database migrations (required on first clone)
 alembic upgrade head
 
-# Run server
+# Run server (from backend/ with venv active)
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -188,9 +195,12 @@ uvicorn app.main:app --reload --port 8000
 
 ```bash
 cd frontend
+cp .env.example .env.local   # optional; defaults to http://localhost:8000/api/v1
 npm install
 npm run dev    # → http://localhost:3000
 ```
+
+**Auth:** Register or sign in at http://localhost:3000/register or `/login` before creating FSMs, running optimisation, or export (JWT required). Swagger at `/docs` works for API-only testing.
 
 **Run all checks at once:**
 
@@ -286,7 +296,7 @@ grayFSM/
 | `POST` | `/api/v1/fsms/{id}/fork` | Fork an FSM into your own catalog |
 | `POST` | `/api/v1/fsms/{id}/optimize` | Run an optimisation algorithm |
 | `POST` | `/api/v1/fsms/{id}/export` | Export to Verilog / VHDL / JSON / CSV / testbench |
-| `GET` | `/api/v1/algorithms` | List available optimisation algorithms |
+| `GET` | `/api/v1/fsms/algorithms` | List available optimisation algorithms |
 | `GET` | `/api/v1/examples` | List built-in example FSMs |
 | `GET` | `/api/v1/categories` | List FSM categories |
 | `POST` | `/api/v1/auth/register` | Register a user (rate-limited) |

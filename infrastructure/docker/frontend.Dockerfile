@@ -23,6 +23,10 @@ COPY frontend/tailwind.config.js ./
 COPY frontend/postcss.config.js ./
 COPY frontend/.eslintrc.cjs ./
 
+# Same-origin /api/v1 when served behind nginx; override at build time for split-host deploys.
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build application
 RUN npm run build
 
