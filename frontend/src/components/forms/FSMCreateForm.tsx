@@ -83,7 +83,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
       data-testid="fsm-create-form"
     >
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="name" className="block text-sm font-medium text-ink-soft">
           Name
         </label>
         <input
@@ -91,7 +91,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           id="name"
           type="text"
           data-testid="fsm-form-name"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint"
           placeholder="My FSM"
         />
         {errors.name && (
@@ -102,7 +102,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-ink-soft"
         >
           Description
         </label>
@@ -111,7 +111,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           id="description"
           data-testid="fsm-form-description"
           rows={3}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint"
           placeholder="Describe your FSM..."
         />
       </div>
@@ -119,7 +119,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
       <div>
         <label
           htmlFor="fsm_type"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-ink-soft"
         >
           FSM Type
         </label>
@@ -127,7 +127,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           {...register('fsm_type')}
           id="fsm_type"
           data-testid="fsm-form-type"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint"
         >
           {FSM_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -140,7 +140,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
       <div>
         <label
           htmlFor="visibility"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-ink-soft"
         >
           Visibility
         </label>
@@ -148,7 +148,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           {...register('visibility')}
           id="visibility"
           data-testid="fsm-form-visibility"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint"
         >
           {VISIBILITY_OPTIONS.map((v) => (
             <option key={v.value} value={v.value}>
@@ -181,7 +181,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
             type="button"
             onClick={onCancel}
             data-testid="fsm-form-cancel"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
           >
             Cancel
           </button>

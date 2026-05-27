@@ -28,14 +28,14 @@ export default function RegisterPage() {
   };
 
   const fieldClass =
-    'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400';
+    'mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint';
 
   return (
     <div className="max-w-md mx-auto mt-12 px-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Create account</h1>
+      <h1 className="text-2xl font-bold text-ink mb-6">Create account</h1>
       <form onSubmit={onSubmit} className="space-y-4" data-testid="register-form">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-ink-soft">
             Email
           </label>
           <input
@@ -50,7 +50,7 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-ink-soft">
             Password
           </label>
           <input
@@ -63,7 +63,7 @@ export default function RegisterPage() {
             className={fieldClass}
             placeholder="••••••••"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink-faint">
             Min 8 chars with upper, lower, digit, and a special character.
           </p>
         </div>
@@ -80,9 +80,9 @@ export default function RegisterPage() {
           {submitting ? 'Creating…' : 'Create account'}
         </button>
       </form>
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-ink-soft">
         Already have an account?{' '}
-        <Link to={ROUTES.LOGIN} className="text-blue-600 hover:underline">
+        <Link to={ROUTES.LOGIN} className="text-accent hover:underline">
           Sign in
         </Link>
       </p>

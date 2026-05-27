@@ -26,14 +26,14 @@ export default function LoginPage() {
   };
 
   const fieldClass =
-    'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400';
+    'mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint';
 
   return (
     <div className="max-w-md mx-auto mt-12 px-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Sign in</h1>
+      <h1 className="text-2xl font-bold text-ink mb-6">Sign in</h1>
       <form onSubmit={onSubmit} className="space-y-4" data-testid="login-form">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-ink-soft">
             Email
           </label>
           <input
@@ -48,7 +48,7 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-ink-soft">
             Password
           </label>
           <input
@@ -75,9 +75,9 @@ export default function LoginPage() {
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-ink-soft">
         No account?{' '}
-        <Link to={ROUTES.REGISTER} className="text-blue-600 hover:underline">
+        <Link to={ROUTES.REGISTER} className="text-accent hover:underline">
           Create one
         </Link>
       </p>
