@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ROUTES } from './config/routes'
 import AppLayout from './components/layout/AppLayout'
@@ -8,7 +8,10 @@ import ExportPage from './pages/ExportPage'
 import GalleryPage from './pages/GalleryPage'
 import ExamplesPage from './pages/ExamplesPage'
 import AboutPage from './pages/AboutPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { useAuthStore } from './store/authStore'
 import { ToastProvider, Spinner } from './components/ui'
 import { ThemeProvider } from './components/providers/ThemeProvider'
 import { CommandPalette, useCommandPalette } from './components/ui'
@@ -30,6 +33,12 @@ function AppWithCommandPalette({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  // Restore an existing session (validate persisted token) on load.
+  const initAuth = useAuthStore((s) => s.init)
+  useEffect(() => {
+    initAuth()
+  }, [initAuth])
+
   return (
     <ThemeProvider>
     <ToastProvider>
@@ -43,6 +52,24 @@ function App() {
           element={
             <AppLayout>
               <HomePage />
+            </AppLayout>
+          }
+        />
+
+        {/* Auth */}
+        <Route
+          path={ROUTES.LOGIN}
+          element={
+            <AppLayout>
+              <LoginPage />
+            </AppLayout>
+          }
+        />
+        <Route
+          path={ROUTES.REGISTER}
+          element={
+            <AppLayout>
+              <RegisterPage />
             </AppLayout>
           }
         />

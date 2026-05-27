@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
 import { useUIStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
 import { useTheme, type Theme } from '../providers/theme-context';
 import { cn } from '../../utils/cn';
 
@@ -42,8 +43,17 @@ const buildHash: string =
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { theme, setTheme } = useTheme();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate(ROUTES.HOME);
+  };
 
   const isActive = (path: string): boolean => {
     if (path === ROUTES.HOME) return location.pathname === ROUTES.HOME;
@@ -137,6 +147,35 @@ export default function Navbar() {
             >
               <span className="mr-1.5">↳</span>New
             </Link>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                {user?.email && (
+                  <span
+                    className="font-mono text-[0.7rem] text-ink-soft max-w-[12ch] truncate"
+                    title={user.email}
+                  >
+                    {user.email}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  data-testid="nav-logout"
+                  className="font-mono font-medium uppercase text-[0.72rem] tracking-[0.1em] border border-rule-strong text-ink-soft hover:border-ink hover:text-ink px-3 py-1.5 transition-colors focus-ring"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to={ROUTES.LOGIN}
+                data-testid="nav-login"
+                className="font-mono font-medium uppercase text-[0.72rem] tracking-[0.1em] no-underline border border-rule-strong text-ink-soft hover:border-ink hover:text-ink px-3 py-1.5 transition-colors focus-ring"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
 
           {/* Mobile: theme toggle + hamburger */}
