@@ -293,9 +293,7 @@ function ApiExampleCard({
       <div className="flex gap-2 mt-auto">
         <button
           type="button"
-          onClick={() =>
-            navigate(generateRoute(ROUTES.EXAMPLE_DETAIL, { id: example.id }))
-          }
+          onClick={() => navigate(`${ROUTES.EDITOR_NEW}?example=${example.id}`)}
           data-testid={`example-try-${example.id}`}
           className="flex-1 font-mono text-[0.78rem] uppercase tracking-[0.1em] border border-ink bg-accent text-paper px-4 py-2 hover:bg-ink hover:text-paper transition-colors focus-ring"
         >

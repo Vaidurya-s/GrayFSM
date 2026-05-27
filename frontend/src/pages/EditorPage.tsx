@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import FSMCanvas from '../components/fsm/FSMCanvas';
 import PropertyPanel from '../components/fsm/PropertyPanel';
 import FSMCreateForm from '../components/forms/FSMCreateForm';
 import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
 import { useFSM, useUpdateFSM } from '../hooks/useFSM';
+import { examplesAPI } from '../api/endpoints/examples';
 import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSMStore } from '../store/fsmStore';
@@ -18,6 +19,9 @@ import { useEditorModals } from './editor/useEditorModals';
 
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  // "Try it" on the Examples page links here as /editor/new?example=<id>.
+  const exampleId = searchParams.get('example');
   const navigate = useNavigate();
   // Three editor-owned modals (create / shortcuts / import) — co-located
   // in a hook so each modal's open/close pair is one named action instead
@@ -63,15 +67,35 @@ export default function EditorPage() {
     }
   }, [fsmResponse, loadFSMIntoDraft]);
 
-  // Reset on unmount or when creating new
+  // Reset on unmount or when creating new — but not when we're about to load
+  // a built-in example into the draft (that flow populates it instead).
   useEffect(() => {
-    if (!id) {
+    if (!id && !exampleId) {
       resetDraft();
     }
     return () => {
       // Don't reset on unmount, user might navigate to optimize
     };
-  }, [id, resetDraft]);
+  }, [id, exampleId, resetDraft]);
+
+  // Load a built-in example into the editor when arriving via ?example=<id>.
+  useEffect(() => {
+    if (!exampleId || id) return;
+    let cancelled = false;
+    examplesAPI
+      .get(exampleId)
+      .then((res) => {
+        if (cancelled) return;
+        const ex = (res as unknown as { data?: unknown })?.data ?? res;
+        loadFSMIntoDraft(ex as Parameters<typeof loadFSMIntoDraft>[0]);
+      })
+      .catch(() => {
+        if (!cancelled) toastError('Failed to load example');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [exampleId, id, loadFSMIntoDraft, toastError]);
 
   const handleAddState = useCallback(() => {
     const stateNumber = draftStates.length;
