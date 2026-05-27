@@ -46,6 +46,10 @@ COPY backend/.env.example ./.env.example
 COPY backend/alembic.ini ./alembic.ini
 COPY backend/alembic ./alembic
 
+# Example FSM JSON files. ExampleService reads these from <app>/../examples
+# (i.e. /app/examples); without them the /examples API returns nothing.
+COPY backend/examples ./examples
+
 # Create logs directory (referenced by LOGGING_CONFIG)
 RUN mkdir -p /app/logs
 
