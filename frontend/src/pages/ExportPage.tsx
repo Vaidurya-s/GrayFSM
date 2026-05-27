@@ -390,7 +390,7 @@ export default function ExportPage() {
             {fsmName || 'Export specification'}
           </h1>
           <span className="font-mono text-[0.78rem] uppercase tracking-[0.05em] text-accent">
-            {fsmType.toUpperCase()}
+            {fsmType?.toUpperCase() ?? '—'}
           </span>
           {optimized && (
             <span className="font-mono text-[0.7rem] uppercase tracking-[0.08em] border border-ok text-ok px-2 py-[0.1rem]">

@@ -95,7 +95,7 @@ export default function AboutPage() {
               The algorithms shipped here.
             </h2>
             <p>
-              Three optimisers are available; each operates on a copy of the
+              Four optimisers are available; each operates on a copy of the
               specification and never mutates the original.
             </p>
             <p className="mt-4">
@@ -129,6 +129,18 @@ export default function AboutPage() {
               worse configurations with a temperature-dependent probability
               so it can escape local optima. When the temperature drops it
               terminates with whatever assignment is best so far.
+            </p>
+            <p className="mt-4">
+              The{' '}
+              <span className="font-mono not-italic font-medium">
+                Genetic algorithm
+              </span>{' '}
+              optimiser also reassigns encodings, but evolves a whole
+              population of Gray-code assignments: it selects the fittest
+              candidates, recombines them via crossover, and applies random
+              mutation each generation. Over many generations the population
+              converges toward low-Hamming encodings, trading more compute for
+              a broad exploration of the search space.
             </p>
 
             <h2 className="font-sans text-xl font-semibold tracking-tight text-ink mt-12 mb-3 pb-1 border-b border-rule-strong">
