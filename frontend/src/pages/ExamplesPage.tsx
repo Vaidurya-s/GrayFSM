@@ -131,7 +131,7 @@ function StaticExampleCard({
         <SpecRow label="Transitions" value={example.transitionCount} divider />
         <SpecRow
           label="Type"
-          value={example.fsmType.toUpperCase()}
+          value={example.fsmType?.toUpperCase() ?? '—'}
           tabular={false}
           divider
         />

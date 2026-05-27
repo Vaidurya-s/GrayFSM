@@ -409,7 +409,7 @@ export default function HomePage() {
                 noLeftRule
                 valueSize="compact"
                 label="Type"
-                value={displayedFSM.fsm_type.toUpperCase()}
+                value={displayedFSM.fsm_type?.toUpperCase() ?? '—'}
                 qual={
                   displayedFSM.fsm_type === 'moore'
                     ? 'Outputs depend on state alone.'

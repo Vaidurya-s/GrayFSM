@@ -311,7 +311,7 @@ export default function OptimizationPage() {
                 items={[
                   {
                     label: 'Algorithm',
-                    value: result.algorithm.toUpperCase(),
+                    value: result.algorithm?.toUpperCase() ?? '—',
                     tone: 'accent',
                   },
                   {
