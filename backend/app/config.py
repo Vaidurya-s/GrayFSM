@@ -144,7 +144,7 @@ class Settings(BaseSettings):
         """
         for sync_prefix in ("postgresql+psycopg2://", "postgresql://", "postgres://"):
             if v.startswith(sync_prefix):
-                return "postgresql+asyncpg://" + v[len(sync_prefix):]
+                return "postgresql+asyncpg://" + v[len(sync_prefix) :]
         return v
 
     @field_validator("cors_origins", mode="before")
