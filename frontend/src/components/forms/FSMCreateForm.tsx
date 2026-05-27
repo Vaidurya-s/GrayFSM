@@ -45,12 +45,17 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
 
   const onSubmit = async (values: FSMFormValues) => {
     const stateNames = draftStates.map((s) => s.name);
+    // Keep the payload self-consistent: the backend rejects an empty state
+    // list and an initial_state that isn't one of the states (422).
+    const states = stateNames.length > 0 ? stateNames : ['S0'];
+    const initialState =
+      draftInitialState && states.includes(draftInitialState) ? draftInitialState : states[0];
     const payload: FSMCreate = {
       name: values.name,
       description: values.description,
       fsm_type: values.fsm_type,
-      states: stateNames.length > 0 ? stateNames : ['S0'],
-      initial_state: draftInitialState || stateNames[0] || 'S0',
+      states,
+      initial_state: initialState,
       transitions: draftTransitions.map((t) => ({
         from_state: t.from_state,
         to_state: t.to_state,
