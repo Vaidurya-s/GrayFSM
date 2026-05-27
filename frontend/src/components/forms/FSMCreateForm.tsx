@@ -86,7 +86,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           id="name"
           type="text"
           data-testid="fsm-form-name"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
           placeholder="My FSM"
         />
         {errors.name && (
@@ -106,7 +106,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           id="description"
           data-testid="fsm-form-description"
           rows={3}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
           placeholder="Describe your FSM..."
         />
       </div>
@@ -122,7 +122,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           {...register('fsm_type')}
           id="fsm_type"
           data-testid="fsm-form-type"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
         >
           {FSM_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -143,7 +143,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
           {...register('visibility')}
           id="visibility"
           data-testid="fsm-form-visibility"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
         >
           {VISIBILITY_OPTIONS.map((v) => (
             <option key={v.value} value={v.value}>
