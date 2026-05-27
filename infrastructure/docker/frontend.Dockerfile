@@ -23,6 +23,11 @@ COPY frontend/tailwind.config.js ./
 COPY frontend/postcss.config.js ./
 COPY frontend/.eslintrc.cjs ./
 
+# Vite inlines VITE_* at build time. Accept the API base as a build arg so the
+# bundle targets the right backend; default to the same-origin nginx proxy.
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build application
 RUN npm run build
 

@@ -43,7 +43,10 @@ spec:
           containerPort: 80
           protocol: TCP
         env:
-        - name: VITE_API_URL
+        # NOTE: VITE_* is consumed at image BUILD time (Vite inlines it), so
+        # this runtime env is informational only — set the value via the
+        # frontend image build arg VITE_API_BASE_URL. Kept for parity/naming.
+        - name: VITE_API_BASE_URL
           valueFrom:
             configMapKeyRef:
               name: frontend-config
