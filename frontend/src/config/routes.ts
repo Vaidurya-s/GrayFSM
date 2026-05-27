@@ -1,5 +1,7 @@
 export const ROUTES = {
   HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
   EDITOR: '/editor',
   EDITOR_NEW: '/editor/new',
   EDITOR_EDIT: '/editor/:id',
