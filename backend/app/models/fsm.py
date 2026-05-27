@@ -123,6 +123,14 @@ class FSM(Base):
             return states_raw
         return []
 
+    @property
+    def transitions(self) -> list[Any]:
+        """Convenience accessor for transitions stored in definition JSONB."""
+        if self.definition and isinstance(self.definition, dict):
+            transitions_raw: list[Any] = self.definition.get("transitions", [])
+            return transitions_raw
+        return []
+
     __table_args__ = (
         Index("idx_fsms_type", "fsm_type"),
         Index("idx_fsms_category", "category_id"),

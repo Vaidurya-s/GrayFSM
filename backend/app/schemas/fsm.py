@@ -78,6 +78,9 @@ class FSMResponse(BaseModel):
     dummy_state_count: int
     view_count: int
     states: list[str] = []
+    # Expose transitions so the editor can round-trip the full FSM (without
+    # this, a saved FSM reloads with no transitions).
+    transitions: list[dict[str, Any]] = []
     created_at: datetime
     updated_at: datetime | None
 
