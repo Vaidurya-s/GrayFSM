@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     # Authentication (Phase 4)
     secret_key: str = ""
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 1440  # 24h — avoid mid-session expiry
     refresh_token_expire_days: int = 7
     # JWT audience claim — both encode and decode must agree.
     # Bumping this value invalidates every issued token.

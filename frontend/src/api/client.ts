@@ -29,9 +29,14 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Handle errors globally
     if (error.response?.status === 401) {
-      // Clear auth and redirect to login
+      // Token missing/expired: clear it and send the user to login so they
+      // re-authenticate, instead of silently failing every request while the
+      // navbar still shows them as signed in.
       localStorage.removeItem('auth_token');
-      // Optionally redirect: window.location.href = '/login';
+      const path = window.location.pathname;
+      if (path !== '/login' && path !== '/register') {
+        window.location.href = '/login';
+      }
     }
 
     // Re-throw error for individual handlers
