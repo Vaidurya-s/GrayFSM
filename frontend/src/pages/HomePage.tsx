@@ -67,7 +67,7 @@ export default function HomePage() {
     error,
   } = useQuery<FSM[]>({
     queryKey: ['fsms'],
-    queryFn: async () => unwrapList<FSM>(await api.get('/fsms?limit=10')),
+    queryFn: async () => unwrapList<FSM>(await api.get('/fsms?page_size=10')),
     retry: 1,
   });
 
