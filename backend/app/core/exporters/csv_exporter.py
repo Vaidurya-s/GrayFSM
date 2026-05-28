@@ -95,16 +95,21 @@ class CSVExporter:
             lines.append(separator.join(["name", "output", "encoding", "is_initial", "is_dummy"]))
 
         for state in states:
-            is_initial = "true" if state == initial_state else "false"
-            is_dummy = "true" if state.startswith("DUMMY_") else "false"
-            output = outputs.get(state, "")
-            encoding = encodings.get(state, "")
+            # Stringify defensively. State names are usually str but a
+            # malformed FSM (or a list of plain values from an old
+            # definition shape) shouldn't crash the whole export with a
+            # TypeError mid-join.
+            state_s = str(state) if state is not None else ""
+            is_initial = "true" if state_s == initial_state else "false"
+            is_dummy = "true" if state_s.startswith("DUMMY_") else "false"
+            output = outputs.get(state_s, "") or ""
+            encoding = encodings.get(state_s, "") or ""
 
             line = separator.join(
                 [
-                    state,
-                    output,
-                    encoding,
+                    state_s,
+                    str(output),
+                    str(encoding),
                     is_initial,
                     is_dummy,
                 ]
@@ -130,17 +135,23 @@ class CSVExporter:
             lines.append(separator.join(["from_state", "to_state", "input", "output"]))
 
         for trans in transitions:
-            from_state = trans.get("from_state", "")
-            to_state = trans.get("to_state", "")
-            input_signal = trans.get("input", "")
-            output_signal = trans.get("output", "")
+            # Each value is `or ""`'d because `dict.get(k, "")` only
+            # returns the default when the key is missing — if the key
+            # is present but explicitly None (very common for Moore
+            # transitions and dummy transitions emitted by the greedy
+            # optimizer, which set `output: None`), `separator.join`
+            # raises TypeError and the whole CSV export 400s.
+            from_state = trans.get("from_state") or ""
+            to_state = trans.get("to_state") or ""
+            input_signal = trans.get("input") or ""
+            output_signal = trans.get("output") or ""
 
             line = separator.join(
                 [
-                    from_state,
-                    to_state,
-                    input_signal,
-                    output_signal,
+                    str(from_state),
+                    str(to_state),
+                    str(input_signal),
+                    str(output_signal),
                 ]
             )
             lines.append(line)
