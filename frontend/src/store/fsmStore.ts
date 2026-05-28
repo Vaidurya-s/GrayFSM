@@ -218,14 +218,21 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
       draftDescription: fsm.description || '',
       draftFsmType: fsm.fsm_type,
       draftInitialState: fsm.initial_state,
+      // Prefer the rich State[] from definition only when it actually
+      // has entries; a truthy-but-empty array would suppress the
+      // string-list fall-through and silently drop all states.
       draftStates:
-        fsm.definition?.states ||
-        (fsm.states ?? []).map((name, i) => ({
-          id: name,
-          name,
-          position: { x: 150 + (i % 4) * 200, y: 100 + Math.floor(i / 4) * 150 },
-        })),
-      draftTransitions: fsm.transitions ?? [],
+        fsm.definition?.states && fsm.definition.states.length > 0
+          ? fsm.definition.states
+          : (fsm.states ?? []).map((name, i) => ({
+              id: name,
+              name,
+              position: { x: 150 + (i % 4) * 200, y: 100 + Math.floor(i / 4) * 150 },
+            })),
+      draftTransitions:
+        fsm.transitions && fsm.transitions.length > 0
+          ? fsm.transitions
+          : (fsm.definition?.transitions ?? []),
       // Encoding map is optional on the FSM payload — fall back to {} so
       // the StateNode renders without an encoding subtitle when missing.
       draftEncoding: fsm.encoding ?? {},
