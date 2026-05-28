@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { useFSM } from '../hooks/useFSM';
-import { useOptimize } from '../hooks/useOptimization';
+import { useOptimize, useOptimizationResults } from '../hooks/useOptimization';
 import { useFSMStore } from '../store/fsmStore';
 import OptimizationForm from '../components/forms/OptimizationForm';
 import HammingChart from '../components/visualization/HammingChart';
@@ -18,9 +18,13 @@ import MetricsDashboard from '../components/visualization/MetricsDashboard';
 const Hypercube3D = lazyWithRetry(() => import('../components/visualization/Hypercube3D'));
 import { ROUTES, generateRoute } from '../config/routes';
 import { fsmAPI } from '../api/endpoints/fsms';
-import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
+import type {
+  AlgorithmResult,
+  OptimizationRequest,
+  OptimizationResponse,
+  FSM,
+} from '../types/fsm';
 import type { APIResponse } from '../api/client';
-import type { AxiosResponse } from 'axios';
 import {
   Button,
   Card,
@@ -52,18 +56,70 @@ export default function OptimizationPage() {
   const [optimizedFSM, setOptimizedFSM] = useState<FSM | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>('comparison');
 
-  // Load FSM into store for the canvas and capture it as originalFSM
+  // Load FSM into store for the canvas and capture it as originalFSM.
+  // The apiClient interceptor already returns `response.data` (the wrapped
+  // body), so fsmResponse IS `{ success, data: FSM, ... }` — pull off
+  // `.data` once. The previous `response.data.data` indirection produced
+  // an undefined FSM and silently broke the optimization flow.
   useEffect(() => {
     if (fsmResponse) {
-      // At runtime fsmResponse is AxiosResponse<APIResponse<FSM>>, so .data.data is the FSM
-      const axiosResp = fsmResponse as unknown as AxiosResponse<APIResponse<FSM>>;
-      const fsm = axiosResp.data?.data ?? (fsmResponse as unknown as FSM);
+      const wrapped = fsmResponse as unknown as APIResponse<FSM>;
+      const fsm = wrapped?.data ?? (fsmResponse as unknown as FSM);
       if (fsm && typeof fsm === 'object' && 'id' in fsm) {
         loadFSMIntoDraft(fsm);
         setOriginalFSM(fsm);
       }
     }
   }, [fsmResponse, loadFSMIntoDraft]);
+
+  // ----- Lab-report persistence ------------------------------------- //
+  // After a user runs Optimize and navigates away, the local `result` /
+  // `optimizedFSM` state is lost. On revisit we restore the most recent
+  // past run from GET /fsms/:id/results so the report is always viewable
+  // — no "re-run to see again" or empty graphs.
+  const { data: pastResultsResp } = useOptimizationResults(id);
+  useEffect(() => {
+    if (result || !pastResultsResp) return;
+    const wrapped = pastResultsResp as unknown as APIResponse<AlgorithmResult[]>;
+    const list = wrapped?.data ?? [];
+    const latest = list.find((r) => r.optimized_fsm_id) ?? list[0];
+    if (!latest) return;
+    // Synthesise an OptimizationResponse from the persisted AlgorithmResult.
+    // max_hamming_* aren't stored on the row, so they render as 0 — avg is
+    // what the charts care about. The OptimizationMetrics fields not present
+    // simply default to 0 via the normaliser.
+    const synthesized: OptimizationResponse = {
+      optimized_fsm_id: latest.optimized_fsm_id ?? '',
+      algorithm: latest.algorithm,
+      execution_time_ms: latest.execution_time_ms ?? 0,
+      dummy_states_added: latest.dummy_states_added ?? 0,
+      total_states: latest.total_states_final ?? 0,
+      improvement_percentage: latest.improvement_percentage ?? 0,
+      metrics: {
+        avg_hamming_before: latest.avg_hamming_before ?? 0,
+        avg_hamming_after: latest.avg_hamming_after ?? 0,
+        max_hamming_before: 0,
+        max_hamming_after: 0,
+      },
+      encoding_map: latest.encoding_map ?? {},
+    };
+    setResult(synthesized);
+    if (latest.optimized_fsm_id) {
+      fsmAPI
+        .get(latest.optimized_fsm_id)
+        .then((fsmResp) => {
+          const w = fsmResp as unknown as APIResponse<FSM>;
+          const optFSM = w?.data ?? (fsmResp as unknown as FSM);
+          if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
+            setOptimizedFSM(optFSM);
+          }
+        })
+        .catch(() => {
+          // Comparison tab will show its loading fallback; the rest of the
+          // lab report (charts, metrics) still renders from `result`.
+        });
+    }
+  }, [pastResultsResp, result]);
 
   const handleOptimize = async (request: OptimizationRequest) => {
     if (!id) return;
@@ -72,19 +128,22 @@ export default function OptimizationPage() {
         fsmId: id,
         request,
       });
-      // At runtime response is AxiosResponse<APIResponse<OptimizationResponse>>,
-      // so response.data is { success: true, data: OptimizationResponse }
-      // and response.data.data is the actual OptimizationResponse
-      const axiosResp = response as unknown as AxiosResponse<APIResponse<OptimizationResponse>>;
-      const optimizationResult = axiosResp.data?.data ?? (response as unknown as OptimizationResponse);
+      // apiClient interceptor returned response.data already, so `response`
+      // IS { success, data: OptimizationResponse, ... }. Pull `.data` off
+      // once — the previous double-unwrap left optimizationResult as the
+      // outer envelope, so optimized_fsm_id/metrics were undefined and the
+      // page stuck on "Loading optimized FSM…" with empty charts.
+      const wrapped = response as unknown as APIResponse<OptimizationResponse>;
+      const optimizationResult =
+        wrapped?.data ?? (response as unknown as OptimizationResponse);
       setResult(optimizationResult);
 
       // Fetch optimized FSM immediately so ComparisonView has both sides ready
       if (optimizationResult?.optimized_fsm_id) {
         try {
           const fsmResp = await fsmAPI.get(optimizationResult.optimized_fsm_id);
-          const fsmAxiosResp = fsmResp as unknown as AxiosResponse<APIResponse<FSM>>;
-          const optFSM = fsmAxiosResp.data?.data ?? (fsmResp as unknown as FSM);
+          const fsmWrapped = fsmResp as unknown as APIResponse<FSM>;
+          const optFSM = fsmWrapped?.data ?? (fsmResp as unknown as FSM);
           if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
             setOptimizedFSM(optFSM);
           }

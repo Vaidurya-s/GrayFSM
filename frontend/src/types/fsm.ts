@@ -89,6 +89,11 @@ export interface OptimizedFSM extends FSM {
 }
 
 export interface AlgorithmResult {
+  id?: string;
+  // Set when the algorithm produced a derived FSM (greedy/BFS may add
+  // dummy states; SA/GA produce a re-encoded FSM). Lets the lab report
+  // re-fetch the optimized FSM after revisiting the page.
+  optimized_fsm_id?: string | null;
   algorithm: string;
   dummy_states_added: number;
   total_states_final: number;
@@ -97,6 +102,7 @@ export interface AlgorithmResult {
   improvement_percentage: number;
   execution_time_ms: number;
   encoding_map: Record<string, string>;
+  executed_at?: string;
 }
 
 export interface OptimizationRequest {
