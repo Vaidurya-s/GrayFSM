@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ROUTES } from './config/routes'
 import AppLayout from './components/layout/AppLayout'
@@ -20,7 +21,7 @@ import type { ReactNode } from 'react'
 
 // OptimizationPage transitively imports recharts (~180 KB gz). Lazy-load it
 // so those chunks are only fetched when the user navigates to /optimize.
-const OptimizationPage = lazy(() => import('./pages/OptimizationPage'))
+const OptimizationPage = lazyWithRetry(() => import('./pages/OptimizationPage'))
 
 function AppWithCommandPalette({ children }: { children: ReactNode }) {
   const { isOpen, close } = useCommandPalette()
