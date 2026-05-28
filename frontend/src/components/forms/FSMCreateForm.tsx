@@ -174,7 +174,7 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
         </div>
       )}
 
-      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
         <button
           type="submit"
           disabled={isSubmitting || createFSM.isPending}

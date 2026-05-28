@@ -81,7 +81,13 @@ export default function EditorPage() {
   // the user explicitly dismissed the drawer for the SAME selection — the
   // deps change is what re-triggers it.
   useEffect(() => {
-    if (selectedNode || selectedEdge) setSidebarOpen(true);
+    if (typeof window === 'undefined') return;
+    if (
+      !window.matchMedia('(min-width: 1024px)').matches &&
+      (selectedNode || selectedEdge)
+    ) {
+      setSidebarOpen(true);
+    }
   }, [selectedNode, selectedEdge, setSidebarOpen]);
 
   // Load FSM into editor when data arrives
@@ -428,7 +434,7 @@ export default function EditorPage() {
             data-testid="editor-import"
             aria-label="Import FSM"
             title="Import FSM"
-            className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
           >
             <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
@@ -440,7 +446,7 @@ export default function EditorPage() {
             onClick={handleAddState}
             data-testid="editor-add-state"
             aria-label="Add new state"
-            className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
           >
             <span className="sm:hidden">+ State</span>
             <span className="hidden sm:inline">+ Add State</span>
@@ -448,7 +454,7 @@ export default function EditorPage() {
           <button
             onClick={handleSave}
             data-testid="editor-save"
-            className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
             {id ? 'Save' : 'Create'}
           </button>
@@ -462,7 +468,7 @@ export default function EditorPage() {
               disabled
               data-testid="editor-optimize-already-optimized"
               title="Already optimized — open Lab Report to view the source run, or optimize the source FSM directly"
-              className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
             >
               Optimize
             </button>
@@ -470,7 +476,7 @@ export default function EditorPage() {
             <button
               onClick={handleOptimize}
               data-testid="editor-optimize"
-              className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
             >
               Optimize
             </button>
@@ -479,7 +485,7 @@ export default function EditorPage() {
               disabled
               data-testid="editor-optimize-disabled"
               title="Save first to enable optimization"
-              className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
             >
               Optimize
             </button>
@@ -494,7 +500,7 @@ export default function EditorPage() {
               data-testid="editor-lab-report"
               title="View the optimization run that produced this FSM"
               aria-label="View Lab Report"
-              className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 inline-flex items-center gap-1"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 inline-flex items-center gap-1"
             >
               <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -512,7 +518,7 @@ export default function EditorPage() {
               data-testid="editor-export"
               aria-label="Export FSM"
               title="Export FSM"
-              className="px-2 sm:px-3 py-1.5 text-[0.7rem] sm:text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
             >
               <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M17 14l-5 5m0 0l-5-5m5 5V3" />

@@ -11,6 +11,11 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   description?: string;
+  /**
+   * Fallback accessible name when `title` is omitted. Either `title` or
+   * `ariaLabel` is recommended to satisfy the axe `aria-dialog-name` rule.
+   */
+  ariaLabel?: string;
   children: ReactNode;
   size?: ModalSize;
   /** Geometry / animation variant. Default `center`. */
@@ -89,6 +94,7 @@ export function Modal({
   onClose,
   title,
   description,
+  ariaLabel,
   children,
   size = 'md',
   position = 'center',
@@ -128,21 +134,23 @@ export function Modal({
     };
   }, [isOpen, handleEscape]);
 
-  // Focus management — save on open, restore on close.
+  // Focus management — save on open, restore on close OR on unmount-while-open.
+  // Moving the restore into the effect cleanup ensures focus returns even if
+  // the Modal is unmounted (e.g. parent route change) while still open.
   useEffect(() => {
-    if (isOpen) {
-      previouslyFocused.current = document.activeElement;
-      // Defer until the panel is in the DOM and translate has settled.
-      const id = window.setTimeout(() => panelRef.current?.focus(), 0);
-      return () => window.clearTimeout(id);
-    }
-    // Restore focus when closing.
-    const saved = previouslyFocused.current as HTMLElement | null;
-    if (saved && document.contains(saved)) {
-      saved.focus();
-    } else {
-      document.body.focus();
-    }
+    if (!isOpen) return;
+    previouslyFocused.current = document.activeElement;
+    // Defer until the panel is in the DOM and translate has settled.
+    const id = window.setTimeout(() => panelRef.current?.focus(), 0);
+    return () => {
+      window.clearTimeout(id);
+      const saved = previouslyFocused.current as HTMLElement | null;
+      if (saved && document.contains(saved)) {
+        saved.focus();
+      } else {
+        document.body.focus();
+      }
+    };
   }, [isOpen]);
 
   if (!mounted && !isOpen) return null;
@@ -159,6 +167,7 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
+      aria-label={!title ? ariaLabel : undefined}
       aria-describedby={description ? 'modal-description' : undefined}
       data-testid={dataTestId}
       data-state={dataState}

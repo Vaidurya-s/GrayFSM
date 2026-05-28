@@ -289,7 +289,7 @@ export default function OptimizationPage() {
                       onClick={() => setActiveTab(tab.id)}
                       data-testid={`optimization-tab-${tab.id}`}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[0.65rem] sm:text-[0.78rem] font-mono font-medium uppercase tracking-[0.1em] transition-colors border-b-2 -mb-[1px] flex-shrink-0 whitespace-nowrap ${
+                      className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-[0.78rem] font-mono font-medium uppercase tracking-[0.1em] transition-colors border-b-2 -mb-[1px] flex-shrink-0 whitespace-nowrap ${
                         active
                           ? 'text-ink border-accent bg-accent-tint'
                           : 'text-ink-soft border-transparent hover:text-ink hover:bg-paper-shade'
