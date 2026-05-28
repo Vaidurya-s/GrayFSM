@@ -111,7 +111,7 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
         """Random permutation of `codes` assigned to `state_ids`."""
         shuffled = list(codes)
         self._rng.shuffle(shuffled)
-        return dict(zip(state_ids, shuffled))
+        return dict(zip(state_ids, shuffled, strict=True))
 
     def _tournament_select(
         self,
@@ -192,9 +192,7 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
         if best_cost == 0.0:
             self.iterations_run = 0
             self.final_cost = 0.0
-            self.improvement_ratio = (
-                1.0 if self.initial_cost > 0 else 0.0
-            )
+            self.improvement_ratio = 1.0 if self.initial_cost > 0 else 0.0
             return best
 
         generations_run = 0
@@ -202,9 +200,7 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
             # Elitism: top-K survive unchanged.
             ranked = sorted(range(len(population)), key=lambda i: fitnesses[i])
             elitism = max(0, min(self.elitism, len(population)))
-            new_pop: list[dict[str, str]] = [
-                dict(population[ranked[i]]) for i in range(elitism)
-            ]
+            new_pop: list[dict[str, str]] = [dict(population[ranked[i]]) for i in range(elitism)]
             while len(new_pop) < self.population_size:
                 p1 = self._tournament_select(population, fitnesses)
                 p2 = self._tournament_select(population, fitnesses)
@@ -225,8 +221,6 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
         self.iterations_run = generations_run
         self.final_cost = best_cost
         self.improvement_ratio = (
-            (self.initial_cost - best_cost) / self.initial_cost
-            if self.initial_cost > 0
-            else 0.0
+            (self.initial_cost - best_cost) / self.initial_cost if self.initial_cost > 0 else 0.0
         )
         return best
