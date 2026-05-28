@@ -168,15 +168,20 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
         name = `S${n}`;
       }
       // Position: derived from the deduped id's numeric suffix so two states
-      // can never land on the same spot. Circular layout, radius scaled.
+      // can never land on the same spot. Tight 4-column grid so newly-added
+      // nodes stay in the initial React Flow viewport (no "where did my state
+      // go?" — previous circular layout pushed nodes out to ±640 px which
+      // sat outside the default visible area until the user hit Fit View).
       const m = id.match(/^S(\d+)$/);
       const i = m ? parseInt(m[1], 10) : s.draftStates.length;
-      const slots = Math.max(8, i + 1);
-      const radius = 80 * Math.min(slots, 8);
-      const angle = (2 * Math.PI * (i % slots)) / slots;
+      const cols = 4;
+      const dx = 160;
+      const dy = 130;
+      const startX = 80;
+      const startY = 80;
       const position = {
-        x: Math.round(400 + radius * Math.cos(angle - Math.PI / 2)),
-        y: Math.round(300 + radius * Math.sin(angle - Math.PI / 2)),
+        x: startX + (i % cols) * dx,
+        y: startY + Math.floor(i / cols) * dy,
       };
       return { draftStates: [...s.draftStates, { ...state, id, name, position }] };
     });
