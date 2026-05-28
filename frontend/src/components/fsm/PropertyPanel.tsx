@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import { useFSMStore } from '../../store/fsmStore';
 
-export default function PropertyPanel() {
+interface PropertyPanelProps {
+  /** When true, panel is rendered inside a host container (e.g. a mobile
+   *  drawer) — drop the card chrome (bg/shadow/border) but keep inner
+   *  padding so inputs don't butt against the drawer edges. */
+  embedded?: boolean;
+}
+
+export default function PropertyPanel({ embedded = false }: PropertyPanelProps) {
+  const cardChrome = embedded
+    ? 'p-4'
+    : 'bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700';
+
   const {
     selectedNode,
     selectedEdge,
@@ -41,7 +52,7 @@ export default function PropertyPanel() {
   if (!selectedStateData && !selectedTransitionData) {
     return (
       <div
-        className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700"
+        className={cardChrome}
         data-testid="property-panel"
       >
         <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">Properties</h3>
@@ -55,7 +66,7 @@ export default function PropertyPanel() {
   if (selectedStateData) {
     return (
       <div
-        className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700"
+        className={cardChrome}
         data-testid="property-panel-state"
       >
         <h3 className="text-sm font-semibold text-ink dark:text-white mb-4">State Properties</h3>
@@ -72,7 +83,7 @@ export default function PropertyPanel() {
                 const err = validateStateName(e.target.value, selectedStateData.id);
                 if (!err) updateState(selectedStateData.id, { name: e.target.value });
               }}
-              className={`w-full px-3 py-1.5 text-sm border rounded-md focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white ${
+              className={`w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border rounded-md focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white ${
                 validateStateName(selectedStateData.name, selectedStateData.id)
                   ? 'border-red-400 dark:border-red-500'
                   : 'border-rule-strong dark:border-gray-600'
@@ -95,7 +106,7 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateState(selectedStateData.id, { output: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
+              className="w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
               placeholder="e.g. 00, 01, 10"
             />
           </div>
@@ -121,14 +132,14 @@ export default function PropertyPanel() {
                 <button
                   data-testid="property-state-delete-confirm"
                   onClick={() => { removeState(selectedStateData.id); setPendingDeleteState(null); }}
-                  className="flex-1 px-3 py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                  className="flex-1 px-3 py-2 sm:py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
                 >
                   Delete
                 </button>
                 <button
                   data-testid="property-state-delete-cancel"
                   onClick={() => setPendingDeleteState(null)}
-                  className="flex-1 px-3 py-1.5 text-sm text-ink-soft bg-paper-shade rounded-md hover:bg-paper-deep transition-colors"
+                  className="flex-1 px-3 py-2 sm:py-1.5 text-sm text-ink-soft bg-paper-shade rounded-md hover:bg-paper-deep transition-colors"
                 >
                   Cancel
                 </button>
@@ -138,7 +149,7 @@ export default function PropertyPanel() {
             <button
               data-testid="property-state-delete"
               onClick={() => setPendingDeleteState(selectedStateData.id)}
-              className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+              className="w-full px-3 py-2 sm:py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
             >
               Delete State
             </button>
@@ -151,7 +162,7 @@ export default function PropertyPanel() {
   if (selectedTransitionData && selectedTransitionIndex >= 0) {
     return (
       <div
-        className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700"
+        className={cardChrome}
         data-testid="property-panel-transition"
       >
         <h3 className="text-sm font-semibold text-ink dark:text-white mb-4">
@@ -170,7 +181,7 @@ export default function PropertyPanel() {
                   from_state: e.target.value,
                 })
               }
-              className="w-full px-3 py-1.5 text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
+              className="w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
             >
               {draftStates.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -191,7 +202,7 @@ export default function PropertyPanel() {
                   to_state: e.target.value,
                 })
               }
-              className="w-full px-3 py-1.5 text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
+              className="w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
             >
               {draftStates.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -211,7 +222,7 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateTransition(selectedTransitionIndex, { input: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
+              className="w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
               placeholder="e.g. 0, 1, a"
             />
           </div>
@@ -226,7 +237,7 @@ export default function PropertyPanel() {
               onChange={(e) =>
                 updateTransition(selectedTransitionIndex, { output: e.target.value })
               }
-              className="w-full px-3 py-1.5 text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
+              className="w-full px-3 py-2 sm:py-1.5 text-base sm:text-sm border border-rule-strong dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-accent focus:border-accent"
               placeholder="e.g. 0, 1"
             />
           </div>
@@ -237,14 +248,14 @@ export default function PropertyPanel() {
                 <button
                   data-testid="property-transition-delete-confirm"
                   onClick={() => { removeTransition(selectedTransitionIndex); setPendingDeleteTransition(null); }}
-                  className="flex-1 px-3 py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                  className="flex-1 px-3 py-2 sm:py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
                 >
                   Delete
                 </button>
                 <button
                   data-testid="property-transition-delete-cancel"
                   onClick={() => setPendingDeleteTransition(null)}
-                  className="flex-1 px-3 py-1.5 text-sm text-ink-soft bg-paper-shade rounded-md hover:bg-paper-deep transition-colors"
+                  className="flex-1 px-3 py-2 sm:py-1.5 text-sm text-ink-soft bg-paper-shade rounded-md hover:bg-paper-deep transition-colors"
                 >
                   Cancel
                 </button>
@@ -254,7 +265,7 @@ export default function PropertyPanel() {
             <button
               data-testid="property-transition-delete"
               onClick={() => setPendingDeleteTransition(selectedTransitionIndex)}
-              className="w-full px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+              className="w-full px-3 py-2 sm:py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
             >
               Delete Transition
             </button>
