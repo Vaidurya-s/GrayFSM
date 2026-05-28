@@ -167,6 +167,10 @@ async def get_optimization_results(
         data.append(
             {
                 "id": str(row.id),
+                # optimized_fsm_id lets the frontend re-fetch the derived FSM
+                # so the lab report (ComparisonView/HammingChart/MetricsDashboard)
+                # can be reconstructed when revisiting /optimize/:id.
+                "optimized_fsm_id": str(row.optimized_fsm_id) if row.optimized_fsm_id else None,
                 "algorithm": row.algorithm,
                 "execution_time_ms": row.execution_time_ms,
                 "dummy_states_added": row.dummy_states_added,
