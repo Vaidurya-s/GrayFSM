@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import type { FSM } from '../types/fsm';
-import { ROUTES } from '../config/routes';
+import { ROUTES, generateRoute } from '../config/routes';
 import {
   CommandKey,
   CommandKeyRow,
@@ -59,6 +60,7 @@ interface HealthShape {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [selectedFSM, setSelectedFSM] = useState<FSM | null>(null);
 
   const {
@@ -344,7 +346,14 @@ export default function HomePage() {
               columns={columns}
               rowKey={(f) => f.id}
               isSelected={(f) => displayedFSM?.id === f.id}
-              onRowClick={(f) => setSelectedFSM(f)}
+              // Clicking a catalog row opens the editor for that FSM —
+              // matches the Gallery behaviour (rows look like nav buttons,
+              // users expect them to navigate). The preview panel below
+              // still defaults to the first FSM via `displayedFSM`.
+              onRowClick={(f) => {
+                setSelectedFSM(f);
+                navigate(generateRoute(ROUTES.EDITOR_EDIT, { id: f.id }));
+              }}
             />
           )}
         </TypedSection>
