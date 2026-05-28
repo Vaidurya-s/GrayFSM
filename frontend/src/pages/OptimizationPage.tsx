@@ -141,14 +141,28 @@ export default function OptimizationPage() {
       setOptimizedFSM(null);
       setOptimizedFSMError(null);
       if (optimizationResult?.optimized_fsm_id) {
+        const targetId = optimizationResult.optimized_fsm_id;
         try {
-          const fsmResp = await fsmAPI.get(optimizationResult.optimized_fsm_id);
+          const fsmResp = await fsmAPI.get(targetId);
           const fsmWrapped = fsmResp as unknown as APIResponse<FSM>;
           const optFSM = fsmWrapped?.data ?? (fsmResp as unknown as FSM);
           if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
             setOptimizedFSM(optFSM);
           } else {
-            setOptimizedFSMError('Optimized FSM response was empty.');
+            // Dump the actual shape we received so the user (and we) can
+            // see whether the body was null, double-wrapped, missing id,
+            // etc. Capped at 240 chars to stay inside the Alert.
+            const shape = (() => {
+              try {
+                return JSON.stringify(fsmResp).slice(0, 240);
+              } catch {
+                return String(fsmResp);
+              }
+            })();
+            setOptimizedFSMError(
+              `Optimized FSM response was empty for id=${targetId}. ` +
+                `Body: ${shape}`,
+            );
           }
         } catch (e) {
           // Surface the error in the comparison panel so a stuck fetch
@@ -162,6 +176,11 @@ export default function OptimizationPage() {
               : `Failed to load optimized FSM${status ? ` (HTTP ${status})` : ''}.`,
           );
         }
+      } else {
+        setOptimizedFSMError(
+          'Optimization response did not include an optimized_fsm_id. ' +
+            `Got: ${JSON.stringify(optimizationResult).slice(0, 240)}`,
+        );
       }
 
       // Default to the comparison tab when results arrive
