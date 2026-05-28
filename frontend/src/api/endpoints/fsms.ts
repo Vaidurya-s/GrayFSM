@@ -3,11 +3,31 @@ import type { FSM, FSMCreate, FSMUpdate } from '@/types/fsm';
 import type { FSMListParams } from '@/types/api';
 import { normalizeFSM } from '../normalize';
 
-/** Apply normalizeFSM to the `data` payload of an APIResponse/Paginated wrap. */
+/** Apply normalizeFSM to the `data` payload of an APIResponse/Paginated wrap.
+ *
+ * Tolerant of two shapes because the backend's response_wrapper middleware
+ * has been observed skipping the envelope on some responses (notably the
+ * GET /fsms/{id} for freshly-created optimized FSMs). When the body comes
+ * back as a bare FSM (`{id, name, ...}`) instead of `{success, data: FSM}`,
+ * the previous code spread the FSM and then overlaid `data: normalize(undefined)`
+ * — producing an object whose `.data` was an id-less defaults blob and
+ * triggering the "response was empty" diagnostic.
+ *
+ * Now: if the body already looks like a bare FSM (has `id` but no `data`),
+ * synthesize the envelope so downstream `res.data` reads work uniformly.
+ */
 function normalizeFSMResponse<R extends { data: FSM }>(res: R): R {
+  const raw = res as unknown as Record<string, unknown>;
+  if (raw && typeof raw === 'object' && 'id' in raw && !('data' in raw)) {
+    return { success: true, data: normalizeFSM(raw as Partial<FSM>) } as unknown as R;
+  }
   return { ...res, data: normalizeFSM(res.data) };
 }
 function normalizeFSMListResponse<R extends { data: FSM[] }>(res: R): R {
+  const raw = res as unknown as Record<string, unknown>;
+  if (Array.isArray(raw)) {
+    return { success: true, data: (raw as unknown as FSM[]).map(normalizeFSM) } as unknown as R;
+  }
   return { ...res, data: (res.data ?? []).map(normalizeFSM) };
 }
 
