@@ -1,7 +1,9 @@
 {
   "name": "Elevator Controller",
-  "description": "3-floor elevator with explicit moving states",
+  "description": "3-floor elevator controller with explicit moving states between adjacent floors. Floor states are stable; moving states auto-advance on the next clock tick.",
   "type": "moore",
+  "difficulty": "intermediate",
+  "initial_state": "Floor1",
   "states": [
     "Floor1",
     "Moving1to2",
@@ -11,44 +13,15 @@
     "Moving3to2",
     "Moving2to1"
   ],
-  "initial_state": "Floor1",
   "transitions": [
-    {
-      "from_state": "Floor1",
-      "to_state": "Moving1to2",
-      "input": "up"
-    },
-    {
-      "from_state": "Moving1to2",
-      "to_state": "Floor2"
-    },
-    {
-      "from_state": "Floor2",
-      "to_state": "Moving2to3",
-      "input": "up"
-    },
-    {
-      "from_state": "Floor2",
-      "to_state": "Moving2to1",
-      "input": "down"
-    },
-    {
-      "from_state": "Moving2to3",
-      "to_state": "Floor3"
-    },
-    {
-      "from_state": "Floor3",
-      "to_state": "Moving3to2",
-      "input": "down"
-    },
-    {
-      "from_state": "Moving3to2",
-      "to_state": "Floor2"
-    },
-    {
-      "from_state": "Moving2to1",
-      "to_state": "Floor1"
-    }
+    { "from_state": "Floor1",      "to_state": "Moving1to2", "input": "up" },
+    { "from_state": "Moving1to2",  "to_state": "Floor2",     "input": "tick" },
+    { "from_state": "Floor2",      "to_state": "Moving2to3", "input": "up" },
+    { "from_state": "Floor2",      "to_state": "Moving2to1", "input": "down" },
+    { "from_state": "Moving2to3",  "to_state": "Floor3",     "input": "tick" },
+    { "from_state": "Floor3",      "to_state": "Moving3to2", "input": "down" },
+    { "from_state": "Moving3to2",  "to_state": "Floor2",     "input": "tick" },
+    { "from_state": "Moving2to1",  "to_state": "Floor1",     "input": "tick" }
   ],
   "outputs": {
     "Floor1": "001",
@@ -58,6 +31,5 @@
     "Floor3": "101",
     "Moving3to2": "110",
     "Moving2to1": "111"
-  },
-  "difficulty": "advanced"
+  }
 }

@@ -1,37 +1,25 @@
 {
   "name": "Traffic Light Controller",
-  "description": "Simple 4-state traffic light with standard cycle",
+  "description": "Classic 4-state traffic light cycling Red -> Red+Yellow -> Green -> Yellow on each clock tick. Output is a 3-bit lamp mask [R, Y, G].",
   "type": "moore",
+  "difficulty": "beginner",
+  "initial_state": "Red",
   "states": [
     "Red",
     "RedYellow",
     "Green",
     "Yellow"
   ],
-  "initial_state": "Red",
   "transitions": [
-    {
-      "from_state": "Red",
-      "to_state": "RedYellow"
-    },
-    {
-      "from_state": "RedYellow",
-      "to_state": "Green"
-    },
-    {
-      "from_state": "Green",
-      "to_state": "Yellow"
-    },
-    {
-      "from_state": "Yellow",
-      "to_state": "Red"
-    }
+    { "from_state": "Red",       "to_state": "RedYellow", "input": "tick" },
+    { "from_state": "RedYellow", "to_state": "Green",     "input": "tick" },
+    { "from_state": "Green",     "to_state": "Yellow",    "input": "tick" },
+    { "from_state": "Yellow",    "to_state": "Red",       "input": "tick" }
   ],
   "outputs": {
     "Red": "100",
     "RedYellow": "110",
     "Green": "001",
     "Yellow": "010"
-  },
-  "difficulty": "beginner"
+  }
 }
