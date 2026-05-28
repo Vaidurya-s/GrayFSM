@@ -1,0 +1,623 @@
+{
+  "name": "Elevator Controller (10 floors)",
+  "description": "Industrial 10-floor elevator controller with full motion + door cycle per floor, plus emergency and maintenance states. 40 states give the Gray-code optimiser meaningful work: adjacent-floor transitions form natural Hamming-distance chains that all four algorithms attack differently. Moore outputs encode [motor_up, motor_down, door_open, alarm] so the synthesised HDL is immediately useful.",
+  "type": "moore",
+  "difficulty": "advanced",
+  "initial_state": "IDLE_F1",
+  "states": [
+    "IDLE_F1",
+    "IDLE_F2",
+    "IDLE_F3",
+    "IDLE_F4",
+    "IDLE_F5",
+    "IDLE_F6",
+    "IDLE_F7",
+    "IDLE_F8",
+    "IDLE_F9",
+    "IDLE_F10",
+    "DOOR_F1",
+    "DOOR_F2",
+    "DOOR_F3",
+    "DOOR_F4",
+    "DOOR_F5",
+    "DOOR_F6",
+    "DOOR_F7",
+    "DOOR_F8",
+    "DOOR_F9",
+    "DOOR_F10",
+    "UP_F1F2",
+    "UP_F2F3",
+    "UP_F3F4",
+    "UP_F4F5",
+    "UP_F5F6",
+    "UP_F6F7",
+    "UP_F7F8",
+    "UP_F8F9",
+    "UP_F9F10",
+    "DN_F2F1",
+    "DN_F3F2",
+    "DN_F4F3",
+    "DN_F5F4",
+    "DN_F6F5",
+    "DN_F7F6",
+    "DN_F8F7",
+    "DN_F9F8",
+    "DN_F10F9",
+    "EMERGENCY",
+    "MAINT"
+  ],
+  "transitions": [
+    {
+      "from_state": "IDLE_F1",
+      "to_state": "UP_F1F2",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F1",
+      "to_state": "DOOR_F1",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F1",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F1",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F2",
+      "to_state": "UP_F2F3",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F2",
+      "to_state": "DN_F2F1",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F2",
+      "to_state": "DOOR_F2",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F2",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F2",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F3",
+      "to_state": "UP_F3F4",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F3",
+      "to_state": "DN_F3F2",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F3",
+      "to_state": "DOOR_F3",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F3",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F3",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F4",
+      "to_state": "UP_F4F5",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F4",
+      "to_state": "DN_F4F3",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F4",
+      "to_state": "DOOR_F4",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F4",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F4",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F5",
+      "to_state": "UP_F5F6",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F5",
+      "to_state": "DN_F5F4",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F5",
+      "to_state": "DOOR_F5",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F5",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F5",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F6",
+      "to_state": "UP_F6F7",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F6",
+      "to_state": "DN_F6F5",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F6",
+      "to_state": "DOOR_F6",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F6",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F6",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F7",
+      "to_state": "UP_F7F8",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F7",
+      "to_state": "DN_F7F6",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F7",
+      "to_state": "DOOR_F7",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F7",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F7",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F8",
+      "to_state": "UP_F8F9",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F8",
+      "to_state": "DN_F8F7",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F8",
+      "to_state": "DOOR_F8",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F8",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F8",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F9",
+      "to_state": "UP_F9F10",
+      "input": "up"
+    },
+    {
+      "from_state": "IDLE_F9",
+      "to_state": "DN_F9F8",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F9",
+      "to_state": "DOOR_F9",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F9",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F9",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "IDLE_F10",
+      "to_state": "DN_F10F9",
+      "input": "down"
+    },
+    {
+      "from_state": "IDLE_F10",
+      "to_state": "DOOR_F10",
+      "input": "open"
+    },
+    {
+      "from_state": "IDLE_F10",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "IDLE_F10",
+      "to_state": "MAINT",
+      "input": "maint"
+    },
+    {
+      "from_state": "UP_F1F2",
+      "to_state": "IDLE_F2",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F1F2",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F2F3",
+      "to_state": "IDLE_F3",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F2F3",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F3F4",
+      "to_state": "IDLE_F4",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F3F4",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F4F5",
+      "to_state": "IDLE_F5",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F4F5",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F5F6",
+      "to_state": "IDLE_F6",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F5F6",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F6F7",
+      "to_state": "IDLE_F7",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F6F7",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F7F8",
+      "to_state": "IDLE_F8",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F7F8",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F8F9",
+      "to_state": "IDLE_F9",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F8F9",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "UP_F9F10",
+      "to_state": "IDLE_F10",
+      "input": "arrive"
+    },
+    {
+      "from_state": "UP_F9F10",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F2F1",
+      "to_state": "IDLE_F1",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F2F1",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F3F2",
+      "to_state": "IDLE_F2",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F3F2",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F4F3",
+      "to_state": "IDLE_F3",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F4F3",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F5F4",
+      "to_state": "IDLE_F4",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F5F4",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F6F5",
+      "to_state": "IDLE_F5",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F6F5",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F7F6",
+      "to_state": "IDLE_F6",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F7F6",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F8F7",
+      "to_state": "IDLE_F7",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F8F7",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F9F8",
+      "to_state": "IDLE_F8",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F9F8",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DN_F10F9",
+      "to_state": "IDLE_F9",
+      "input": "arrive"
+    },
+    {
+      "from_state": "DN_F10F9",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F1",
+      "to_state": "IDLE_F1",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F1",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F2",
+      "to_state": "IDLE_F2",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F2",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F3",
+      "to_state": "IDLE_F3",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F3",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F4",
+      "to_state": "IDLE_F4",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F4",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F5",
+      "to_state": "IDLE_F5",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F5",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F6",
+      "to_state": "IDLE_F6",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F6",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F7",
+      "to_state": "IDLE_F7",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F7",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F8",
+      "to_state": "IDLE_F8",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F8",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F9",
+      "to_state": "IDLE_F9",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F9",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "DOOR_F10",
+      "to_state": "IDLE_F10",
+      "input": "close"
+    },
+    {
+      "from_state": "DOOR_F10",
+      "to_state": "EMERGENCY",
+      "input": "emergency"
+    },
+    {
+      "from_state": "EMERGENCY",
+      "to_state": "IDLE_F1",
+      "input": "reset"
+    },
+    {
+      "from_state": "MAINT",
+      "to_state": "IDLE_F1",
+      "input": "reset"
+    }
+  ],
+  "outputs": {
+    "IDLE_F1": "0000",
+    "IDLE_F2": "0000",
+    "IDLE_F3": "0000",
+    "IDLE_F4": "0000",
+    "IDLE_F5": "0000",
+    "IDLE_F6": "0000",
+    "IDLE_F7": "0000",
+    "IDLE_F8": "0000",
+    "IDLE_F9": "0000",
+    "IDLE_F10": "0000",
+    "DOOR_F1": "0010",
+    "DOOR_F2": "0010",
+    "DOOR_F3": "0010",
+    "DOOR_F4": "0010",
+    "DOOR_F5": "0010",
+    "DOOR_F6": "0010",
+    "DOOR_F7": "0010",
+    "DOOR_F8": "0010",
+    "DOOR_F9": "0010",
+    "DOOR_F10": "0010",
+    "UP_F1F2": "1000",
+    "UP_F2F3": "1000",
+    "UP_F3F4": "1000",
+    "UP_F4F5": "1000",
+    "UP_F5F6": "1000",
+    "UP_F6F7": "1000",
+    "UP_F7F8": "1000",
+    "UP_F8F9": "1000",
+    "UP_F9F10": "1000",
+    "DN_F2F1": "0100",
+    "DN_F3F2": "0100",
+    "DN_F4F3": "0100",
+    "DN_F5F4": "0100",
+    "DN_F6F5": "0100",
+    "DN_F7F6": "0100",
+    "DN_F8F7": "0100",
+    "DN_F9F8": "0100",
+    "DN_F10F9": "0100",
+    "EMERGENCY": "0001",
+    "MAINT": "1111"
+  }
+}
