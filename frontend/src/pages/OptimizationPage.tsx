@@ -345,8 +345,8 @@ export default function OptimizationPage() {
               />
 
               <HammingChart
-                avgBefore={result.metrics.avg_hamming_before}
-                avgAfter={result.metrics.avg_hamming_after}
+                avgBefore={result.metrics?.avg_hamming_before ?? 0}
+                avgAfter={result.metrics?.avg_hamming_after ?? 0}
                 statesBefore={result.total_states - result.dummy_states_added}
                 statesAfter={result.total_states}
                 dummyStatesAdded={result.dummy_states_added}

@@ -94,16 +94,19 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
   const originalStateCount = total_states - dummy_states_added;
 
   // --- Hamming distance distribution chart data ---
+  // Guard against missing fields so the dashboard renders 0 instead of
+  // crashing when an optimization result lacks a metrics object.
+  const fixed3 = (v: number | undefined): number => Number((v ?? 0).toFixed(3));
   const hammingDistData = [
     {
       name: 'Avg Hamming',
-      Before: Number(innerMetrics.avg_hamming_before.toFixed(3)),
-      After: Number(innerMetrics.avg_hamming_after.toFixed(3)),
+      Before: fixed3(innerMetrics?.avg_hamming_before),
+      After: fixed3(innerMetrics?.avg_hamming_after),
     },
     {
       name: 'Max Hamming',
-      Before: Number(innerMetrics.max_hamming_before.toFixed(3)),
-      After: Number(innerMetrics.max_hamming_after.toFixed(3)),
+      Before: fixed3(innerMetrics?.max_hamming_before),
+      After: fixed3(innerMetrics?.max_hamming_after),
     },
   ];
 
