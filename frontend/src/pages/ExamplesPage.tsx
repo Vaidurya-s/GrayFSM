@@ -138,7 +138,7 @@ function StaticExampleCard({
       </div>
 
       {/* Tags */}
-      {example.tags.length > 0 && (
+      {Array.isArray(example.tags) && example.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {example.tags.slice(0, 4).map((tag) => (
             <span
@@ -277,7 +277,7 @@ function ApiExampleCard({
       )}
 
       {/* Tags */}
-      {example.tags.length > 0 && (
+      {Array.isArray(example.tags) && example.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {example.tags.slice(0, 4).map((tag) => (
             <span
