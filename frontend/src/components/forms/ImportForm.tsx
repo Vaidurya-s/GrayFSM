@@ -176,12 +176,12 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
           'flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors select-none',
           isDragging
             ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400 bg-gray-50',
+            : 'border-rule-strong hover:border-gray-400 bg-paper-shade',
         )}
         data-testid="import-dropzone"
       >
         <svg
-          className={cn('w-10 h-10', isDragging ? 'text-blue-500' : 'text-gray-400')}
+          className={cn('w-10 h-10', isDragging ? 'text-blue-500' : 'text-ink-faint')}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -194,14 +194,14 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
           />
         </svg>
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-medium text-ink-soft">
             {isDragging ? 'Drop your file here' : 'Drag & drop a JSON file'}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            or <span className="text-blue-600 underline">browse</span> to select
+          <p className="text-xs text-ink-faint mt-1">
+            or <span className="text-accent underline">browse</span> to select
           </p>
         </div>
-        <p className="text-xs text-gray-400">Accepts .json files</p>
+        <p className="text-xs text-ink-faint">Accepts .json files</p>
       </div>
 
       {/* Hidden file input */}
@@ -247,22 +247,22 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
           <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
             File parsed successfully
           </p>
-          <table className="w-full text-sm text-gray-700">
+          <table className="w-full text-sm text-ink-soft">
             <tbody>
               <tr>
-                <td className="py-0.5 font-medium text-gray-500 w-32">Name</td>
-                <td className="py-0.5 font-semibold text-gray-900">{preview.name}</td>
+                <td className="py-0.5 font-medium text-ink-faint w-32">Name</td>
+                <td className="py-0.5 font-semibold text-ink">{preview.name}</td>
               </tr>
               <tr>
-                <td className="py-0.5 font-medium text-gray-500">Type</td>
+                <td className="py-0.5 font-medium text-ink-faint">Type</td>
                 <td className="py-0.5 capitalize">{preview.fsmType}</td>
               </tr>
               <tr>
-                <td className="py-0.5 font-medium text-gray-500">States</td>
+                <td className="py-0.5 font-medium text-ink-faint">States</td>
                 <td className="py-0.5">{preview.stateCount}</td>
               </tr>
               <tr>
-                <td className="py-0.5 font-medium text-gray-500">Transitions</td>
+                <td className="py-0.5 font-medium text-ink-faint">Transitions</td>
                 <td className="py-0.5">{preview.transitionCount}</td>
               </tr>
             </tbody>
@@ -277,7 +277,7 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
           onClick={handleImport}
           disabled={!parsedPayload || isImporting}
           data-testid="import-submit"
-          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
         >
           {isImporting ? 'Importing...' : 'Import FSM'}
         </button>
@@ -285,7 +285,7 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
           type="button"
           onClick={onCancel}
           data-testid="import-cancel"
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+          className="px-4 py-2 text-sm font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
         >
           Cancel
         </button>

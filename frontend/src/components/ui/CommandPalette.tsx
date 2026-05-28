@@ -98,7 +98,7 @@ function HighlightedText({
     <>
       {text.split('').map((char, i) =>
         indexSet.has(i) ? (
-          <span key={i} className="text-blue-600 dark:text-blue-400 font-semibold">
+          <span key={i} className="text-accent dark:text-blue-400 font-semibold">
             {char}
           </span>
         ) : (
@@ -121,9 +121,9 @@ function KbdBadge({ shortcut }: { shortcut: string }) {
           className={cn(
             'inline-flex items-center justify-center',
             'min-w-[1.4rem] h-5 px-1 rounded text-[10px] font-mono font-medium',
-            'bg-gray-100 dark:bg-gray-700',
-            'text-gray-500 dark:text-gray-400',
-            'border border-gray-300 dark:border-gray-600',
+            'bg-paper-shade dark:bg-gray-700',
+            'text-ink-faint dark:text-ink-faint',
+            'border border-rule-strong dark:border-gray-600',
             'shadow-[0_1px_0_0_theme(colors.gray.300)] dark:shadow-[0_1px_0_0_theme(colors.gray.600)]'
           )}
         >
@@ -426,7 +426,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       <div
         className={cn(
           'relative z-10 w-full max-w-lg',
-          'bg-white dark:bg-gray-900',
+          'bg-paper dark:bg-gray-900',
           'rounded-xl shadow-2xl ring-1 ring-black/10 dark:ring-white/10',
           'flex flex-col overflow-hidden',
           'max-h-[60vh]',
@@ -438,8 +438,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         }}
       >
         {/* Search row */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-rule dark:border-gray-700 shrink-0">
+          <Search className="w-4 h-4 text-ink-faint dark:text-ink-faint shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -448,14 +448,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             placeholder="Type a command or search…"
             className={cn(
               'flex-1 bg-transparent outline-none',
-              'text-sm text-gray-900 dark:text-gray-100',
-              'placeholder:text-gray-400 dark:placeholder:text-gray-500'
+              'text-sm text-ink dark:text-gray-100',
+              'placeholder:text-ink-faint dark:placeholder:text-ink-faint'
             )}
             autoComplete="off"
             spellCheck={false}
           />
           <kbd className="hidden sm:inline-flex items-center gap-0.5 shrink-0">
-            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5">
+            <span className="text-[10px] font-mono text-ink-faint dark:text-ink-faint bg-paper-shade dark:bg-gray-800 border border-rule-strong dark:border-gray-600 rounded px-1 py-0.5">
               ESC
             </span>
           </kbd>
@@ -464,7 +464,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         {/* Results list */}
         <div ref={listRef} className="overflow-y-auto flex-1 py-1.5">
           {filteredCommands.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-10">
+            <p className="text-center text-sm text-ink-faint dark:text-ink-faint py-10">
               No commands found for &quot;{query}&quot;
             </p>
           ) : (
@@ -472,7 +472,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               <div key={category}>
                 {/* Category header */}
                 <div className="px-4 pt-3 pb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 select-none">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint dark:text-ink-faint select-none">
                     {category}
                   </span>
                 </div>
@@ -494,7 +494,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                         'text-sm transition-colors duration-75',
                         isActive
                           ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                          : 'text-ink-soft dark:text-gray-300 hover:bg-paper-shade dark:hover:bg-gray-800/60'
                       )}
                     >
                       {/* Icon */}
@@ -502,8 +502,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                         className={cn(
                           'shrink-0 w-7 h-7 rounded-md flex items-center justify-center',
                           isActive
-                            ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                            ? 'bg-blue-100 dark:bg-blue-900/60 text-accent dark:text-blue-400'
+                            : 'bg-paper-shade dark:bg-gray-800 text-ink-faint dark:text-ink-faint'
                         )}
                       >
                         {cmd.icon}
@@ -528,14 +528,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         </div>
 
         {/* Footer hint */}
-        <div className="shrink-0 flex items-center gap-3 px-4 py-2 border-t border-gray-100 dark:border-gray-800">
-          <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+        <div className="shrink-0 flex items-center gap-3 px-4 py-2 border-t border-rule dark:border-gray-800">
+          <span className="flex items-center gap-1 text-[11px] text-ink-faint dark:text-ink-faint">
             <kbd className="font-mono">↑↓</kbd> navigate
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+          <span className="flex items-center gap-1 text-[11px] text-ink-faint dark:text-ink-faint">
             <kbd className="font-mono">↵</kbd> select
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+          <span className="flex items-center gap-1 text-[11px] text-ink-faint dark:text-ink-faint">
             <kbd className="font-mono">ESC</kbd> close
           </span>
         </div>

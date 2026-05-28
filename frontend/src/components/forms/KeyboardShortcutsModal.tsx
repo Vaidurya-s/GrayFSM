@@ -22,7 +22,7 @@ interface KeyboardShortcutsModalProps {
 
 function KeyBadge({ label }: { label: string }) {
   return (
-    <kbd className="inline-flex items-center justify-center min-w-[1.75rem] px-1.5 py-0.5 text-xs font-mono font-semibold bg-gray-100 border border-gray-300 rounded shadow-sm text-gray-700">
+    <kbd className="inline-flex items-center justify-center min-w-[1.75rem] px-1.5 py-0.5 text-xs font-mono font-semibold bg-paper-shade border border-rule-strong rounded shadow-sm text-ink-soft">
       {label}
     </kbd>
   );
@@ -39,13 +39,13 @@ export default function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsMod
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div className="bg-paper rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Keyboard Shortcuts</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+          <h2 className="text-lg font-semibold text-ink">Keyboard Shortcuts</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1 rounded-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade transition-colors"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,7 +58,7 @@ export default function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsMod
         <div className="px-6 py-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+              <tr className="text-left text-xs font-semibold text-ink-faint uppercase tracking-wider border-b border-rule">
                 <th className="pb-2 w-1/2">Keys</th>
                 <th className="pb-2">Action</th>
               </tr>
@@ -72,21 +72,21 @@ export default function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsMod
                         <span key={ki} className="inline-flex items-center gap-1">
                           <KeyBadge label={k} />
                           {ki < row.keys.length - 1 && (
-                            <span className="text-gray-400 text-xs">+</span>
+                            <span className="text-ink-faint text-xs">+</span>
                           )}
                         </span>
                       ))}
                     </span>
                   </td>
-                  <td className="py-2.5 text-gray-700">{row.description}</td>
+                  <td className="py-2.5 text-ink-soft">{row.description}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="px-6 py-3 bg-gray-50 rounded-b-lg border-t border-gray-200">
-          <p className="text-xs text-gray-500">
+        <div className="px-6 py-3 bg-paper-shade rounded-b-lg border-t border-rule">
+          <p className="text-xs text-ink-faint">
             Shortcuts are disabled when a text field is focused.
           </p>
         </div>
