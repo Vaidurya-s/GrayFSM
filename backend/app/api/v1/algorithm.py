@@ -92,11 +92,22 @@ async def optimize_fsm(
         from app.api.v1.tasks import create_task
 
         # Verify ownership synchronously so the user gets immediate 404 on
-        # someone else's FSM, instead of a task that fails async.
+        # someone else's FSM, instead of a task that fails async. Also
+        # block re-optimization here so the user finds out before queuing
+        # rather than via task-status polling.
         try:
-            await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
+            fsm = await OptimizationService(db).verify_ownership(fsm_id, user_id=user_id)
         except FSMNotFoundException:
             raise HTTPException(status_code=404, detail="FSM not found") from None
+        if fsm is not None and fsm.is_optimized:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "This FSM is already an optimization result. Re-optimizing "
+                    "it would compound dummy states. Optimize the source FSM "
+                    "instead (use the Lab Report link to reach it)."
+                ),
+            ) from None
 
         task_id = str(uuid.uuid4())
         create_task(task_id, str(fsm_id), user_id=str(user_id))
