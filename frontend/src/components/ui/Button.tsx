@@ -31,8 +31,9 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs gap-1.5',
-  md: 'px-4 py-2 text-sm gap-2',
+  // Mobile gets ~32-36px tall (touch-comfortable); desktop unchanged.
+  sm: 'px-3 py-2 sm:py-1.5 text-xs gap-1.5',
+  md: 'px-4 py-2.5 sm:py-2 text-sm gap-2',
   lg: 'px-5 py-2.5 text-base gap-2',
 };
 
