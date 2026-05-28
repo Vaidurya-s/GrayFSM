@@ -79,14 +79,17 @@ function StateNode({ data, selected }: NodeProps<StateNodeData>) {
       />
 
       {/* main label area */}
-      <div className="flex-1 px-3 py-2 flex flex-col items-center justify-center">
+      <div className="flex-1 px-3 py-2 flex flex-col items-center justify-center min-w-0">
         {/* tabular figures so digits in state names ("S0", "S10") line
          *  up vertically with the encoding subtitle below. */}
-        <div className="font-mono font-tabular font-semibold uppercase tracking-[0.06em] text-[0.95rem] text-ink truncate max-w-full">
+        {/* Wrap long names instead of ellipsising ("S2_renamed" -> "S2_RENAME…").
+         *  break-all on the unlikely all-caps long-token case keeps the node
+         *  from blowing out horizontally. */}
+        <div className="font-mono font-tabular font-semibold uppercase tracking-[0.06em] text-[0.95rem] text-ink text-center break-all leading-tight">
           {data.label}
         </div>
         {subtitle && (
-          <div className="font-mono text-[0.72rem] text-accent font-tabular truncate max-w-full mt-0.5">
+          <div className="font-mono text-[0.72rem] text-accent font-tabular text-center break-all leading-tight mt-0.5">
             {subtitle}
           </div>
         )}

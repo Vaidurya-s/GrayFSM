@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import type { AxiosError } from 'axios';
 import { FSM_TYPES, VISIBILITY_OPTIONS } from '../../config/constants';
 import { useCreateFSM } from '../../hooks/useFSM';
 import { useFSMStore } from '../../store/fsmStore';
@@ -162,7 +163,13 @@ export default function FSMCreateForm({ onSuccess, onCancel }: FSMCreateFormProp
         <div className="bg-red-50 border border-red-200 rounded p-3">
           <p className="text-sm text-red-800">
             Failed to create FSM.{' '}
-            {createFSM.error instanceof Error ? createFSM.error.message : 'Please try again.'}
+            {/* Surface the backend's validation detail (Pydantic / service
+                validator) instead of the generic axios message — tells the
+                user exactly what was rejected (duplicate state, Moore output
+                missing, initial_state not in list, etc.). */}
+            {(createFSM.error as AxiosError<{ detail?: string }> | undefined)?.response?.data
+              ?.detail ||
+              (createFSM.error instanceof Error ? createFSM.error.message : 'Please try again.')}
           </p>
         </div>
       )}

@@ -56,10 +56,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const me = await authAPI.me();
       set({ token, user: me.data, isAuthenticated: true });
-    } catch {
-      // Token invalid/expired — drop it.
-      localStorage.removeItem(TOKEN_KEY);
-      set({ token: null, user: null, isAuthenticated: false });
+    } catch (err) {
+      // Only treat 401/403 as "session expired" and drop the token.
+      // Transient backend errors (502/503/timeout/network) must NOT log the
+      // user out — a single hiccup would otherwise wipe an authenticated
+      // session and force re-login. We keep the token + last known auth
+      // state so the next request can succeed when the backend recovers.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
+        localStorage.removeItem(TOKEN_KEY);
+        set({ token: null, user: null, isAuthenticated: false });
+      } else {
+        set({ token, isAuthenticated: true });
+      }
     } finally {
       set({ loading: false });
     }
