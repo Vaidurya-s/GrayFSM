@@ -18,7 +18,6 @@ import {
 } from '../components/ui';
 import type { ExportFormat, ExportResponse } from '../types/fsm';
 import type { APIResponse } from '../api/client';
-import type { AxiosResponse } from 'axios';
 
 // ------------------------------------------------------------------ //
 // Types
@@ -186,7 +185,9 @@ interface CodePreviewProps {
 }
 
 function CodePreview({ content }: CodePreviewProps) {
-  const lines = content.split('\n');
+  // Defensive: a malformed export response (missing content) should render
+  // an empty preview instead of crashing the whole page.
+  const lines = (content ?? '').split('\n');
 
   return (
     <div className="relative font-mono text-sm leading-relaxed overflow-x-auto bg-paper-deep">
@@ -264,11 +265,14 @@ export default function ExportPage() {
         },
       };
       const response = await exportMutation.mutateAsync({ fsmId: id, request });
-      // The axios interceptor returns the full AxiosResponse at runtime;
-      // unwrap the envelope: response.data.data
-      const axiosResp = response as unknown as AxiosResponse<APIResponse<ExportResponse>>;
+      // The axios interceptor already returns response.data (the wrapped
+      // body), so `response` IS `{ success, data: ExportResponse, … }`.
+      // Just pull `.data` off — the previous `response.data.data` indirection
+      // was one level too deep and produced an ExportResponse with no
+      // `content`, which crashed CodePreview's split('\n').
+      const wrapped = response as unknown as APIResponse<ExportResponse>;
       const result: ExportResponse =
-        axiosResp.data?.data ?? (response as unknown as ExportResponse);
+        wrapped?.data ?? (response as unknown as ExportResponse);
       setExportResult(result);
       toastSuccess('Export generated successfully');
     } catch {
