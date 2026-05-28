@@ -283,7 +283,7 @@ export default function EditorPage() {
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-sm text-gray-600">Loading FSM...</p>
+          <p className="mt-4 text-sm text-ink-soft">Loading FSM...</p>
         </div>
       </div>
     );
@@ -313,12 +313,12 @@ export default function EditorPage() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
       {/* Toolbar */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
+      <div className="bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
             data-testid="editor-toggle-sidebar"
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-1.5 rounded-md text-ink-faint hover:text-ink-soft dark:hover:text-gray-300 hover:bg-paper-shade dark:hover:bg-gray-800"
             title="Toggle sidebar"
             aria-label="Toggle sidebar"
           >
@@ -327,12 +327,12 @@ export default function EditorPage() {
             </svg>
           </button>
           <div>
-            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mb-0.5">
-              <Link to={ROUTES.HOME} className="hover:text-gray-600 dark:hover:text-gray-300">Home</Link>
+            <div className="flex items-center gap-1 text-xs text-ink-faint dark:text-ink-faint mb-0.5">
+              <Link to={ROUTES.HOME} className="hover:text-ink-soft dark:hover:text-gray-300">Home</Link>
               <span>/</span>
-              <span className="text-gray-700 dark:text-gray-200">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
+              <span className="text-ink-soft dark:text-gray-200">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-ink-faint dark:text-ink-faint">
               <span className="font-tabular">{draftStates.length}</span> states, <span className="font-tabular">{draftTransitions.length}</span> transitions
             </p>
           </div>
@@ -344,7 +344,7 @@ export default function EditorPage() {
             onClick={() => modals.openShortcuts()}
             data-testid="editor-shortcuts-help"
             title="Keyboard shortcuts (?)"
-            className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="p-1.5 rounded-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade"
             aria-label="Show keyboard shortcuts"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,27 +358,27 @@ export default function EditorPage() {
           </button>
 
           {/* Undo / Redo buttons */}
-          <div className="flex items-center gap-1 border border-gray-200 rounded-md">
+          <div className="flex items-center gap-1 border border-rule rounded-md">
             <button
               onClick={() => undo()}
               disabled={!canUndo}
               data-testid="editor-undo"
               title="Undo (Ctrl+Z)"
               aria-label="Undo"
-              className="p-1.5 rounded-l-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-l-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 010 10H9m-6-10l4-4M3 10l4 4" />
               </svg>
             </button>
-            <div className="w-px h-5 bg-gray-200" />
+            <div className="w-px h-5 bg-paper-deep" />
             <button
               onClick={() => redo()}
               disabled={!canRedo}
               data-testid="editor-redo"
               title="Redo (Ctrl+Shift+Z)"
               aria-label="Redo"
-              className="p-1.5 rounded-r-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-r-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a5 5 0 000 10h4m6-10l-4-4m4 4l-4 4" />
@@ -390,7 +390,7 @@ export default function EditorPage() {
           <button
             onClick={() => modals.openImport()}
             data-testid="editor-import"
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
           >
             Import
           </button>
@@ -399,7 +399,7 @@ export default function EditorPage() {
             onClick={handleAddState}
             data-testid="editor-add-state"
             aria-label="Add new state"
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
           >
             + Add State
           </button>
@@ -436,7 +436,7 @@ export default function EditorPage() {
         {/* Canvas */}
         <div className="flex-1 relative">
           {draftStates.length === 0 ? (
-            <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-center justify-center h-full bg-paper-shade dark:bg-gray-900">
               <div className="text-center max-w-md">
                 <svg
                   className="mx-auto h-16 w-16 text-gray-300"
@@ -451,10 +451,10 @@ export default function EditorPage() {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                <h3 className="mt-4 text-lg font-medium text-ink dark:text-white">
                   No states yet
                 </h3>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-sm text-ink-faint dark:text-ink-faint">
                   Click &quot;Add State&quot; to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
@@ -469,7 +469,7 @@ export default function EditorPage() {
                   <button
                     onClick={() => modals.openImport()}
                     data-testid="editor-import-empty"
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
                   >
                     Import JSON
                   </button>
@@ -487,7 +487,7 @@ export default function EditorPage() {
         {sidebarOpen && (
           <div
             className={cn(
-              'border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto',
+              'border-l border-rule dark:border-gray-700 bg-paper dark:bg-gray-900 overflow-y-auto',
               'flex flex-col gap-4 p-4',
               'absolute inset-y-0 right-0 z-40 w-72 lg:relative lg:z-auto'
             )}
@@ -496,10 +496,10 @@ export default function EditorPage() {
             <PropertyPanel />
 
             {/* State list */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">States</h3>
+            <div className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">States</h3>
               {draftStates.length === 0 ? (
-                <p className="text-xs text-gray-500">No states added yet.</p>
+                <p className="text-xs text-ink-faint">No states added yet.</p>
               ) : (
                 <ul className="space-y-1">
                   {draftStates.map((s) => (
@@ -512,12 +512,12 @@ export default function EditorPage() {
                       aria-label={`Select state ${s.name}`}
                       className={cn(
                         'text-xs px-2 py-1.5 rounded cursor-pointer flex items-center gap-2',
-                        'focus:outline-none focus:ring-2 focus:ring-blue-500',
+                        'focus:outline-none focus:ring-2 focus:ring-accent',
                         s.id === draftInitialState && 'bg-green-50 text-green-700',
                         s.is_dummy && 'bg-orange-50 text-orange-700',
                         !s.is_dummy &&
                           s.id !== draftInitialState &&
-                          'hover:bg-gray-50 text-gray-700'
+                          'hover:bg-paper-shade text-ink-soft'
                       )}
                     >
                       <span className="font-medium">{s.name}</span>
@@ -538,12 +538,12 @@ export default function EditorPage() {
             </div>
 
             {/* Transition list */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+            <div className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">
                 Transitions
               </h3>
               {draftTransitions.length === 0 ? (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-faint">
                   No transitions. Connect states by dragging between handles.
                 </p>
               ) : (
@@ -551,11 +551,11 @@ export default function EditorPage() {
                   {draftTransitions.map((t, i) => (
                     <li
                       key={i}
-                      className="text-xs px-2 py-1.5 rounded hover:bg-gray-50 text-gray-700"
+                      className="text-xs px-2 py-1.5 rounded hover:bg-paper-shade text-ink-soft"
                     >
                       {t.from_state} &rarr; {t.to_state}
                       {t.input && (
-                        <span className="text-gray-400 ml-1">
+                        <span className="text-ink-faint ml-1">
                           [{t.input}{t.output ? `/${t.output}` : ''}]
                         </span>
                       )}
@@ -572,10 +572,10 @@ export default function EditorPage() {
       {modals.createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            className="bg-paper rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
             data-testid="create-fsm-modal"
           >
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <h2 className="text-lg font-semibold text-ink mb-4">
               Create New FSM
             </h2>
             <FSMCreateForm
@@ -595,14 +595,14 @@ export default function EditorPage() {
       {modals.importOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            className="bg-paper rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
             data-testid="import-fsm-modal"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Import FSM</h2>
+              <h2 className="text-lg font-semibold text-ink">Import FSM</h2>
               <button
                 onClick={() => modals.closeImport()}
-                className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                className="p-1 rounded-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

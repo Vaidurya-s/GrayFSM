@@ -16,22 +16,22 @@ const typeConfig: Record<
   { wrapper: string; icon: ReactNode; iconColor: string }
 > = {
   success: {
-    wrapper: 'bg-white border-green-200',
+    wrapper: 'bg-paper border-green-200',
     iconColor: 'text-green-500',
     icon: <CheckCircle className="h-5 w-5" />,
   },
   error: {
-    wrapper: 'bg-white border-red-200',
+    wrapper: 'bg-paper border-red-200',
     iconColor: 'text-red-500',
     icon: <XCircle className="h-5 w-5" />,
   },
   warning: {
-    wrapper: 'bg-white border-yellow-200',
+    wrapper: 'bg-paper border-yellow-200',
     iconColor: 'text-yellow-500',
     icon: <AlertTriangle className="h-5 w-5" />,
   },
   info: {
-    wrapper: 'bg-white border-blue-200',
+    wrapper: 'bg-paper border-blue-200',
     iconColor: 'text-blue-500',
     icon: <Info className="h-5 w-5" />,
   },
@@ -75,16 +75,16 @@ function ToastItem({
 
       <div className="flex-1 min-w-0">
         {toast.title && (
-          <p className="text-sm font-semibold text-gray-900">{toast.title}</p>
+          <p className="text-sm font-semibold text-ink">{toast.title}</p>
         )}
-        <p className="text-sm text-gray-700">{toast.message}</p>
+        <p className="text-sm text-ink-soft">{toast.message}</p>
       </div>
 
       <button
         type="button"
         onClick={() => onRemove(toast.id)}
         aria-label="Dismiss notification"
-        className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+        className="shrink-0 rounded p-0.5 text-ink-faint hover:text-ink-soft hover:bg-paper-shade transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
       >
         <X className="h-4 w-4" />
       </button>

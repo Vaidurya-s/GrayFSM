@@ -56,14 +56,14 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
       data-testid="optimization-form"
     >
       <div>
-        <label htmlFor="algorithm" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="algorithm" className="block text-sm font-medium text-ink-soft">
           Algorithm
         </label>
         <select
           {...register('algorithm')}
           id="algorithm"
           data-testid="optimization-algorithm-select"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm"
         >
           {SUPPORTED_ALGORITHMS.map((algo) => (
             <option key={algo.value} value={algo.value}>
@@ -77,7 +77,7 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
       </div>
 
       <div>
-        <label htmlFor="timeout_ms" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="timeout_ms" className="block text-sm font-medium text-ink-soft">
           Timeout (ms)
         </label>
         <input
@@ -85,17 +85,17 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
           id="timeout_ms"
           type="number"
           data-testid="optimization-timeout"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm"
         />
       </div>
 
       {showAdvanced && (
-        <div className="border-t border-gray-200 pt-4 space-y-3">
-          <h4 className="text-sm font-medium text-gray-700">Advanced Options</h4>
+        <div className="border-t border-rule pt-4 space-y-3">
+          <h4 className="text-sm font-medium text-ink-soft">Advanced Options</h4>
           {selectedAlgorithm === 'global_sa' && (
             <>
               <div>
-                <label htmlFor="temperature" className="block text-xs text-gray-600">
+                <label htmlFor="temperature" className="block text-xs text-ink-soft">
                   Initial Temperature
                 </label>
                 <input
@@ -104,12 +104,12 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
                   type="number"
                   step="0.1"
                   data-testid="optimization-temperature"
-                  className="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 block w-full px-3 py-1.5 border border-rule-strong rounded-md text-sm"
                   placeholder="1000"
                 />
               </div>
               <div>
-                <label htmlFor="cooling_rate" className="block text-xs text-gray-600">
+                <label htmlFor="cooling_rate" className="block text-xs text-ink-soft">
                   Cooling Rate (0-1)
                 </label>
                 <input
@@ -118,14 +118,14 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
                   type="number"
                   step="0.001"
                   data-testid="optimization-cooling-rate"
-                  className="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                  className="mt-1 block w-full px-3 py-1.5 border border-rule-strong rounded-md text-sm"
                   placeholder="0.995"
                 />
               </div>
             </>
           )}
           <div>
-            <label htmlFor="iterations" className="block text-xs text-gray-600">
+            <label htmlFor="iterations" className="block text-xs text-ink-soft">
               Max Iterations
             </label>
             <input
@@ -133,7 +133,7 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
               id="iterations"
               type="number"
               data-testid="optimization-iterations"
-              className="mt-1 block w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+              className="mt-1 block w-full px-3 py-1.5 border border-rule-strong rounded-md text-sm"
               placeholder="10000"
             />
           </div>
@@ -144,7 +144,7 @@ export default function OptimizationForm({ onSubmit, isLoading }: OptimizationFo
         type="submit"
         disabled={isLoading}
         data-testid="optimization-submit"
-        className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
