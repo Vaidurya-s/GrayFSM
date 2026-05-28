@@ -417,11 +417,12 @@ export default function ExamplesPage() {
               label: (
                 <>
                   {t.label}
-                  {byCategory[t.value as Category].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
-                      {byCategory[t.value as Category].length}
-                    </span>
-                  )}
+                  {/* Always render the badge — including 0 — so the
+                      COMPLEX tab isn't visually inconsistent with
+                      SIMPLE/MEDIUM when empty. */}
+                  <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
+                    {byCategory[t.value as Category].length}
+                  </span>
                 </>
               ),
             }))}
@@ -462,11 +463,9 @@ export default function ExamplesPage() {
               label: (
                 <>
                   {t.label}
-                  {byDifficulty[t.value].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
-                      {byDifficulty[t.value].length}
-                    </span>
-                  )}
+                  <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
+                    {byDifficulty[t.value].length}
+                  </span>
                 </>
               ),
             }))}
@@ -506,11 +505,12 @@ export default function ExamplesPage() {
               label: (
                 <>
                   {t.label}
-                  {byCategory[t.value as Category].length > 0 && (
-                    <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
-                      {byCategory[t.value as Category].length}
-                    </span>
-                  )}
+                  {/* Always render the badge — including 0 — so the
+                      COMPLEX tab isn't visually inconsistent with
+                      SIMPLE/MEDIUM when empty. */}
+                  <span className="ml-1.5 rounded-full bg-rule px-1.5 text-[10px] font-semibold text-ink-soft">
+                    {byCategory[t.value as Category].length}
+                  </span>
                 </>
               ),
             }))}

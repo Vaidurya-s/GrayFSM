@@ -311,9 +311,12 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
-      {/* Toolbar */}
-      <div className="bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-4 py-2 flex items-center justify-between">
+    // `relative` contains the absolute sidebar to the editor area so it
+    // can't extend up over the sticky navbar.
+    <div className="relative h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
+      {/* Toolbar — relative + z-30 puts it above the sidebar so the
+          shortcut/help button + Import JSON aren't obscured. */}
+      <div className="relative z-30 bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
@@ -489,7 +492,9 @@ export default function EditorPage() {
             className={cn(
               'border-l border-rule dark:border-gray-700 bg-paper dark:bg-gray-900 overflow-y-auto',
               'flex flex-col gap-4 p-4',
-              'absolute inset-y-0 right-0 z-40 w-72 lg:relative lg:z-auto'
+              // z-20 keeps the sidebar below the editor toolbar (z-30) and
+              // the navbar (z-50) so it can't obscure controls.
+              'absolute inset-y-0 right-0 z-20 w-72 lg:relative lg:z-auto'
             )}
             data-testid="editor-sidebar"
           >

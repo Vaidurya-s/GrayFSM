@@ -68,7 +68,9 @@ export default function Navbar() {
 
   return (
     <nav
-      className="bg-paper border-b border-ink sticky top-0 z-30"
+      // z-50 so any in-page absolute element (e.g. the editor sidebar) can
+      // never cover the navbar controls (theme toggle, NEW, logout).
+      className="bg-paper border-b border-ink sticky top-0 z-50"
       data-testid="navbar"
     >
       <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -114,8 +116,10 @@ export default function Navbar() {
 
           {/* Right meta + actions (desktop) */}
           <div className="hidden md:flex items-center gap-4">
-            <span className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint">
-              build <span className="text-accent">{buildHash}</span>
+            {/* Build hash — informational only; styled as muted text so it
+                doesn't read as a link. */}
+            <span className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-faint select-text">
+              build <span className="text-ink-soft">{buildHash}</span>
             </span>
 
             <button
@@ -125,8 +129,10 @@ export default function Navbar() {
               aria-label={`Switch theme (current: ${THEME_LABEL[theme]})`}
               className={cn(
                 'inline-flex items-center justify-center h-7 w-7',
-                'border border-rule-strong text-ink-soft',
-                'hover:border-ink hover:text-ink',
+                // text-ink (not ink-soft) so the icon stays readable in dark
+                // mode where ink-soft renders near the muted navbar grey.
+                'border border-rule-strong text-ink',
+                'hover:border-ink hover:bg-paper-shade',
                 'focus-ring transition-colors',
               )}
               data-testid="theme-toggle"
