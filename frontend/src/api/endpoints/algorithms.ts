@@ -13,6 +13,9 @@ import {
 export const algorithmAPI = {
   /**
    * Optimize FSM with specified algorithm
+   *
+   * Same bare-body tolerance as fsmAPI: when the backend response_wrapper
+   * skips the envelope, treat the raw body as `data`.
    */
   optimize: async (
     fsmId: string,
@@ -22,6 +25,13 @@ export const algorithmAPI = {
       `/fsms/${fsmId}/optimize`,
       request,
     )) as unknown as APIResponse<OptimizationResponse>;
+    const raw = res as unknown as Record<string, unknown>;
+    if (raw && typeof raw === 'object' && 'optimized_fsm_id' in raw && !('data' in raw)) {
+      return {
+        success: true,
+        data: normalizeOptimizationResponse(raw as Partial<OptimizationResponse>),
+      } as unknown as APIResponse<OptimizationResponse>;
+    }
     return { ...res, data: normalizeOptimizationResponse(res.data) };
   },
 
@@ -35,6 +45,12 @@ export const algorithmAPI = {
     const res = (await apiClient.get(`/fsms/${fsmId}/results`, {
       params: { algorithm },
     })) as unknown as APIResponse<AlgorithmResult[]>;
+    if (Array.isArray(res)) {
+      return {
+        success: true,
+        data: (res as unknown as AlgorithmResult[]).map(normalizeAlgorithmResult),
+      } as unknown as APIResponse<AlgorithmResult[]>;
+    }
     return { ...res, data: (res.data ?? []).map(normalizeAlgorithmResult) };
   },
 
@@ -52,6 +68,12 @@ export const algorithmAPI = {
       algorithms,
       options,
     })) as unknown as APIResponse<AlgorithmResult[]>;
+    if (Array.isArray(res)) {
+      return {
+        success: true,
+        data: (res as unknown as AlgorithmResult[]).map(normalizeAlgorithmResult),
+      } as unknown as APIResponse<AlgorithmResult[]>;
+    }
     return { ...res, data: (res.data ?? []).map(normalizeAlgorithmResult) };
   },
 
