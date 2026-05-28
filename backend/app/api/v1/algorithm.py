@@ -181,6 +181,11 @@ async def get_optimization_results(
                 "avg_hamming_after": float(row.avg_hamming_after)
                 if row.avg_hamming_after is not None
                 else None,
+                # Snapshot fields added by migration e6a8c9d0b3f1 so a
+                # revisited lab report can reconstruct radar + hypercube.
+                "max_hamming_before": row.max_hamming_before,
+                "max_hamming_after": row.max_hamming_after,
+                "encoding_map": row.encoding_map or {},
                 "improvement_percentage": float(row.improvement_percentage)
                 if row.improvement_percentage is not None
                 else None,

@@ -373,6 +373,12 @@ class OptimizationService:
             total_states_final=len(outcome.states_list),
             avg_hamming_before=round(metrics.avg_before, 2),
             avg_hamming_after=round(metrics.avg_after, 2),
+            # Snapshot the full metrics + final encoding so a revisit to the
+            # lab report can reconstruct every chart (radar uses max, hypercube
+            # uses encoding) without re-running the algorithm.
+            max_hamming_before=metrics.max_before,
+            max_hamming_after=metrics.max_after,
+            encoding_map=dict(outcome.encodings) if outcome.encodings else None,
             improvement_percentage=round(metrics.improvement_pct, 2),
             execution_time_ms=outcome.execution_time_ms,
             success=True,
