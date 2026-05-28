@@ -55,6 +55,10 @@ export default function OptimizationPage() {
   const [result, setResult] = useState<OptimizationResponse | null>(null);
   const [originalFSM, setOriginalFSM] = useState<FSM | null>(null);
   const [optimizedFSM, setOptimizedFSM] = useState<FSM | null>(null);
+  // Surfaces the failure mode when the post-optimization fetch of the
+  // derived FSM fails (used by the comparison panel to render an error
+  // instead of an infinite "Loading optimized FSM..." spinner).
+  const [optimizedFSMError, setOptimizedFSMError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>('comparison');
 
   // Load FSM into store for the canvas and capture it as originalFSM.
@@ -99,11 +103,19 @@ export default function OptimizationPage() {
           const optFSM = w?.data ?? (fsmResp as unknown as FSM);
           if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
             setOptimizedFSM(optFSM);
+          } else {
+            setOptimizedFSMError('Optimized FSM response was empty.');
           }
         })
-        .catch(() => {
-          // Comparison tab will show its loading fallback; the rest of the
-          // lab report (charts, metrics) still renders from `result`.
+        .catch((e: unknown) => {
+          const status = (e as { response?: { status?: number } })?.response?.status;
+          const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data
+            ?.detail;
+          setOptimizedFSMError(
+            detail
+              ? `Failed to load optimized FSM (${status ?? 'network'}): ${detail}`
+              : `Failed to load optimized FSM${status ? ` (HTTP ${status})` : ''}.`,
+          );
         });
     }
   }, [pastResultsResp, result]);
@@ -126,6 +138,8 @@ export default function OptimizationPage() {
       setResult(optimizationResult);
 
       // Fetch optimized FSM immediately so ComparisonView has both sides ready
+      setOptimizedFSM(null);
+      setOptimizedFSMError(null);
       if (optimizationResult?.optimized_fsm_id) {
         try {
           const fsmResp = await fsmAPI.get(optimizationResult.optimized_fsm_id);
@@ -133,9 +147,20 @@ export default function OptimizationPage() {
           const optFSM = fsmWrapped?.data ?? (fsmResp as unknown as FSM);
           if (optFSM && typeof optFSM === 'object' && 'id' in optFSM) {
             setOptimizedFSM(optFSM);
+          } else {
+            setOptimizedFSMError('Optimized FSM response was empty.');
           }
-        } catch {
-          // Silently fail — ComparisonView tab will show a loading fallback
+        } catch (e) {
+          // Surface the error in the comparison panel so a stuck fetch
+          // doesn't leave the user staring at an infinite spinner.
+          const status = (e as { response?: { status?: number } })?.response?.status;
+          const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data
+            ?.detail;
+          setOptimizedFSMError(
+            detail
+              ? `Failed to load optimized FSM (${status ?? 'network'}): ${detail}`
+              : `Failed to load optimized FSM${status ? ` (HTTP ${status})` : ''}.`,
+          );
         }
       }
 
@@ -270,6 +295,16 @@ export default function OptimizationPage() {
                           metrics={result}
                         />
                       </ErrorBoundary>
+                    ) : optimizedFSMError ? (
+                      <div className="flex items-center justify-center h-full p-6">
+                        <Alert variant="error" title="Optimized FSM unavailable">
+                          {optimizedFSMError}{' '}
+                          <span className="text-ink-soft">
+                            Metrics, hypercube, and lab-report charts above are still
+                            populated from the optimization result.
+                          </span>
+                        </Alert>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center text-ink-faint">
