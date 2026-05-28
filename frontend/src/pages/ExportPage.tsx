@@ -190,7 +190,7 @@ function CodePreview({ content }: CodePreviewProps) {
   const lines = (content ?? '').split('\n');
 
   return (
-    <div className="relative font-mono text-sm leading-relaxed overflow-x-auto bg-paper-deep">
+    <div className="relative font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto bg-paper-deep">
       <table className="w-full border-collapse">
         <tbody>
           {lines.map((line, idx) => (
@@ -423,7 +423,7 @@ export default function ExportPage() {
               {EXPORT_FORMATS.map((fmt) => (
                 <TabPanel key={fmt.value} value={fmt.value} activeValue={activeFormat}>
                   {/* Preview toolbar — datasheet status bar */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-rule bg-paper-shade">
+                  <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2 border-b border-rule bg-paper-shade">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-ink-faint">
                         File
@@ -488,7 +488,7 @@ export default function ExportPage() {
 
                   {/* Code preview — datasheet code pane */}
                   <div
-                    className="bg-paper-deep min-h-[420px] overflow-auto"
+                    className="bg-paper-deep min-h-[280px] sm:min-h-[420px] overflow-auto"
                     data-testid="export-preview"
                   >
                     {exportResult ? (

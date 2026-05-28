@@ -26,12 +26,12 @@ export default function LoginPage() {
   };
 
   const fieldClass =
-    'mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-sm bg-paper text-ink placeholder-ink-faint';
+    'mt-1 block w-full px-3 py-2 border border-rule-strong rounded-md shadow-sm focus:ring-accent focus:border-accent text-base sm:text-sm bg-paper text-ink placeholder-ink-faint';
 
   return (
-    <div className="max-w-md mx-auto mt-12 px-4">
-      <h1 className="text-2xl font-bold text-ink mb-6">Sign in</h1>
-      <form onSubmit={onSubmit} className="space-y-4" data-testid="login-form">
+    <div className="max-w-md mx-auto mt-8 sm:mt-12 px-4 sm:px-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-ink mb-6">Sign in</h1>
+      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-4" data-testid="login-form">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-ink-soft">
             Email

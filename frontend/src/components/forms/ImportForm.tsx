@@ -278,7 +278,7 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-1">
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-1">
         <button
           type="button"
           onClick={handleImport}
