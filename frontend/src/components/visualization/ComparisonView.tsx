@@ -61,13 +61,13 @@ interface StaticCanvasProps {
 function StaticCanvas({ fsm, label, badge }: StaticCanvasProps) {
   const states: State[] =
     fsm.definition?.states ||
-    fsm.states.map((name, i) => ({
+    (fsm.states ?? []).map((name, i) => ({
       id: name,
       name,
       position: { x: 150 + (i % 4) * 200, y: 100 + Math.floor(i / 4) * 150 },
     }));
 
-  const transitions: Transition[] = fsm.transitions || [];
+  const transitions: Transition[] = fsm.transitions ?? [];
 
   const initialNodes = useMemo(
     () => statesToNodes(states, fsm.initial_state),
@@ -216,7 +216,7 @@ export default function ComparisonView({
         />
         <StatTile
           label="Improvement"
-          value={`${improvementPct.toFixed(1)}%`}
+          value={`${(improvementPct ?? 0).toFixed(1)}%`}
           tone="ok"
         />
       </div>
