@@ -142,8 +142,14 @@ export default function OptimizationPage() {
       // Default to the comparison tab when results arrive
       setActiveTab('comparison');
       toastSuccess('Optimization complete');
-    } catch {
-      toastError('Optimization failed');
+    } catch (err) {
+      // Surface the backend detail so the user can see why the run failed
+      // (e.g. "column 'max_hamming_before' does not exist" after a missed
+      // alembic upgrade, or a per-algorithm exception). Falls back to a
+      // generic toast if no detail is present.
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail;
+      toastError(detail ? `Optimization failed: ${detail}` : 'Optimization failed');
     }
   };
 

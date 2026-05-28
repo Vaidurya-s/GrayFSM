@@ -153,16 +153,73 @@ export const useFSMStore = create<FSMStore>((set, get) => ({
   },
 
   addState: (state) => {
-    set((s) => ({ draftStates: [...s.draftStates, state] }));
+    // Compute id/name/position INSIDE the set callback so two rapid clicks
+    // (which React batches against the same `draftStates` snapshot) can't
+    // produce duplicate IDs/positions. The caller's hints are honoured only
+    // if they don't collide with existing states.
+    set((s) => {
+      const used = new Set(s.draftStates.map((st) => st.id));
+      let id = state.id;
+      let name = state.name;
+      if (!id || !name || used.has(id) || used.has(name)) {
+        let n = 0;
+        while (used.has(`S${n}`)) n++;
+        id = `S${n}`;
+        name = `S${n}`;
+      }
+      // Position: derived from the deduped id's numeric suffix so two states
+      // can never land on the same spot. Circular layout, radius scaled.
+      const m = id.match(/^S(\d+)$/);
+      const i = m ? parseInt(m[1], 10) : s.draftStates.length;
+      const slots = Math.max(8, i + 1);
+      const radius = 80 * Math.min(slots, 8);
+      const angle = (2 * Math.PI * (i % slots)) / slots;
+      const position = {
+        x: Math.round(400 + radius * Math.cos(angle - Math.PI / 2)),
+        y: Math.round(300 + radius * Math.sin(angle - Math.PI / 2)),
+      };
+      return { draftStates: [...s.draftStates, { ...state, id, name, position }] };
+    });
     get().pushSnapshot();
   },
 
   updateState: (id, updates) => {
-    set((s) => ({
-      draftStates: s.draftStates.map((st) =>
-        st.id === id ? { ...st, ...updates } : st,
-      ),
-    }));
+    set((s) => {
+      const target = s.draftStates.find((st) => st.id === id);
+      // The app uses `id === name` everywhere (transitions key by name, the
+      // initial-state pointer stores the name). On rename we update the
+      // id too AND cascade the new name into transitions + draftInitialState
+      // so the sidebar list, the canvas labels, and the initial-state badge
+      // all stay in sync. Abort the rename on collision so two states can't
+      // end up with the same identifier.
+      const isRename = !!updates.name && target && updates.name !== target.name;
+      if (isRename) {
+        const newName = updates.name!;
+        const collision = s.draftStates.some(
+          (st) => st.id !== id && (st.id === newName || st.name === newName),
+        );
+        if (collision) return s; // no-op; UI shows the unchanged name
+        const oldName = target!.name;
+        return {
+          draftStates: s.draftStates.map((st) =>
+            st.id === id ? { ...st, ...updates, id: newName, name: newName } : st,
+          ),
+          draftTransitions: s.draftTransitions.map((t) => ({
+            ...t,
+            from_state: t.from_state === oldName ? newName : t.from_state,
+            to_state: t.to_state === oldName ? newName : t.to_state,
+          })),
+          draftInitialState:
+            s.draftInitialState === oldName ? newName : s.draftInitialState,
+          selectedNode: s.selectedNode === oldName ? newName : s.selectedNode,
+        };
+      }
+      return {
+        draftStates: s.draftStates.map((st) =>
+          st.id === id ? { ...st, ...updates } : st,
+        ),
+      };
+    });
     get().pushSnapshot();
   },
 

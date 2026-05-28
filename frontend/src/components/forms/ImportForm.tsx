@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react';
+import type { AxiosError } from 'axios';
 import { fsmAPI } from '../../api/endpoints/fsms';
 import type { FSMCreate } from '../../types/fsm';
 import { cn } from '../../utils/cn';
@@ -151,8 +152,14 @@ export default function ImportForm({ onSuccess, onCancel }: ImportFormProps) {
       const fsmId = (fsmData as { id: string }).id;
       onSuccess(fsmId);
     } catch (err) {
+      // Surface the backend's validation detail (e.g. "Initial state 'foo'
+      // not in states list", "Moore machines must have outputs defined for
+      // all states") instead of a generic 422 so the user can actually
+      // correct the file. Falls back to the axios message and a default.
+      const detail = (err as AxiosError<{ detail?: string }>)?.response?.data?.detail;
       setError(
-        err instanceof Error ? err.message : 'Failed to import FSM. Please try again.',
+        detail ||
+          (err instanceof Error ? err.message : 'Failed to import FSM. Please try again.'),
       );
     } finally {
       setIsImporting(false);
