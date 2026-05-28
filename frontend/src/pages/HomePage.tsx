@@ -487,7 +487,7 @@ export default function HomePage() {
 
         {/* ===================== § 0.2  ALGORITHMS ===================== */}
         <TypedSection number="0.2" title="Available optimisations">
-          <div className="grid grid-cols-1 md:grid-cols-3 border border-ink">
+          <div className="grid grid-cols-1 md:grid-cols-4 border border-ink">
             {algorithms.map((alg, idx) => (
               <article
                 key={alg.id}
@@ -580,6 +580,13 @@ const algorithms = [
     complexity: 'O(I · T)',
     desc:
       'Reassigns state encodings using temperature-driven acceptance to minimise total Hamming distance before resorting to dummy-state insertion. Escapes local optima.',
+  },
+  {
+    id: '004 / GA',
+    name: 'Genetic algorithm',
+    complexity: 'O(G · P · T)',
+    desc:
+      'Evolves a population of Gray-code assignments via selection, crossover, and random mutation each generation. Trades more compute for a broad exploration of the encoding search space.',
   },
 ];
 
