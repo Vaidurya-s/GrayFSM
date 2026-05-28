@@ -102,9 +102,14 @@ app = FastAPI(
     - OpenAPI spec: /openapi.json
     """,
     version=settings.app_version,
-    docs_url="/docs" if settings.debug else None,
-    redoc_url="/redoc" if settings.debug else None,
-    openapi_url="/openapi.json",
+    # Match the API_PREFIX so the spec is reachable through the same nginx
+    # proxy as every other endpoint (/api/v1/*). The frontend advertises
+    # /api/v1/openapi.json from the homepage colophon + AboutPage; before
+    # this, that link 404'd because openapi was mounted at the root path
+    # which nginx doesn't proxy.
+    docs_url="/api/v1/docs" if settings.debug else None,
+    redoc_url="/api/v1/redoc" if settings.debug else None,
+    openapi_url="/api/v1/openapi.json",
     lifespan=lifespan,
 )
 

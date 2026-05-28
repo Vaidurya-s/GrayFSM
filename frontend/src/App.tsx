@@ -177,16 +177,18 @@ function App() {
           element={<Navigate to={ROUTES.ABOUT} replace />}
         />
 
-        {/* 404 */}
+        {/* 404 — render NotFoundPage directly on the unmatched route so
+            location.pathname stays at the URL the user actually typed.
+            Previously this redirected to /404 first, which made the page
+            show "/404" as the requested path. */}
         <Route
-          path="/404"
+          path={ROUTES.NOT_FOUND}
           element={
             <AppLayout>
               <NotFoundPage />
             </AppLayout>
           }
         />
-        <Route path={ROUTES.NOT_FOUND} element={<Navigate to="/404" replace />} />
       </Routes>
       </ErrorBoundary>
       </AppWithCommandPalette>
