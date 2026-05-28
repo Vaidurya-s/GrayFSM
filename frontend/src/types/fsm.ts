@@ -99,6 +99,10 @@ export interface AlgorithmResult {
   total_states_final: number;
   avg_hamming_before: number;
   avg_hamming_after: number;
+  // Persisted by migration e6a8c9d0b3f1. Optional because rows written
+  // before that migration won't carry them.
+  max_hamming_before?: number | null;
+  max_hamming_after?: number | null;
   improvement_percentage: number;
   execution_time_ms: number;
   encoding_map: Record<string, string>;

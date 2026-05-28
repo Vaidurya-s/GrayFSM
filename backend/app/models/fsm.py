@@ -164,7 +164,15 @@ class AlgorithmResult(Base):
     total_states_final: Mapped[int] = mapped_column(Integer, nullable=False)
     avg_hamming_before: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
     avg_hamming_after: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
+    # Max Hamming on any single transition (before/after). Persisted so the
+    # MetricsDashboard radar chart round-trips when revisiting a past run.
+    max_hamming_before: Mapped[int | None] = mapped_column(Integer)
+    max_hamming_after: Mapped[int | None] = mapped_column(Integer)
     improvement_percentage: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
+    # Final state -> Gray-code encoding map for the optimized FSM. Persisted
+    # so the Hypercube tab can be reconstructed historically without
+    # recomputing the algorithm.
+    encoding_map: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
     # Performance
     execution_time_ms: Mapped[int] = mapped_column(Integer, nullable=False)

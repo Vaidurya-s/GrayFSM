@@ -119,3 +119,34 @@ export function normalizeAlgorithmResult(
     encoding_map: r.encoding_map ?? {},
   };
 }
+
+/**
+ * Single canonical transformation from the persistence-model
+ * AlgorithmResult to the runtime-model OptimizationResponse. Used to
+ * replay a stored lab report (most-recent or selected past run) without
+ * re-running the algorithm. Lives at the normalization boundary so the
+ * conversion isn't duplicated in component code.
+ *
+ * Fields backfilled with 0 / empty are display-only — they degrade
+ * gracefully and only affect partially-snapshotted rows written before
+ * migration e6a8c9d0b3f1 added max_hamming_* and encoding_map.
+ */
+export function normalizeAlgorithmResultToOptimizationResponse(
+  result: AlgorithmResult,
+): OptimizationResponse {
+  return {
+    optimized_fsm_id: result.optimized_fsm_id ?? '',
+    algorithm: result.algorithm,
+    execution_time_ms: result.execution_time_ms ?? 0,
+    dummy_states_added: result.dummy_states_added ?? 0,
+    total_states: result.total_states_final ?? 0,
+    improvement_percentage: result.improvement_percentage ?? 0,
+    metrics: {
+      avg_hamming_before: result.avg_hamming_before ?? 0,
+      avg_hamming_after: result.avg_hamming_after ?? 0,
+      max_hamming_before: result.max_hamming_before ?? 0,
+      max_hamming_after: result.max_hamming_after ?? 0,
+    },
+    encoding_map: result.encoding_map ?? {},
+  };
+}

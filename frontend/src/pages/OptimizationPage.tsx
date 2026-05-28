@@ -18,6 +18,7 @@ import MetricsDashboard from '../components/visualization/MetricsDashboard';
 const Hypercube3D = lazyWithRetry(() => import('../components/visualization/Hypercube3D'));
 import { ROUTES, generateRoute } from '../config/routes';
 import { fsmAPI } from '../api/endpoints/fsms';
+import { normalizeAlgorithmResultToOptimizationResponse } from '../api/normalize';
 import type {
   AlgorithmResult,
   OptimizationRequest,
@@ -76,34 +77,20 @@ export default function OptimizationPage() {
   // After a user runs Optimize and navigates away, the local `result` /
   // `optimizedFSM` state is lost. On revisit we restore the most recent
   // past run from GET /fsms/:id/results so the report is always viewable
-  // — no "re-run to see again" or empty graphs.
+  // — no "re-run to see again" or empty graphs. The AlgorithmResult →
+  // OptimizationResponse conversion lives in the normalization layer so
+  // this component stays focused on render concerns.
   const { data: pastResultsResp } = useOptimizationResults(id);
   useEffect(() => {
     if (result || !pastResultsResp) return;
     const wrapped = pastResultsResp as unknown as APIResponse<AlgorithmResult[]>;
     const list = wrapped?.data ?? [];
+    // Prefer a row with an optimized_fsm_id (so ComparisonView can render);
+    // fall back to the most recent row otherwise so the metrics + charts
+    // still come back even if the derived FSM was deleted.
     const latest = list.find((r) => r.optimized_fsm_id) ?? list[0];
     if (!latest) return;
-    // Synthesise an OptimizationResponse from the persisted AlgorithmResult.
-    // max_hamming_* aren't stored on the row, so they render as 0 — avg is
-    // what the charts care about. The OptimizationMetrics fields not present
-    // simply default to 0 via the normaliser.
-    const synthesized: OptimizationResponse = {
-      optimized_fsm_id: latest.optimized_fsm_id ?? '',
-      algorithm: latest.algorithm,
-      execution_time_ms: latest.execution_time_ms ?? 0,
-      dummy_states_added: latest.dummy_states_added ?? 0,
-      total_states: latest.total_states_final ?? 0,
-      improvement_percentage: latest.improvement_percentage ?? 0,
-      metrics: {
-        avg_hamming_before: latest.avg_hamming_before ?? 0,
-        avg_hamming_after: latest.avg_hamming_after ?? 0,
-        max_hamming_before: 0,
-        max_hamming_after: 0,
-      },
-      encoding_map: latest.encoding_map ?? {},
-    };
-    setResult(synthesized);
+    setResult(normalizeAlgorithmResultToOptimizationResponse(latest));
     if (latest.optimized_fsm_id) {
       fsmAPI
         .get(latest.optimized_fsm_id)
