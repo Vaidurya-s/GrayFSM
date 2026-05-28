@@ -115,9 +115,10 @@ class FSMService:
             raise FSMNotFoundException(str(fsm_id))
 
         # Strict-ownership: legacy NULL-created_by FSMs are no longer
-        # readable to all callers. Public FSMs remain visible to anyone;
+        # readable to all callers. Public AND disk-seeded "example" FSMs
+        # remain visible to anyone (examples are intentionally ownerless);
         # everything else needs the matching owner.
-        if fsm.visibility != "public":
+        if fsm.visibility not in ("public", "example"):
             if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
                 raise FSMNotFoundException(str(fsm_id))
 
@@ -258,9 +259,9 @@ class FSMService:
         """
         original = await self.get_fsm_raw(fsm_id)
 
-        # Strict-ownership (matches get_fsm above): public FSMs may be
-        # forked by anyone, otherwise only the owner can.
-        if original.visibility != "public":
+        # Strict-ownership (matches get_fsm above): public AND disk-seeded
+        # "example" FSMs may be forked by anyone, otherwise only the owner can.
+        if original.visibility not in ("public", "example"):
             if original.created_by is None or user_id is None or original.created_by != user_id:
                 raise FSMNotFoundException(str(fsm_id))
 
