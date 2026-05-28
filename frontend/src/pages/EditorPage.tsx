@@ -437,6 +437,19 @@ export default function EditorPage() {
               Optimize
             </button>
           ) : null}
+          {/* Export — only available once the FSM is saved; routes to the
+              full export page (Verilog/VHDL/JSON/CSV/Testbench). This was
+              completely unreachable from the UI before — only via direct
+              URL. */}
+          {id && (
+            <Link
+              to={generateRoute(ROUTES.EXPORT, { id })}
+              data-testid="editor-export"
+              className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
+            >
+              Export
+            </Link>
+          )}
         </div>
       </div>
 

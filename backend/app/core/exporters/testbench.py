@@ -70,8 +70,13 @@ class TestbenchExporter:
         lines.append("`timescale 1ns/1ps")
         lines.append("")
 
-        # Testbench module
-        lines.append(f"module {self._sanitize_name(name)}_tb ();")
+        # Testbench module — reuse the DUT module name (already sanitised
+        # and option-honoured) so the TB filename, DUT instance, and TB
+        # module name all agree. Previously the TB called `_sanitize_name`
+        # on the raw FSM name, which differed from the DUT name when the
+        # name contained spaces / parentheses / hyphens (e.g.
+        # "test3_optimized_greedy" vs "test3__optimized___greedy__tb").
+        lines.append(f"module {dut_module_name}_tb ();")
         lines.append("")
 
         # Clock period constants
