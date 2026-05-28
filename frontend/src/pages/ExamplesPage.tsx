@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Zap, ChevronRight, Layers } from 'lucide-react';
@@ -350,6 +350,25 @@ export default function ExamplesPage() {
     Complex: apiExamples.filter((e) => e.difficulty === 'advanced'),
   };
 
+  // Auto-switch to the first non-empty tab once examples load. Without
+  // this the page defaults to "Simple" and any example whose difficulty
+  // is only `intermediate`/`advanced` (e.g. the 10-floor elevator) is
+  // hidden behind a tab the user has to discover. We only auto-switch
+  // while the user is still on the default tab; once they pick one
+  // manually `userPickedRef.current` stays true.
+  const userPickedRef = useRef(false);
+  const handleTabChange = (next: string) => {
+    userPickedRef.current = true;
+    setActiveTab(next);
+  };
+  useEffect(() => {
+    if (userPickedRef.current) return;
+    if (apiExamples.length === 0) return;
+    if ((byDifficulty[activeTab] ?? []).length > 0) return;
+    const first = CATEGORY_TABS.find((t) => byDifficulty[t].length > 0);
+    if (first) setActiveTab(first);
+  }, [apiExamples, activeTab, byDifficulty]);
+
   // Group static examples by category
   const byCategory: Record<Category, StaticExample[]> = {
     Simple: STATIC_EXAMPLES.filter((e) => e.category === 'Simple'),
@@ -427,7 +446,7 @@ export default function ExamplesPage() {
               ),
             }))}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             className="mb-6"
           >
             {CATEGORY_TABS.map((cat) => (
@@ -470,7 +489,7 @@ export default function ExamplesPage() {
               ),
             }))}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
           >
             {CATEGORY_TABS.map((cat) => (
               <TabPanel key={cat} value={cat} activeValue={activeTab}>
@@ -515,7 +534,7 @@ export default function ExamplesPage() {
               ),
             }))}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             className="mb-6"
           >
             {CATEGORY_TABS.map((cat) => (

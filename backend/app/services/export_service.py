@@ -143,10 +143,12 @@ class ExportService:
         if not fsm:
             raise FSMNotFoundException(str(fsm_id))
 
-        # Strict-ownership: legacy NULL-created_by rows are no longer
-        # reachable via export (was allowed-through; see DRIFT.md).
-        if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
-            raise FSMNotFoundException(str(fsm_id))
+        # Mirror get_fsm's access rule: public AND disk-seeded "example"
+        # FSMs may be exported by any authenticated caller (read-only
+        # operation). Anything else still requires owner match.
+        if fsm.visibility not in ("public", "example"):
+            if fsm.created_by is None or user_id is None or fsm.created_by != user_id:
+                raise FSMNotFoundException(str(fsm_id))
 
         if not fsm.definition:
             # No `cause` here — this isn't wrapping an inner exception.
