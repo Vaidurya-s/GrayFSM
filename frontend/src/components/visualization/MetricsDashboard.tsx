@@ -81,15 +81,23 @@ function chartTooltipStyle(colors: ThemeColors): React.CSSProperties {
 export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
   const colors = useThemeColors();
 
+  // Coalesce all numeric fields to 0 and innerMetrics to {} so a partial
+  // result (e.g. one missing `metrics`) renders zeros instead of crashing.
   const {
-    total_states,
-    dummy_states_added,
-    improvement_percentage,
-    execution_time_ms,
+    total_states = 0,
+    dummy_states_added = 0,
+    improvement_percentage = 0,
+    execution_time_ms = 0,
     algorithm,
-    metrics: innerMetrics,
+    metrics: innerMetricsRaw,
     encoding_map,
-  } = metrics;
+  } = metrics ?? ({} as Partial<typeof metrics>);
+  const innerMetrics = innerMetricsRaw ?? {
+    avg_hamming_before: 0,
+    avg_hamming_after: 0,
+    max_hamming_before: 0,
+    max_hamming_after: 0,
+  };
 
   const originalStateCount = total_states - dummy_states_added;
 

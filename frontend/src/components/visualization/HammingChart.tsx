@@ -67,7 +67,7 @@ export default function HammingChart({
       {/* Improvement banner — datasheet pull-figure */}
       <div className="border-t-[3px] border-b-[3px] border-double border-ink py-3 text-center">
         <div className="font-mono font-tabular font-light text-3xl tracking-tight text-accent leading-none">
-          {improvementPct.toFixed(1)}
+          {(improvementPct ?? 0).toFixed(1)}
           <span className="font-serif italic font-normal text-base text-ink-soft ml-1">
             %
           </span>
@@ -119,8 +119,8 @@ export default function HammingChart({
 
       {/* Metrics grid — datasheet field tiles */}
       <div className="grid grid-cols-2 gap-px bg-rule border border-ink">
-        <Tile label="Avg Hamming · before" value={avgBefore.toFixed(2)} />
-        <Tile label="Avg Hamming · after" value={avgAfter.toFixed(2)} accent />
+        <Tile label="Avg Hamming · before" value={(avgBefore ?? 0).toFixed(2)} />
+        <Tile label="Avg Hamming · after" value={(avgAfter ?? 0).toFixed(2)} accent />
         <Tile label="Dummy states added" value={dummyStatesAdded} />
         <Tile label="Total states" value={statesAfter} />
       </div>
