@@ -56,7 +56,7 @@ Create a `.env` file in the `e2e/` directory:
 
 ```env
 # Application URLs
-BASE_URL=http://localhost:5173
+BASE_URL=http://localhost:3000
 API_URL=http://localhost:8000
 
 # Test configuration
@@ -339,7 +339,7 @@ jobs:
           cd e2e
           npm test
         env:
-          BASE_URL: http://localhost:5173
+          BASE_URL: http://localhost:3000
           API_URL: http://localhost:8000
 
       - name: Upload test results
