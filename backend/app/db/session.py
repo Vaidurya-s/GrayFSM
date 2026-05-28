@@ -98,8 +98,13 @@ async def _seed_examples_if_empty() -> None:
             return
 
         for example in examples:
+            # Include `initial_state` in the JSONB definition — the optimizer
+            # reads `original_fsm.definition["initial_state"]` when persisting
+            # an optimized FSM. Without it, optimizing a seeded example raised
+            # KeyError mid-transaction.
             definition = {
                 "states": example["states"],
+                "initial_state": example["initial_state"],
                 "transitions": example["transitions"],
                 "outputs": example.get("outputs", {}),
             }
