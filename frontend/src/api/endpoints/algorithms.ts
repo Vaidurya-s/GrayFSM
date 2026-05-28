@@ -5,6 +5,10 @@ import type {
   AlgorithmResult,
 } from '@/types/fsm';
 import type { TaskStatus } from '@/types/api';
+import {
+  normalizeAlgorithmResult,
+  normalizeOptimizationResponse,
+} from '../normalize';
 
 export const algorithmAPI = {
   /**
@@ -12,9 +16,13 @@ export const algorithmAPI = {
    */
   optimize: async (
     fsmId: string,
-    request: OptimizationRequest
+    request: OptimizationRequest,
   ): Promise<APIResponse<OptimizationResponse>> => {
-    return apiClient.post(`/fsms/${fsmId}/optimize`, request);
+    const res = (await apiClient.post(
+      `/fsms/${fsmId}/optimize`,
+      request,
+    )) as unknown as APIResponse<OptimizationResponse>;
+    return { ...res, data: normalizeOptimizationResponse(res.data) };
   },
 
   /**
@@ -22,11 +30,12 @@ export const algorithmAPI = {
    */
   getResults: async (
     fsmId: string,
-    algorithm?: string
+    algorithm?: string,
   ): Promise<APIResponse<AlgorithmResult[]>> => {
-    return apiClient.get(`/fsms/${fsmId}/results`, {
+    const res = (await apiClient.get(`/fsms/${fsmId}/results`, {
       params: { algorithm },
-    });
+    })) as unknown as APIResponse<AlgorithmResult[]>;
+    return { ...res, data: (res.data ?? []).map(normalizeAlgorithmResult) };
   },
 
   /**
@@ -37,12 +46,13 @@ export const algorithmAPI = {
     algorithms: string[],
     // Per-algorithm tuning knobs (max_iterations, timeout_ms, etc.).
     // Loose because the backend accepts any algorithm-specific shape.
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): Promise<APIResponse<AlgorithmResult[]>> => {
-    return apiClient.post(`/fsms/${fsmId}/compare`, {
+    const res = (await apiClient.post(`/fsms/${fsmId}/compare`, {
       algorithms,
       options,
-    });
+    })) as unknown as APIResponse<AlgorithmResult[]>;
+    return { ...res, data: (res.data ?? []).map(normalizeAlgorithmResult) };
   },
 
   /**
