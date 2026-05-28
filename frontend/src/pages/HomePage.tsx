@@ -207,7 +207,8 @@ export default function HomePage() {
     },
     { label: 'Catalog', value: `${summary.held} entries` },
     { label: 'Optimised', value: `${summary.optimised} / ${summary.held}` },
-    { label: 'Build', value: buildHash, tone: 'accent' },
+    // Informational only — no linked target — so no `tone: 'accent'`.
+    { label: 'Build', value: buildHash },
     {
       label: 'Time',
       value: new Date().toLocaleTimeString([], {
@@ -533,7 +534,8 @@ export default function HomePage() {
           <div>
             <strong className="text-ink font-medium">Build</strong>
             {' · '}
-            <span className="text-accent">{buildHash}</span>
+            {/* Muted — matches the navbar build hash; the hash isn't a link. */}
+            <span className="text-ink-soft">{buildHash}</span>
           </div>
           <div>
             <strong className="text-ink font-medium">API</strong>

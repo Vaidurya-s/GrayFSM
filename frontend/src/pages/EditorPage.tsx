@@ -312,8 +312,14 @@ export default function EditorPage() {
 
   return (
     // `relative` contains the absolute sidebar to the editor area so it
-    // can't extend up over the sticky navbar.
-    <div className="relative h-[calc(100vh-4rem)] flex flex-col" data-testid="editor-page">
+    // can't extend up over the sticky navbar. `overflow-x-hidden` clears the
+    // spurious horizontal scrollbar from sub-pixel overflow on the toolbar
+    // row (page reports body.scrollWidth ≈ viewport width but the browser
+    // still renders one).
+    <div
+      className="relative h-[calc(100vh-4rem)] flex flex-col overflow-x-hidden"
+      data-testid="editor-page"
+    >
       {/* Toolbar — relative + z-30 puts it above the sidebar so the
           shortcut/help button + Import JSON aren't obscured. */}
       <div className="relative z-30 bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-4 py-2 flex items-center justify-between">
