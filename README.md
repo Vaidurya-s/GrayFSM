@@ -146,6 +146,10 @@ specification and never mutates the original.
 ```bash
 cd infrastructure/docker
 docker compose up -d
+
+# Apply database migrations on first startup
+# (the backend image runs uvicorn only, not migrations)
+docker compose exec backend alembic upgrade head
 ```
 
 | Service | URL |
@@ -168,7 +172,7 @@ pip install -r requirements.txt
 
 # PostgreSQL + Redis
 docker run -d --name grayfsm-pg \
-  -e POSTGRES_USER=grayfsm -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=grayfsm -e POSTGRES_PASSWORD=changeme \
   -e POSTGRES_DB=grayfsm -p 5432:5432 postgres:15-alpine
 docker run -d --name grayfsm-redis -p 6379:6379 redis:7-alpine
 

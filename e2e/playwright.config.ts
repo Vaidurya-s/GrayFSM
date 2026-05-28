@@ -36,7 +36,7 @@ export default defineConfig({
   // Global test configuration
   use: {
     // Base URL for the application
-    baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
 
     // API base URL
     apiURL: process.env.API_URL || 'http://localhost:8000',
@@ -142,7 +142,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'cd ../frontend && npm run dev',
-      url: 'http://localhost:5173',
+      url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
