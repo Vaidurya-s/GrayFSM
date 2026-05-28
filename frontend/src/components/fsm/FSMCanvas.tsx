@@ -183,17 +183,32 @@ export default function FSMCanvas({ readOnly = false }: FSMCanvasProps) {
         nodesDraggable={!readOnly}
         nodesConnectable={!readOnly}
         elementsSelectable={true}
+        // Touch ergonomics — boolean `panOnDrag` is required for proper
+        // single-touch panning (the array form is mouse-button-specific
+        // and breaks touch).
+        panOnDrag={true}
+        panOnScroll={false}
+        zoomOnPinch={true}
+        zoomOnDoubleClick={false}
+        zoomOnScroll={true}
+        selectionOnDrag={false}
+        minZoom={0.2}
+        maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            if (node.data?.isInitial) return '#0072B2';
-            if (node.data?.isDummy) return '#E69F00';
-            return '#e5e7eb';
-          }}
-          maskColor="rgba(0,0,0,0.1)"
-        />
+        <Controls position="top-right" />
+        {/* MiniMap kept mounted (CSS-hidden on narrow viewports) so React
+            Flow's internal state stays stable across resizes. */}
+        <div className="hidden md:block">
+          <MiniMap
+            nodeColor={(node) => {
+              if (node.data?.isInitial) return '#0072B2';
+              if (node.data?.isDummy) return '#E69F00';
+              return '#e5e7eb';
+            }}
+            maskColor="rgba(0,0,0,0.1)"
+          />
+        </div>
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
       </ReactFlow>
     </div>

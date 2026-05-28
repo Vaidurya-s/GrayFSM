@@ -226,7 +226,7 @@ export default function OptimizationPage() {
   }
 
   return (
-    <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-paper text-ink min-h-screen" data-testid="optimization-page">
+    <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 bg-paper text-ink min-h-screen" data-testid="optimization-page">
       {/* Header */}
       <div className="mb-8">
         <nav
@@ -260,12 +260,12 @@ export default function OptimizationPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left / Main area */}
-        <div className="lg:col-span-2">
+        {/* Left / Main area — canvas / lab-report tabs */}
+        <div className="lg:col-span-2 order-2 lg:order-1">
           {!result ? (
             /* Before optimization: show the original FSM canvas */
             <Card variant="bordered" className="overflow-hidden">
-              <div className="h-[500px]">
+              <div className="h-[60vh] sm:h-[500px]">
                 <FSMCanvas readOnly />
               </div>
             </Card>
@@ -274,13 +274,13 @@ export default function OptimizationPage() {
             <div className="bg-paper border border-ink flex flex-col">
               {/* Tab bar — datasheet aesthetic: mono uppercase, accent
                *  bottom rule on active, hairline divider below. */}
-              <div className="flex border-b border-ink shrink-0">
+              <div className="flex border-b border-ink shrink-0 overflow-x-auto">
                 {(
                   [
-                    { id: 'comparison', label: '2.1 · Comparison' },
-                    { id: 'metrics',    label: '2.2 · Metrics' },
-                    { id: 'hypercube',  label: '2.3 · Hypercube' },
-                  ] as { id: ResultTab; label: string }[]
+                    { id: 'comparison', short: 'Comparison', long: '2.1 · Comparison' },
+                    { id: 'metrics',    short: 'Metrics',    long: '2.2 · Metrics' },
+                    { id: 'hypercube',  short: 'Hypercube',  long: '2.3 · Hypercube' },
+                  ] as { id: ResultTab; short: string; long: string }[]
                 ).map((tab) => {
                   const active = activeTab === tab.id;
                   return (
@@ -289,13 +289,14 @@ export default function OptimizationPage() {
                       onClick={() => setActiveTab(tab.id)}
                       data-testid={`optimization-tab-${tab.id}`}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex-1 px-4 py-3 text-[0.78rem] font-mono font-medium uppercase tracking-[0.1em] transition-colors border-b-2 -mb-[1px] ${
+                      className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-[0.7rem] sm:text-[0.78rem] font-mono font-medium uppercase tracking-[0.1em] transition-colors border-b-2 -mb-[1px] flex-shrink-0 whitespace-nowrap ${
                         active
                           ? 'text-ink border-accent bg-accent-tint'
                           : 'text-ink-soft border-transparent hover:text-ink hover:bg-paper-shade'
                       }`}
                     >
-                      {tab.label}
+                      <span className="sm:hidden">{tab.short}</span>
+                      <span className="hidden sm:inline">{tab.long}</span>
                     </button>
                   );
                 })}
@@ -305,7 +306,7 @@ export default function OptimizationPage() {
               <div className="flex-1 overflow-auto">
                 {/* Comparison tab */}
                 {activeTab === 'comparison' && (
-                  <div className="h-[560px] p-4">
+                  <div className="h-[60vh] sm:h-[560px] p-4">
                     {originalFSM && optimizedFSM ? (
                       <ErrorBoundary>
                         <ComparisonView
@@ -337,7 +338,7 @@ export default function OptimizationPage() {
 
                 {/* Metrics tab */}
                 {activeTab === 'metrics' && (
-                  <div className="p-6 overflow-y-auto max-h-[560px]">
+                  <div className="p-4 sm:p-6 overflow-y-auto max-h-[70vh] sm:max-h-[560px]">
                     <ErrorBoundary>
                       <MetricsDashboard metrics={result} />
                     </ErrorBoundary>
@@ -346,7 +347,7 @@ export default function OptimizationPage() {
 
                 {/* Hypercube tab */}
                 {activeTab === 'hypercube' && (
-                  <div className="h-[560px] p-4">
+                  <div className="h-[60vh] sm:h-[560px] p-4">
                     <ErrorBoundary>
                       <Suspense
                         fallback={
@@ -374,8 +375,8 @@ export default function OptimizationPage() {
           )}
         </div>
 
-        {/* Right: Controls & Results */}
-        <div className="space-y-6">
+        {/* Right: Controls & Results — surface first on mobile so the form is visible above the canvas. */}
+        <div className="space-y-6 order-1 lg:order-2">
           {/* Optimization Form */}
           <Card
             variant="bordered"

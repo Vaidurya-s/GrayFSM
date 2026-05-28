@@ -82,7 +82,8 @@ export default function HammingChart({
         <h4 className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-ink mb-2 pb-1 border-b border-rule">
           Hamming distance · before → after
         </h4>
-        <ResponsiveContainer width="100%" height={120}>
+        <div className="h-[120px] min-w-0">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={hammingData} layout="vertical">
             <CartesianGrid strokeDasharray="2 4" stroke={colors.rule} horizontal={false} />
             <XAxis type="number" domain={[0, 'auto']} tick={axisTick} stroke={colors.rule} />
@@ -99,6 +100,7 @@ export default function HammingChart({
             <Bar dataKey="After" fill={colors.accent} name="After" />
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* State count chart */}
@@ -106,7 +108,8 @@ export default function HammingChart({
         <h4 className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-ink mb-2 pb-1 border-b border-rule">
           State counts
         </h4>
-        <ResponsiveContainer width="100%" height={160}>
+        <div className="h-[140px] sm:h-[160px] min-w-0">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={stateData}>
             <CartesianGrid strokeDasharray="2 4" stroke={colors.rule} vertical={false} />
             <XAxis dataKey="name" tick={axisTick} stroke={colors.rule} />
@@ -115,6 +118,7 @@ export default function HammingChart({
             <Bar dataKey="count" fill={colors.accent} />
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Metrics grid — datasheet field tiles */}

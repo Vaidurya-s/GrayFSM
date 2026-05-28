@@ -75,7 +75,7 @@ function StateNode({ data, selected }: NodeProps<StateNodeData>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2 !h-2 !bg-accent !border !border-ink !rounded-none"
+        className="!w-3 !h-3 !bg-accent !border !border-ink !rounded-none"
       />
 
       {/* main label area */}
@@ -113,7 +113,7 @@ function StateNode({ data, selected }: NodeProps<StateNodeData>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2 !h-2 !bg-accent !border !border-ink !rounded-none"
+        className="!w-3 !h-3 !bg-accent !border !border-ink !rounded-none"
       />
     </div>
   );

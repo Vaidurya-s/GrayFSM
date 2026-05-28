@@ -126,7 +126,7 @@ function StaticExampleCard({
       </p>
 
       {/* Spec inline rule — three-up datasheet stats */}
-      <div className="grid grid-cols-3 mt-auto mb-3 border-t border-b border-rule">
+      <div className="grid grid-cols-2 sm:grid-cols-3 mt-auto mb-3 border-t border-b border-rule">
         <SpecRow label="States" value={example.stateCount} />
         <SpecRow label="Transitions" value={example.transitionCount} divider />
         <SpecRow

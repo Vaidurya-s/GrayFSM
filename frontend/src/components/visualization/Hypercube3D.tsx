@@ -608,7 +608,7 @@ export default function Hypercube3D({
   );
 
   return (
-    <div className="relative w-full h-full min-h-[400px] bg-paper-shade border border-rule overflow-hidden select-none">
+    <div className="relative w-full h-full min-h-[280px] sm:min-h-[400px] bg-paper-shade border border-rule overflow-hidden select-none">
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50, near: 0.1, far: 100 }}
         dpr={[1, 2]}

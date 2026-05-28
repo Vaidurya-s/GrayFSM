@@ -84,10 +84,16 @@ export function RuledTable<T>({
   }
 
   return (
+    <div
+      className="overflow-x-auto -mx-3 sm:mx-0"
+      tabIndex={0}
+      role="region"
+      aria-label={ariaLabel ?? 'Scrollable table'}
+    >
     <table
       aria-label={ariaLabel}
       className={cn(
-        'w-full border-collapse font-mono text-[0.88rem]',
+        'w-full border-collapse font-mono text-[0.88rem] min-w-[36rem]',
         className,
       )}
     >
@@ -160,5 +166,6 @@ export function RuledTable<T>({
         })}
       </tbody>
     </table>
+    </div>
   );
 }

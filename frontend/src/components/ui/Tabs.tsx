@@ -43,6 +43,7 @@ export function Tabs({
       <div
         role="tablist"
         className={cn(
+          'overflow-x-auto',
           variant === 'underline'
             ? 'flex border-b border-rule gap-0'
             : 'flex gap-1 bg-paper-shade p-1 border border-rule'
@@ -63,6 +64,7 @@ export function Tabs({
                 onClick={() => !tab.disabled && onChange(tab.value)}
                 className={cn(
                   'px-4 py-2 font-mono text-[0.78rem] font-medium uppercase tracking-[0.1em] border-b-2 -mb-px transition-colors',
+                  'flex-shrink-0 whitespace-nowrap',
                   'focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset',
                   'disabled:opacity-40 disabled:cursor-not-allowed',
                   isActive
@@ -86,6 +88,7 @@ export function Tabs({
               onClick={() => !tab.disabled && onChange(tab.value)}
               className={cn(
                 'flex-1 px-3 py-1.5 font-mono text-[0.78rem] font-medium uppercase tracking-[0.08em] transition-colors',
+                'flex-shrink-0 whitespace-nowrap',
                 'focus:outline-none focus:ring-2 focus:ring-accent',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
                 isActive

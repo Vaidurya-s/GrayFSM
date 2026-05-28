@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { ROUTES } from '../../config/routes';
@@ -54,6 +55,13 @@ export default function Navbar() {
     await logout();
     navigate(ROUTES.HOME);
   };
+
+  // Close the mobile drawer on every route change. Without this, navigating
+  // via the drawer leaves it open over the next page; navigating via any
+  // other means (back/forward, in-page link) leaves it stuck open too.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, setMobileMenuOpen]);
 
   const isActive = (path: string): boolean => {
     if (path === ROUTES.HOME) return location.pathname === ROUTES.HOME;
@@ -274,6 +282,36 @@ export default function Navbar() {
             >
               ↳ New FSM
             </Link>
+
+            {/* Auth row — sign-in link or logout button so authenticated
+                state isn't trapped on the desktop-only right cluster. */}
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                data-testid="nav-logout-mobile"
+                className="block w-full px-3 py-2.5 border-t border-rule font-mono text-xs uppercase tracking-[0.15em] text-ink-soft text-left hover:bg-paper-shade hover:text-ink transition-colors"
+              >
+                Logout
+                {user?.email && (
+                  <span className="ml-2 text-ink-faint normal-case tracking-normal text-[0.7rem]">
+                    ({user.email})
+                  </span>
+                )}
+              </button>
+            ) : (
+              <Link
+                to={ROUTES.LOGIN}
+                onClick={() => setMobileMenuOpen(false)}
+                data-testid="nav-login-mobile"
+                className="block w-full px-3 py-2.5 border-t border-rule font-mono text-xs uppercase tracking-[0.15em] text-ink-soft text-left hover:bg-paper-shade hover:text-ink transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -249,50 +249,52 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
       {/* Hamming distance distribution */}
       <section>
         <SectionHeading>Hamming distance · before vs after</SectionHeading>
-        <div className="bg-paper border border-rule p-4">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={hammingDistData} barCategoryGap="30%">
-              <CartesianGrid
-                strokeDasharray="2 4"
-                vertical={false}
-                stroke={colors.rule}
-              />
-              <XAxis
-                dataKey="name"
-                tick={{
-                  fontSize: 11,
-                  fill: colors.inkSoft,
-                  fontFamily: 'IBM Plex Mono, monospace',
-                }}
-                stroke={colors.rule}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{
-                  fontSize: 10,
-                  fill: colors.inkFaint,
-                  fontFamily: 'IBM Plex Mono, monospace',
-                }}
-                stroke={colors.rule}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={chartTooltipStyle(colors)}
-                cursor={{ fill: colors.accentTint }}
-              />
-              <Legend
-                wrapperStyle={{
-                  fontSize: 11,
-                  fontFamily: 'IBM Plex Mono, monospace',
-                  color: colors.inkSoft,
-                }}
-              />
-              <Bar dataKey="Before" fill={colors.warn} name="Before" />
-              <Bar dataKey="After" fill={colors.accent} name="After" />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-paper border border-rule p-4 min-w-0">
+          <div className="h-[180px] sm:h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={hammingDistData} barCategoryGap="30%">
+                <CartesianGrid
+                  strokeDasharray="2 4"
+                  vertical={false}
+                  stroke={colors.rule}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{
+                    fontSize: 11,
+                    fill: colors.inkSoft,
+                    fontFamily: 'IBM Plex Mono, monospace',
+                  }}
+                  stroke={colors.rule}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{
+                    fontSize: 10,
+                    fill: colors.inkFaint,
+                    fontFamily: 'IBM Plex Mono, monospace',
+                  }}
+                  stroke={colors.rule}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={chartTooltipStyle(colors)}
+                  cursor={{ fill: colors.accentTint }}
+                />
+                <Legend
+                  wrapperStyle={{
+                    fontSize: 11,
+                    fontFamily: 'IBM Plex Mono, monospace',
+                    color: colors.inkSoft,
+                  }}
+                />
+                <Bar dataKey="Before" fill={colors.warn} name="Before" />
+                <Bar dataKey="After" fill={colors.accent} name="After" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </section>
 
@@ -300,8 +302,9 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <SectionHeading>Optimisation profile</SectionHeading>
-          <div className="bg-paper border border-rule p-4">
-            <ResponsiveContainer width="100%" height={220}>
+          <div className="bg-paper border border-rule p-4 min-w-0">
+            <div className="h-[180px] sm:h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
                 <PolarGrid stroke={colors.rule} />
                 <PolarAngleAxis
@@ -337,13 +340,15 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                 />
               </RadarChart>
             </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
         <div>
           <SectionHeading>State composition</SectionHeading>
-          <div className="bg-paper border border-rule p-4 flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={180}>
+          <div className="bg-paper border border-rule p-4 flex flex-col items-center min-w-0 w-full">
+            <div className="h-[160px] sm:h-[180px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
@@ -373,6 +378,7 @@ export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                 />
               </PieChart>
             </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </section>

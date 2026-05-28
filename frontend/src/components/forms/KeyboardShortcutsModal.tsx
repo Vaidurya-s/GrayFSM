@@ -56,6 +56,9 @@ export default function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsMod
 
         {/* Shortcut table */}
         <div className="px-6 py-4">
+          <p className="md:hidden text-xs text-ink-soft mb-3 italic">
+            These shortcuts apply to desktop keyboards.
+          </p>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-ink-faint uppercase tracking-wider border-b border-rule">

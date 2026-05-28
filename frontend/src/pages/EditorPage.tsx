@@ -5,6 +5,7 @@ import PropertyPanel from '../components/fsm/PropertyPanel';
 import FSMCreateForm from '../components/forms/FSMCreateForm';
 import KeyboardShortcutsModal from '../components/forms/KeyboardShortcutsModal';
 import ImportForm from '../components/forms/ImportForm';
+import { Modal } from '../components/ui/Modal';
 import { useFSM, useUpdateFSM } from '../hooks/useFSM';
 import { examplesAPI } from '../api/endpoints/examples';
 import { useToast } from '../components/ui';
@@ -72,8 +73,22 @@ export default function EditorPage() {
     return typeof orig === 'string' && orig.length > 0 ? orig : undefined;
   }, [currentFSM]);
 
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore();
   const { success: toastSuccess, error: toastError } = useToast();
+
+  // Auto-open the mobile property sheet whenever the user selects a node
+  // or edge. Re-opens on a fresh selection but does not snap back open if
+  // the user explicitly dismissed the drawer for the SAME selection — the
+  // deps change is what re-triggers it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (
+      !window.matchMedia('(min-width: 1024px)').matches &&
+      (selectedNode || selectedEdge)
+    ) {
+      setSidebarOpen(true);
+    }
+  }, [selectedNode, selectedEdge, setSidebarOpen]);
 
   // Load FSM into editor when data arrives
   useEffect(() => {
@@ -299,7 +314,7 @@ export default function EditorPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center">
+        <div className="text-center max-w-md px-4 mx-auto">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
           <p className="mt-4 text-sm text-ink-soft">Loading FSM...</p>
         </div>
@@ -310,8 +325,8 @@ export default function EditorPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+        <div className="text-center max-w-md px-4 mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-800">Failed to load FSM</h2>
             <p className="text-sm text-red-600 mt-2">
               {error instanceof Error ? error.message : 'Unknown error occurred'}
@@ -340,7 +355,7 @@ export default function EditorPage() {
     >
       {/* Toolbar — relative + z-30 puts it above the sidebar so the
           shortcut/help button + Import JSON aren't obscured. */}
-      <div className="relative z-30 bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-4 py-2 flex items-center justify-between">
+      <div className="relative z-30 bg-paper dark:bg-gray-900 border-b border-rule dark:border-gray-700 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
@@ -357,15 +372,15 @@ export default function EditorPage() {
             <div className="flex items-center gap-1 text-xs text-ink-faint dark:text-ink-faint mb-0.5">
               <Link to={ROUTES.HOME} className="hover:text-ink-soft dark:hover:text-gray-300">Home</Link>
               <span>/</span>
-              <span className="text-ink-soft dark:text-gray-200">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
+              <span className="text-ink-soft dark:text-gray-200 truncate max-w-[10rem] sm:max-w-none">{id ? draftName || 'Edit FSM' : 'New FSM'}</span>
             </div>
-            <p className="text-xs text-ink-faint dark:text-ink-faint">
+            <p className="hidden sm:block text-xs text-ink-faint dark:text-ink-faint">
               <span className="font-tabular">{draftStates.length}</span> states, <span className="font-tabular">{draftTransitions.length}</span> transitions
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap ml-auto">
           {/* Keyboard shortcuts help button */}
           <button
             onClick={() => modals.openShortcuts()}
@@ -417,23 +432,29 @@ export default function EditorPage() {
           <button
             onClick={() => modals.openImport()}
             data-testid="editor-import"
-            className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
+            aria-label="Import FSM"
+            title="Import FSM"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
           >
-            Import
+            <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+            </svg>
+            <span className="hidden sm:inline">Import</span>
           </button>
 
           <button
             onClick={handleAddState}
             data-testid="editor-add-state"
             aria-label="Add new state"
-            className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
           >
-            + Add State
+            <span className="sm:hidden">+ State</span>
+            <span className="hidden sm:inline">+ Add State</span>
           </button>
           <button
             onClick={handleSave}
             data-testid="editor-save"
-            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
             {id ? 'Save' : 'Create'}
           </button>
@@ -447,7 +468,7 @@ export default function EditorPage() {
               disabled
               data-testid="editor-optimize-already-optimized"
               title="Already optimized — open Lab Report to view the source run, or optimize the source FSM directly"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
             >
               Optimize
             </button>
@@ -455,7 +476,7 @@ export default function EditorPage() {
             <button
               onClick={handleOptimize}
               data-testid="editor-optimize"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
             >
               Optimize
             </button>
@@ -464,7 +485,7 @@ export default function EditorPage() {
               disabled
               data-testid="editor-optimize-disabled"
               title="Save first to enable optimization"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
             >
               Optimize
             </button>
@@ -478,9 +499,13 @@ export default function EditorPage() {
               to={generateRoute(ROUTES.OPTIMIZE, { id: labReportTargetId })}
               data-testid="editor-lab-report"
               title="View the optimization run that produced this FSM"
-              className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
+              aria-label="View Lab Report"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 inline-flex items-center gap-1"
             >
-              Lab Report
+              <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="hidden sm:inline">Lab Report</span>
             </Link>
           )}
           {/* Export — only available once the FSM is saved; routes to the
@@ -491,9 +516,14 @@ export default function EditorPage() {
             <Link
               to={generateRoute(ROUTES.EXPORT, { id })}
               data-testid="editor-export"
-              className="px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade"
+              aria-label="Export FSM"
+              title="Export FSM"
+              className="px-2 sm:px-3 py-1.5 text-xs font-medium text-ink-soft bg-paper border border-rule-strong rounded-md hover:bg-paper-shade inline-flex items-center gap-1"
             >
-              Export
+              <svg className="w-4 h-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M17 14l-5 5m0 0l-5-5m5 5V3" />
+              </svg>
+              <span className="hidden sm:inline">Export</span>
             </Link>
           )}
         </div>
@@ -504,7 +534,7 @@ export default function EditorPage() {
         {/* Canvas */}
         <div className="flex-1 relative">
           {draftStates.length === 0 ? (
-            <div className="flex items-center justify-center h-full bg-paper-shade dark:bg-gray-900">
+            <div className="flex items-center justify-center h-full bg-paper-shade dark:bg-gray-900 px-4">
               <div className="text-center max-w-md">
                 <svg
                   className="mx-auto h-16 w-16 text-gray-300"
@@ -526,7 +556,7 @@ export default function EditorPage() {
                   Click &quot;Add State&quot; to start building your FSM, or connect states
                   by dragging from one handle to another.
                 </p>
-                <div className="mt-4 flex items-center justify-center gap-3">
+                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
                   <button
                     onClick={handleAddState}
                     data-testid="editor-add-state-empty"
@@ -551,98 +581,132 @@ export default function EditorPage() {
           )}
         </div>
 
-        {/* Sidebar — full height, overlay on mobile, inline on lg+ */}
-        {sidebarOpen && (
-          <div
-            className={cn(
-              'border-l border-rule dark:border-gray-700 bg-paper dark:bg-gray-900 overflow-y-auto',
-              'flex flex-col gap-4 p-4',
-              // z-20 keeps the sidebar below the editor toolbar (z-30) and
-              // the navbar (z-50) so it can't obscure controls.
-              'absolute inset-y-0 right-0 z-20 w-72 lg:relative lg:z-auto'
-            )}
-            data-testid="editor-sidebar"
-          >
-            <PropertyPanel />
+        {/* Sidebar — shared content rendered desktop-only as inline panel;
+            mobile gets a bottom-sheet Modal driven by the same toggle. */}
+        {(() => {
+          const sidebarContent = (embedded: boolean) => (
+            <>
+              <PropertyPanel embedded={embedded} />
 
-            {/* State list */}
-            <div className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">States</h3>
-              {draftStates.length === 0 ? (
-                <p className="text-xs text-ink-faint">No states added yet.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {draftStates.map((s) => (
-                    <li
-                      key={s.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedNode(s.id)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedNode(s.id); }}
-                      aria-label={`Select state ${s.name}`}
-                      className={cn(
-                        'text-xs px-2 py-1.5 rounded cursor-pointer flex items-center gap-2',
-                        'focus:outline-none focus:ring-2 focus:ring-accent',
-                        s.id === draftInitialState && 'bg-green-50 text-green-700',
-                        s.is_dummy && 'bg-orange-50 text-orange-700',
-                        !s.is_dummy &&
-                          s.id !== draftInitialState &&
-                          'hover:bg-paper-shade text-ink-soft'
-                      )}
-                    >
-                      <span className="font-medium">{s.name}</span>
-                      {s.id === draftInitialState && (
-                        <span className="text-[10px] bg-green-100 px-1 rounded">
-                          initial
-                        </span>
-                      )}
-                      {s.is_dummy && (
-                        <span className="text-[10px] bg-orange-100 px-1 rounded">
-                          dummy
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+              {/* State list */}
+              <div className={cn(
+                embedded
+                  ? 'p-0'
+                  : 'bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700',
+              )}>
+                <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">States</h3>
+                {draftStates.length === 0 ? (
+                  <p className="text-xs text-ink-faint">No states added yet.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {draftStates.map((s) => (
+                      <li
+                        key={s.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedNode(s.id)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedNode(s.id); }}
+                        aria-label={`Select state ${s.name}`}
+                        className={cn(
+                          'text-xs px-2 py-1.5 rounded cursor-pointer flex items-center gap-2',
+                          'focus:outline-none focus:ring-2 focus:ring-accent',
+                          s.id === draftInitialState && 'bg-green-50 text-green-700',
+                          s.is_dummy && 'bg-orange-50 text-orange-700',
+                          !s.is_dummy &&
+                            s.id !== draftInitialState &&
+                            'hover:bg-paper-shade text-ink-soft'
+                        )}
+                      >
+                        <span className="font-medium">{s.name}</span>
+                        {s.id === draftInitialState && (
+                          <span className="text-[10px] bg-green-100 px-1 rounded">
+                            initial
+                          </span>
+                        )}
+                        {s.is_dummy && (
+                          <span className="text-[10px] bg-orange-100 px-1 rounded">
+                            dummy
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-            {/* Transition list */}
-            <div className="bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">
-                Transitions
-              </h3>
-              {draftTransitions.length === 0 ? (
-                <p className="text-xs text-ink-faint">
-                  No transitions. Connect states by dragging between handles.
-                </p>
-              ) : (
-                <ul className="space-y-1">
-                  {draftTransitions.map((t, i) => (
-                    <li
-                      key={i}
-                      className="text-xs px-2 py-1.5 rounded hover:bg-paper-shade text-ink-soft"
-                    >
-                      {t.from_state} &rarr; {t.to_state}
-                      {t.input && (
-                        <span className="text-ink-faint ml-1">
-                          [{t.input}{t.output ? `/${t.output}` : ''}]
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
+              {/* Transition list */}
+              <div className={cn(
+                embedded
+                  ? 'p-0'
+                  : 'bg-paper dark:bg-gray-800 rounded-lg shadow p-4 border border-rule dark:border-gray-700',
+              )}>
+                <h3 className="text-sm font-semibold text-ink dark:text-white mb-2">
+                  Transitions
+                </h3>
+                {draftTransitions.length === 0 ? (
+                  <p className="text-xs text-ink-faint">
+                    No transitions. Connect states by dragging between handles.
+                  </p>
+                ) : (
+                  <ul className="space-y-1">
+                    {draftTransitions.map((t, i) => (
+                      <li
+                        key={i}
+                        className="text-xs px-2 py-1.5 rounded hover:bg-paper-shade text-ink-soft"
+                      >
+                        {t.from_state} &rarr; {t.to_state}
+                        {t.input && (
+                          <span className="text-ink-faint ml-1">
+                            [{t.input}{t.output ? `/${t.output}` : ''}]
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          );
+
+          return (
+            <>
+              {/* Desktop: inline aside, always visible on lg+ */}
+              <aside
+                className={cn(
+                  'hidden lg:flex border-l border-rule dark:border-gray-700 bg-paper dark:bg-gray-900 overflow-y-auto',
+                  'flex-col gap-4 p-4',
+                  'relative w-72',
+                  !sidebarOpen && 'lg:hidden',
+                )}
+                data-testid="editor-sidebar"
+              >
+                {sidebarContent(false)}
+              </aside>
+
+              {/* Mobile: bottom-sheet modal */}
+              <div className="lg:hidden">
+                <Modal
+                  isOpen={sidebarOpen}
+                  onClose={() => setSidebarOpen(false)}
+                  position="bottom-sheet"
+                  title="Properties"
+                  data-testid="editor-sidebar-mobile"
+                >
+                  <div className="flex flex-col gap-4">
+                    {sidebarContent(true)}
+                  </div>
+                </Modal>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Create FSM modal */}
       {modals.createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4">
           <div
-            className="bg-paper rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            className="bg-paper rounded-none sm:rounded-lg shadow-xl w-full max-w-md mx-0 sm:mx-4 p-4 sm:p-6 max-h-[100vh] sm:max-h-[90vh] overflow-y-auto"
             data-testid="create-fsm-modal"
           >
             <h2 className="text-lg font-semibold text-ink mb-4">
@@ -663,9 +727,9 @@ export default function EditorPage() {
 
       {/* Import FSM modal */}
       {modals.importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4">
           <div
-            className="bg-paper rounded-lg shadow-xl w-full max-w-md mx-4 p-6"
+            className="bg-paper rounded-none sm:rounded-lg shadow-xl w-full max-w-md mx-0 sm:mx-4 p-4 sm:p-6 max-h-[100vh] sm:max-h-[90vh] overflow-y-auto"
             data-testid="import-fsm-modal"
           >
             <div className="flex items-center justify-between mb-4">

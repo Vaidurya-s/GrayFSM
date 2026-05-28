@@ -51,7 +51,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             disabled={disabled}
             className={cn(
-              'block w-full rounded-md border border-rule-strong bg-paper py-2 text-sm text-ink',
+              'block w-full rounded-md border border-rule-strong bg-paper py-2 text-base sm:text-sm text-ink',
               'placeholder:text-ink-faint',
               'focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent',
               'disabled:bg-paper-shade disabled:text-ink-faint disabled:cursor-not-allowed',

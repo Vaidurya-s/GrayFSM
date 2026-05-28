@@ -170,7 +170,7 @@ export default function ComparisonView({
   return (
     <div className="flex flex-col gap-3 h-full" data-testid="comparison-view">
       {/* Controls bar */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
         <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink">
           FSM · Comparison
         </h3>
@@ -239,7 +239,7 @@ export default function ComparisonView({
 
       {/* Canvas area */}
       {viewMode === 'side-by-side' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0 [&>*]:min-h-[280px]">
           <ReactFlowProvider>
             <StaticCanvas
               fsm={originalFSM}
