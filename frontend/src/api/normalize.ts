@@ -29,8 +29,11 @@ export const DEFAULT_METRICS: OptimizationMetrics = {
   max_hamming_after: 0,
 };
 
-/** Used internally so optional FSM fields land as stable empties. */
-const EMPTY_DEFINITION: FSMDefinition = { states: [], transitions: [] };
+/** Used internally so optional FSM fields land as stable empties. Both
+ * `states` and `transitions` stay UNDEFINED here on purpose: callers
+ * like loadFSMIntoDraft use `fsm.definition?.states || fsm.states` to
+ * pick the right source, and a literal `[]` would mask the fall-through. */
+const EMPTY_DEFINITION: FSMDefinition = {};
 
 /** Defaults applied to optional FSM fields. */
 export const DEFAULT_FSM_OPTIONALS = {
