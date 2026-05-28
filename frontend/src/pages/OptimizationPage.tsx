@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { useParams, Link } from 'react-router-dom';
 import { useToast } from '../components/ui';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
@@ -14,7 +15,7 @@ import MetricsDashboard from '../components/visualization/MetricsDashboard';
 // component only renders on the "Hypercube" tab of the optimization
 // results page — almost no users hit this path on first load. Lazy-load
 // it so three.js doesn't bloat the initial bundle.
-const Hypercube3D = lazy(() => import('../components/visualization/Hypercube3D'));
+const Hypercube3D = lazyWithRetry(() => import('../components/visualization/Hypercube3D'));
 import { ROUTES, generateRoute } from '../config/routes';
 import { fsmAPI } from '../api/endpoints/fsms';
 import type { OptimizationRequest, OptimizationResponse, FSM } from '../types/fsm';
