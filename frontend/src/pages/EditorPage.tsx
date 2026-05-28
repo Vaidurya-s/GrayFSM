@@ -437,7 +437,21 @@ export default function EditorPage() {
           >
             {id ? 'Save' : 'Create'}
           </button>
-          {id ? (
+          {id && labReportTargetId ? (
+            // The loaded FSM is already an optimization result. Re-running
+            // the optimizer would just treat the existing DUMMY_ nodes as
+            // ordinary states and bridge them with MORE dummies (4→6→10→12
+            // observed in the wild). Block the action and point the user
+            // at the Lab Report for the source FSM.
+            <button
+              disabled
+              data-testid="editor-optimize-already-optimized"
+              title="Already optimized — open Lab Report to view the source run, or optimize the source FSM directly"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-400 rounded-md cursor-not-allowed opacity-60"
+            >
+              Optimize
+            </button>
+          ) : id ? (
             <button
               onClick={handleOptimize}
               data-testid="editor-optimize"

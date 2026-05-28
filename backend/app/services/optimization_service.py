@@ -119,6 +119,20 @@ class OptimizationService:
             return OptimizationResponse(**cached)
 
         original_fsm = await self._load_fsm(fsm_id, user_id=user_id)
+
+        # Block re-optimization: a derived FSM's "states" already include
+        # the DUMMY_ nodes inserted by the previous run. Treating those as
+        # ordinary inputs and re-optimizing compounds (every pass adds
+        # more dummies to satisfy adjacency constraints the previous pass
+        # introduced). The caller should target the original instead —
+        # the editor's Lab Report button surfaces that source FSM id.
+        if original_fsm.is_optimized:
+            raise FSMValidationException(
+                "This FSM is already an optimization result. Re-optimizing it "
+                "would compound dummy states. Optimize the source FSM instead "
+                "(use the Lab Report link to reach it).",
+            )
+
         logger.info(
             "Starting optimization",
             fsm_id=str(fsm_id),
@@ -187,17 +201,18 @@ class OptimizationService:
         await cache_set(cache_key, response.model_dump(mode="json"))
         return response
 
-    async def verify_ownership(self, fsm_id: UUID, user_id: UUID | None) -> None:
-        """Verify the caller owns this FSM, without loading the full record.
+    async def verify_ownership(self, fsm_id: UUID, user_id: UUID | None) -> FSM:
+        """Verify the caller owns this FSM, returning the loaded record.
 
         Used by the async-task path in api/v1/algorithm.py to give the
-        caller an immediate 404 on unowned FSMs, rather than letting the
-        ownership check slip into the background task and surface as a
-        late "task failed". Raises FSMNotFoundException on mismatch — the
-        same exception used for "doesn't exist" — so the API can't be used
-        to enumerate FSM IDs.
+        caller an immediate 404 on unowned FSMs (rather than letting the
+        ownership check slip into the background task) and also to read
+        `is_optimized` upfront so re-optimization is blocked before the
+        task is queued. Raises FSMNotFoundException on mismatch — the
+        same exception used for "doesn't exist" — so the API can't be
+        used to enumerate FSM IDs.
         """
-        await self._load_fsm(fsm_id, user_id=user_id)
+        return await self._load_fsm(fsm_id, user_id=user_id)
 
     # ---- helpers (DB / IO) -----------------------------------------------
 
