@@ -8,6 +8,7 @@ All algorithms share the same interface:
 """
 
 from app.core.algorithms.bfs_optimal import BFSOptimizer
+from app.core.algorithms.genetic_algorithm import GeneticAlgorithmOptimizer
 from app.core.algorithms.greedy import GreedyOptimizer
 from app.core.algorithms.simulated_annealing import SimulatedAnnealingOptimizer
 from app.utils.exceptions import AlgorithmException
@@ -18,7 +19,7 @@ ALGORITHM_REGISTRY: dict[str, type[GreedyOptimizer]] = {
     "bfs_optimal": BFSOptimizer,
     "simulated_annealing": SimulatedAnnealingOptimizer,
     "global_sa": SimulatedAnnealingOptimizer,
-    "global_ga": SimulatedAnnealingOptimizer,
+    "global_ga": GeneticAlgorithmOptimizer,
 }
 
 # Algorithm metadata for API consumers
