@@ -72,7 +72,15 @@ export function normalizeExample(
   raw: Partial<Example> | null | undefined,
 ): Example {
   const r = (raw ?? {}) as Partial<Example> & Record<string, unknown>;
+  // Spread the raw payload so backend-specific keys (states, transitions,
+  // initial_state, fsm_type, outputs) survive normalisation untouched.
+  // The editor's "Try it" flow calls loadFSMIntoDraft directly on the
+  // normalised example and that helper reads top-level states/transitions
+  // — previously they were hidden inside fsm_data and the canvas came up
+  // empty. The explicit fields below provide the strict-Example surface
+  // for cards that read example.tags/category/etc.
   return {
+    ...(r as unknown as Example),
     id: r.id as string,
     name: (r.name as string) ?? '',
     description: (r.description as string) ?? '',
