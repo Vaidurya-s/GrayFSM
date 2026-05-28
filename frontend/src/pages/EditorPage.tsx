@@ -53,6 +53,24 @@ export default function EditorPage() {
   const redo = useFSMStore((s) => s.redo);
   const copySelected = useFSMStore((s) => s.copySelected);
   const pasteClipboard = useFSMStore((s) => s.pasteClipboard);
+  const currentFSM = useFSMStore((s) => s.currentFSM);
+
+  // Lab-report link target. When the loaded FSM is an optimized derivative
+  // (`is_optimized` flag set by the optimizer), surface a button that jumps
+  // to the OptimizationPage for the *source* FSM — that's where the saved
+  // run shows up under the past-results restore path with the comparison,
+  // metrics, and hypercube tabs already populated. The source id lives in
+  // the JSONB definition as `original_fsm_id`; falling back to undefined
+  // hides the button gracefully if a derived FSM was saved before that
+  // field was added.
+  const labReportTargetId = useMemo<string | undefined>(() => {
+    if (!currentFSM?.is_optimized) return undefined;
+    const def = currentFSM.definition as unknown as
+      | { original_fsm_id?: unknown }
+      | undefined;
+    const orig = def?.original_fsm_id;
+    return typeof orig === 'string' && orig.length > 0 ? orig : undefined;
+  }, [currentFSM]);
 
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { success: toastSuccess, error: toastError } = useToast();
@@ -437,6 +455,20 @@ export default function EditorPage() {
               Optimize
             </button>
           ) : null}
+          {/* Lab Report — only shown when the loaded FSM is an optimized
+              derivative AND we have the source FSM's id. Routes to the
+              OptimizationPage for the source, where the saved run replays
+              with comparison/metrics/hypercube already populated. */}
+          {labReportTargetId && (
+            <Link
+              to={generateRoute(ROUTES.OPTIMIZE, { id: labReportTargetId })}
+              data-testid="editor-lab-report"
+              title="View the optimization run that produced this FSM"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
+            >
+              Lab Report
+            </Link>
+          )}
           {/* Export — only available once the FSM is saved; routes to the
               full export page (Verilog/VHDL/JSON/CSV/Testbench). This was
               completely unreachable from the UI before — only via direct
