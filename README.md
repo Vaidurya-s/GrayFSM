@@ -84,6 +84,7 @@ specification and never mutates the original.
 | **Greedy** | `O(T log N)` | Fast, locally optimal. Often matches the global optimum on small machines. |
 | **BFS-optimal** | `O(T · N)` | Globally optimal under bit-width constraint. Slower; smart encoding-reuse. |
 | **Simulated annealing** | `O(I · T)` | Reassigns the encodings themselves rather than inserting dummies. Escapes local optima via temperature-driven acceptance. |
+| **Genetic algorithm** | `O(G · P . T)` | Evolves a population of Gray-code assignments via selection, crossover, and random mutation each generation. Trades more compute for a broad exploration of the encoding search space. |
 
 ---
 
@@ -137,6 +138,26 @@ specification and never mutates the original.
   </tr>
 </table>
 
+## Process to generate dummy states : 
+
+<p align="center">
+  <img src="Assets/Screenshots/importing_FSM.png" alt="Importing FSM" width="80%" />
+</p>
+<p align="center">
+  <img src="Assets/Screenshots/Comparison.png" alt="Comparing old states with new states" width="80%" />
+</p>
+<p align="center">
+  <img src="Assets/Screenshots/Metrices_1.png" alt="" width="30%" />
+</p>
+<p align="center">
+  <img src="Assets/Screenshots/Metrices_2.png" alt="" width="30%" />
+</p>
+<p align="center">
+  <img src="Assets/Screenshots/Metrices_3.png" alt="" width="30%" />
+</p>
+<p align="center">
+  <img src="Assets/Screenshots/hypercube.png" alt="N-dimensional hypercube visualization" width="80%" />
+</p>
 ---
 
 ## Quick start
@@ -290,7 +311,7 @@ grayFSM/
 | `POST` | `/api/v1/fsms/{id}/fork` | Fork an FSM into your own catalog |
 | `POST` | `/api/v1/fsms/{id}/optimize` | Run an optimisation algorithm |
 | `POST` | `/api/v1/fsms/{id}/export` | Export to Verilog / VHDL / JSON / CSV / testbench |
-| `GET` | `/api/v1/algorithms` | List available optimisation algorithms |
+| `GET` | `/api/v1/fsms/algorithms` | List available optimisation algorithms |
 | `GET` | `/api/v1/examples` | List built-in example FSMs |
 | `GET` | `/api/v1/categories` | List FSM categories |
 | `POST` | `/api/v1/auth/register` | Register a user (rate-limited) |

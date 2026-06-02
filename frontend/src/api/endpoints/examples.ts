@@ -54,6 +54,6 @@ export const examplesAPI = {
    * List categories
    */
   getCategories: async (): Promise<APIResponse<Category[]>> => {
-    return apiClient.get('/examples/categories');
+    return apiClient.get('/categories');
   },
 };
