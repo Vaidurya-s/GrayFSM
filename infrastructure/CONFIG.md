@@ -69,7 +69,7 @@ UNLEASH_API_KEY=default:development.unleash-insecure-frontend-api-token
 ### Frontend `.env`
 
 ```bash
-VITE_API_URL=http://localhost:8000/api
+VITE_API_BASE_URL=http://localhost:8000/api/v1
 VITE_API_TIMEOUT=30000
 VITE_ENVIRONMENT=development
 VITE_DEBUG=true
@@ -93,7 +93,7 @@ services:
 
   frontend:
     environment:
-      VITE_API_URL: 'http://localhost:8000/api'
+      VITE_API_BASE_URL: '/api/v1'
     ports:
       - "3001:80"
 ```

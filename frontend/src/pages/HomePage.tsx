@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import type { FSM } from '../types/fsm';
 import { ROUTES, generateRoute } from '../config/routes';
+import { OPENAPI_URL } from '../config/constants';
 import {
   CommandKey,
   CommandKeyRow,
@@ -69,7 +70,7 @@ export default function HomePage() {
     error,
   } = useQuery<FSM[]>({
     queryKey: ['fsms'],
-    queryFn: async () => unwrapList<FSM>(await api.get('/fsms?page_size=10')),
+    queryFn: async () => unwrapList<FSM>(await api.get('/fsms?page=1&page_size=10')),
     retry: 1,
   });
 
@@ -186,7 +187,8 @@ export default function HomePage() {
   ];
 
   // ----- system status panel (marginalia) ---------------------------------
-  const apiOk = healthData?.status === 'healthy';
+  const apiOk =
+    healthData?.status === 'healthy' || healthData?.status === 'degraded';
   // Build hash — defined-on-define-config in vite.config.ts as a literal at
   // build time. Falls back to "dev" if the define isn't wired yet.
   const buildHash: string =
@@ -310,7 +312,7 @@ export default function HomePage() {
             <DataBlock items={systemItems} />
             <div className="mt-5 pt-3 border-t border-rule space-y-1">
               <a
-                href="/api/v1/openapi.json"
+                href={OPENAPI_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="block font-mono text-[0.72rem] text-ink-soft hover:text-accent transition-colors"
@@ -541,7 +543,7 @@ export default function HomePage() {
             <strong className="text-ink font-medium">API</strong>
             {' · '}
             <a
-              href="/api/v1/openapi.json"
+              href={OPENAPI_URL}
               target="_blank"
               rel="noreferrer"
               className="text-accent hover:text-ink transition-colors"
