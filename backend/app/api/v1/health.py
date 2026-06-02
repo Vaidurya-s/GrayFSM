@@ -46,14 +46,8 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Any:
     }
 
 
-@router.get("/metrics")
-async def get_metrics() -> Any:
-    """System metrics"""
-    # request_count removed: the hardcoded 0 was misleading for consumers.
-    # Wire up a real Prometheus counter from app/observability/metrics.py
-    # once an instrumentation middleware is in place.
-    return {
-        "avg_response_time_ms": 0,
-        "optimization_count": 0,
-        "cache_hit_rate": 0.0,
-    }
+# Note: Prometheus-format metrics are served at the root path ``/metrics`` by
+# ``app.observability.metrics.setup_metrics`` (wired in ``main.py`` lifespan).
+# The previous ``/api/v1/health/metrics`` placeholder returned hardcoded zeros
+# and has been removed to avoid shipping misleading data alongside the real
+# scrape endpoint.

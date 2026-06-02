@@ -99,7 +99,7 @@ jobs:
 
       - name: Run Dredd contract tests
         run: |
-          dredd openapi-spec.yaml http://localhost:8000 \
+          dredd docs/openapi-spec.yaml http://localhost:8000 \
             --hookfiles=tests/contract/dredd_hooks.py \
             --reporter=markdown:dredd-report.md \
             --reporter=html:dredd-report.html \

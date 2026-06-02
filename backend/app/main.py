@@ -94,7 +94,6 @@ app = FastAPI(
     - FSM creation, management, and validation
     - Multiple optimization algorithms (Greedy, BFS, Global Optimization)
     - HDL export (Verilog, VHDL, testbenches)
-    - Real-time optimization progress via WebSocket
 
     ## Documentation
     - Interactive API docs: /docs
