@@ -8,9 +8,8 @@ FastAPI-based backend for GrayFSM - Automated Finite State Machine Optimization 
 - **Optimization Algorithms**: 
   - Greedy dummy state insertion
   - BFS-optimized algorithm
-  - Global optimization (SA/GA) - Coming soon
-- **HDL Export**: Verilog, VHDL, testbench generation - Coming soon
-- **Real-time Updates**: WebSocket support for long-running optimizations - Coming soon
+  - Global optimization: Simulated Annealing (`global_sa`) and Genetic Algorithm (`global_ga`)
+- **HDL Export**: Verilog, VHDL, JSON, CSV, and testbench generation
 
 ## Technology Stack
 
@@ -32,7 +31,7 @@ FastAPI-based backend for GrayFSM - Automated Finite State Machine Optimization 
 
 1. **Clone the repository**
 ```bash
-cd /home/arunupscee/Music/grayFSM/backend
+cd <repo-root>/backend
 ```
 
 2. **Create virtual environment**
@@ -109,7 +108,7 @@ backend/
 
 ### Health Check
 - `GET /api/v1/health` - System health status
-- `GET /api/v1/metrics` - System metrics
+- `GET /metrics` - Prometheus scrape endpoint (registered at root by observability setup)
 
 ### FSM Management
 - `GET /api/v1/fsms` - List all FSMs
@@ -171,16 +170,9 @@ Key environment variables (see `.env.example`):
 - API documentation
 
 ### 🚧 In Progress
-- Algorithm Service implementation
-- Export Service (Verilog/VHDL generation)
-- Comprehensive test suite
-- WebSocket support for async operations
+- Comprehensive test suite expansion
 
-### 📋 Planned (Phase 2-4)
-- Global optimization algorithms (SA/GA)
-- HDL testbench generation
-- Rate limiting with Redis
-- User authentication (JWT)
+### 📋 Planned
 - Community features (sharing, comments, ratings)
 - ML-based encoding prediction
 

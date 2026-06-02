@@ -56,7 +56,7 @@ database/
 
 ```bash
 # Clone repository and navigate to database directory
-cd /home/arunupscee/Music/grayFSM/database
+cd <repo-root>/database
 
 # Copy environment template
 cp .env.example .env

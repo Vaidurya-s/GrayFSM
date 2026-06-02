@@ -2,11 +2,6 @@
 // nginx proxy even if the VITE_* build vars are unset. Vite inlines these at
 // build time, so a localhost fallback would otherwise be baked into the JS.
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-export const WS_BASE_URL =
-  import.meta.env.VITE_WS_URL ||
-  (typeof window !== 'undefined'
-    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`
-    : '/ws');
 
 export const APP_NAME = 'GrayFSM';
 export const APP_VERSION = '1.0.0';
