@@ -1,0 +1,39 @@
+# Gitleaks configuration for GrayFSM.
+#
+# Extends the upstream default ruleset; only the [allowlist] section is
+# customized — we don't want to silently weaken any detector. The
+# allowlist exists for known-good placeholder fixtures (env templates,
+# auth test fixtures) that gitleaks's default rules sometimes flag.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholder fixtures + example env files."
+
+# Paths that contain only documentation placeholders / non-secret
+# values. Anything under these patterns is exempt from secret scanning.
+paths = [
+  '''(.*?)\.env\.example$''',
+  '''(.*?)\.env\.template$''',
+  # Test fixtures that contain syntactically-shaped but inert tokens
+  # (e.g. signed-with-test-key JWTs in unit tests).
+  '''backend/tests/.*''',
+  '''frontend/src/.*\.test\.(ts|tsx|js|jsx)$''',
+  # Lockfiles: lots of integrity hashes that look like secrets.
+  '''(?i)package-lock\.json$''',
+  '''(?i)poetry\.lock$''',
+]
+
+# Common placeholder strings that ship in env templates / docs. Each
+# regex is matched against the secret value the rule fired on, not the
+# whole file, so this stays narrowly scoped.
+regexes = [
+  '''(?i)your[_-]?(secret|api[_-]?key|token)[_-]?here''',
+  '''(?i)change[_-]?me''',
+  '''(?i)example[_-]?(secret|key|token)''',
+  '''(?i)placeholder''',
+  # Common dummy values for JWT signing keys in .env.example.
+  '''(?i)dev[_-]?(jwt[_-]?)?secret''',
+  '''(?i)super[_-]?secret''',
+]

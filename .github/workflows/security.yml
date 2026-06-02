@@ -1,0 +1,130 @@
+name: Security
+
+# Dependency + static-analysis security gates. These run on every PR to
+# main and on a nightly schedule so newly-disclosed CVEs against pinned
+# deps get caught even when no PR is open.
+#
+# Layout / scope:
+#   * Secret scanning lives in .github/workflows/secrets-scan.yml
+#     (gitleaks). That file is the canonical "secrets blocking gate"; we
+#     don't duplicate it here so PR-level cost stays low.
+#   * This workflow adds the remaining gates the security review called
+#     for: dependency CVE scans (pip-audit, npm audit) and a Python
+#     static analyzer (bandit).
+#
+# Blocking policy (initial rollout — keeps day-1 noise manageable):
+#   * npm audit HIGH/CRITICAL ........ blocking
+#   * pip-audit ...................... advisory (continue-on-error)
+#   * bandit ......................... advisory (continue-on-error)
+# Tighten these once the user has seen one cycle of real output.
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/security.yml'
+  push:
+    branches: [main]
+  schedule:
+    # 03:17 UTC daily — offset from common cron-storm hours.
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # -------------------------------------------------------------------
+  # Backend dependency CVE scan (advisory).
+  # -------------------------------------------------------------------
+  pip-audit:
+    name: pip-audit (backend deps)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: pip install --upgrade pip pip-audit
+
+      - name: Audit requirements.txt
+        # Advisory: we don't want a freshly-disclosed CVE in a transitive
+        # dep to block an unrelated frontend PR. The nightly run will
+        # still surface the finding loud and clear in the Actions tab.
+        continue-on-error: true
+        run: |
+          pip-audit \
+            --requirement backend/requirements.txt \
+            --strict \
+            --progress-spinner=off \
+            --vulnerability-service=osv
+
+  # -------------------------------------------------------------------
+  # Frontend dependency CVE scan (blocking on HIGH/CRITICAL).
+  # -------------------------------------------------------------------
+  npm-audit:
+    name: npm audit (frontend deps)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install (lockfile-only, no scripts)
+        working-directory: frontend
+        # `npm ci --ignore-scripts` is the safe install: it refuses to
+        # run install-time scripts of a potentially-compromised dep
+        # while still producing a tree audit can read.
+        run: npm ci --ignore-scripts
+
+      - name: npm audit
+        working-directory: frontend
+        # Fail the job on HIGH or CRITICAL findings. MODERATE/LOW are
+        # captured in the log but don't block.
+        run: npm audit --audit-level=high
+
+  # -------------------------------------------------------------------
+  # Python static analysis (advisory).
+  # -------------------------------------------------------------------
+  bandit:
+    name: bandit (backend static analysis)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install bandit
+        run: pip install --upgrade pip bandit
+
+      - name: Run bandit
+        continue-on-error: true
+        # -ll = LOW severity floor (don't drown in noise),
+        # -ii = MEDIUM confidence floor.
+        # B101 (assert_used) excluded — pytest uses assert intentionally
+        # and our test tree triggers it everywhere.
+        run: |
+          bandit \
+            --recursive backend/app \
+            --severity-level medium \
+            --confidence-level medium \
+            --skip B101
