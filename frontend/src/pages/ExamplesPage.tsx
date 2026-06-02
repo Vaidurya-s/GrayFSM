@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Zap, ChevronRight, Layers } from 'lucide-react';
@@ -343,12 +343,18 @@ export default function ExamplesPage() {
     return [];
   })();
 
-  // Group API examples by difficulty for tabs
-  const byDifficulty: Record<string, Example[]> = {
-    Simple: apiExamples.filter((e) => e.difficulty === 'beginner'),
-    Medium: apiExamples.filter((e) => e.difficulty === 'intermediate'),
-    Complex: apiExamples.filter((e) => e.difficulty === 'advanced'),
-  };
+  // Group API examples by difficulty for tabs. Memoized because the auto-
+  // switch useEffect below depends on `byDifficulty`; a fresh object every
+  // render would trigger the effect on every render and confuse the
+  // user-pick guard.
+  const byDifficulty: Record<string, Example[]> = useMemo(
+    () => ({
+      Simple: apiExamples.filter((e) => e.difficulty === 'beginner'),
+      Medium: apiExamples.filter((e) => e.difficulty === 'intermediate'),
+      Complex: apiExamples.filter((e) => e.difficulty === 'advanced'),
+    }),
+    [apiExamples],
+  );
 
   // Auto-switch to the first non-empty tab once examples load. Without
   // this the page defaults to "Simple" and any example whose difficulty
