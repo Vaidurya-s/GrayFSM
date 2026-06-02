@@ -45,7 +45,7 @@ async def _run_optimization_task(
     from app.api.v1.tasks import update_task
     from app.db.session import AsyncSessionLocal
 
-    update_task(task_id, status="running")
+    await update_task(task_id, status="running")
     try:
         async with AsyncSessionLocal() as db:
             service = OptimizationService(db)
@@ -53,11 +53,13 @@ async def _run_optimization_task(
                 {"algorithm": algorithm, "async": False, "options": options or {}}
             )
             result = await service.optimize_fsm(fsm_id, req, user_id=user_id)
-            update_task(task_id, status="completed", result=result.model_dump(mode="json"))
+            await update_task(
+                task_id, status="completed", result=result.model_dump(mode="json")
+            )
     except Exception:
         # Don't echo arbitrary exception text to a user-visible task record.
         logger.exception("optimization_task_failed", extra={"task_id": task_id})
-        update_task(task_id, status="failed", error="Optimization failed")
+        await update_task(task_id, status="failed", error="Optimization failed")
 
 
 @router.post("/{fsm_id}/optimize", response_model=OptimizationResponse)
@@ -110,7 +112,7 @@ async def optimize_fsm(
             ) from None
 
         task_id = str(uuid.uuid4())
-        create_task(task_id, str(fsm_id), user_id=str(user_id))
+        await create_task(task_id, str(fsm_id), user_id=str(user_id))
         background_tasks.add_task(
             _run_optimization_task,
             task_id,
