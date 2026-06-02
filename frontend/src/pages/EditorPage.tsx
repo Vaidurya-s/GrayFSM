@@ -703,22 +703,18 @@ export default function EditorPage() {
       </div>
 
       {/* Create FSM modal */}
-      {modals.createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4">
-          <div
-            className="bg-paper rounded-none sm:rounded-lg shadow-xl w-full max-w-md mx-0 sm:mx-4 p-4 sm:p-6 max-h-[100vh] sm:max-h-[90vh] overflow-y-auto"
-            data-testid="create-fsm-modal"
-          >
-            <h2 className="text-lg font-semibold text-ink mb-4">
-              Create New FSM
-            </h2>
-            <FSMCreateForm
-              onSuccess={handleCreateSuccess}
-              onCancel={() => modals.closeCreate()}
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={modals.createOpen}
+        onClose={() => modals.closeCreate()}
+        title="Create New FSM"
+        size="md"
+        data-testid="create-fsm-modal"
+      >
+        <FSMCreateForm
+          onSuccess={handleCreateSuccess}
+          onCancel={() => modals.closeCreate()}
+        />
+      </Modal>
 
       {/* Keyboard shortcuts modal */}
       {modals.shortcutsOpen && (
@@ -726,31 +722,18 @@ export default function EditorPage() {
       )}
 
       {/* Import FSM modal */}
-      {modals.importOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4">
-          <div
-            className="bg-paper rounded-none sm:rounded-lg shadow-xl w-full max-w-md mx-0 sm:mx-4 p-4 sm:p-6 max-h-[100vh] sm:max-h-[90vh] overflow-y-auto"
-            data-testid="import-fsm-modal"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-ink">Import FSM</h2>
-              <button
-                onClick={() => modals.closeImport()}
-                className="p-1 rounded-md text-ink-faint hover:text-ink-soft hover:bg-paper-shade"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <ImportForm
-              onSuccess={handleImportSuccess}
-              onCancel={() => modals.closeImport()}
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={modals.importOpen}
+        onClose={() => modals.closeImport()}
+        title="Import FSM"
+        size="md"
+        data-testid="import-fsm-modal"
+      >
+        <ImportForm
+          onSuccess={handleImportSuccess}
+          onCancel={() => modals.closeImport()}
+        />
+      </Modal>
     </div>
   );
 }
