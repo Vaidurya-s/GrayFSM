@@ -140,8 +140,7 @@ metadata:
   name: frontend-config
   namespace: grayfsm
 data:
-  # Build images with: --build-arg VITE_API_BASE_URL=/api/v1
-  API_BASE_URL: "/api/v1"
+  API_URL: "http://grayfsm-backend:8000/api"
 
 ---
 # PodDisruptionBudget

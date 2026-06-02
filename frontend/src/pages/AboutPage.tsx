@@ -7,7 +7,6 @@ import {
   TypedSection,
 } from '../components/ui';
 import { ROUTES } from '../config/routes';
-import { OPENAPI_URL } from '../config/constants';
 
 /* -------------------------------------------------------------------------- *
  * AboutPage — "§ 5 About"                                                    *
@@ -281,7 +280,7 @@ export default function AboutPage() {
                 </li>
                 <li>
                   <Link
-                    to={OPENAPI_URL}
+                    to="/api/v1/openapi.json"
                     className="font-mono text-[0.75rem] text-ink-soft hover:text-accent transition-colors"
                   >
                     <span className="text-ink-faint mr-2 inline-block w-4">
