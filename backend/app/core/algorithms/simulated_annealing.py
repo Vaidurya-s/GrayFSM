@@ -149,34 +149,45 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         """
         Run the simulated annealing loop.
 
-        Strategy:
-        - Maintain a pool of valid Gray codes (all 2^bit_width codes).
-        - Each state is assigned one code; unused codes fill the pool.
-        - A neighbour solution is produced by swapping the encodings of
-          two randomly chosen states.
+        Search space: any injective assignment of states to codes drawn
+        from the FULL 2^bit_width Gray code alphabet. When there are
+        unused codes (n_states < 2^k), SA can migrate a state to an
+        unused code — not just swap two used codes. Previously it only
+        swapped used codes, which meant states never explored the
+        empty slots of the code space, capping the reachable minimum.
+
+        Two move types are chosen uniformly at random when unused codes
+        exist; only the swap move is available otherwise:
+          - Swap: pick two states, swap their codes.
+          - Migrate: pick a state and an unused code, move the state
+            there. The vacated code becomes the new unused code.
 
         Returns:
-            Best encoding assignment found (state_id -> encoding string)
+            Best encoding assignment found (state_id -> encoding string).
         """
+        from app.core.gray_code import generate_gray_codes
+
         state_ids = list(initial_states.keys())
         n_states = len(state_ids)
 
-        # Build initial assignment from the provided encodings.
-        # If there are more codes available than states, unused codes
-        # are tracked in a pool (not needed for correctness, kept for
-        # potential future extension).
         current = dict(initial_states)
         current_cost = self._compute_cost(current, transitions)
 
+        # Full code alphabet minus the codes already assigned. Anything
+        # left over is a legal migration target.
+        all_codes = set(generate_gray_codes(self.bit_width))
+        unused_codes: set[str] = all_codes - set(current.values())
+
         best = dict(current)
         best_cost = current_cost
+        best_unused = set(unused_codes)
 
         self.initial_cost = current_cost
 
         temperature = self.initial_temp
         iteration = 0
 
-        # Short-circuit: if cost is already zero no transitions need fixing
+        # Short-circuit: nothing left to fix
         if current_cost == 0.0:
             self.iterations_run = 0
             self.final_cost = 0.0
@@ -184,12 +195,24 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
             return best
 
         while temperature > self.min_temp and iteration < self.max_iterations:
-            # --- Generate neighbour: swap encodings of two states -------
-            i, j = self._rng.sample(range(n_states), 2)
-            s1, s2 = state_ids[i], state_ids[j]
-
-            # In-place swap — no dict copy. Evaluate, then swap back if rejected.
-            current[s1], current[s2] = current[s2], current[s1]
+            # --- Generate neighbour -------------------------------------
+            # 50/50 pick between swap and migrate when both are viable;
+            # swap-only when there are no unused codes.
+            do_migrate = bool(unused_codes) and self._rng.random() < 0.5
+            if do_migrate:
+                s = state_ids[self._rng.randrange(n_states)]
+                new_code = self._rng.choice(list(unused_codes))
+                old_code = current[s]
+                current[s] = new_code
+                unused_codes.discard(new_code)
+                unused_codes.add(old_code)
+                # Neighbour parameters we may need to undo:
+                undo = ("migrate", s, old_code, new_code)
+            else:
+                i, j = self._rng.sample(range(n_states), 2)
+                s1, s2 = state_ids[i], state_ids[j]
+                current[s1], current[s2] = current[s2], current[s1]
+                undo = ("swap", s1, s2, None)
 
             # --- Evaluate neighbour ------------------------------------
             neighbour_cost = self._compute_cost(current, transitions)
@@ -197,10 +220,8 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
 
             # --- Accept / reject ---------------------------------------
             if delta < 0:
-                # Improvement: always accept
                 current_cost = neighbour_cost
             else:
-                # Degradation: accept with Boltzmann probability
                 try:
                     prob = math.exp(-delta / temperature)
                 except OverflowError:
@@ -208,13 +229,22 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
                 if self._rng.random() < prob:
                     current_cost = neighbour_cost
                 else:
-                    # Rejected — undo the swap
-                    current[s1], current[s2] = current[s2], current[s1]
+                    # Reject — undo the move exactly.
+                    kind = undo[0]
+                    if kind == "swap":
+                        s1, s2 = undo[1], undo[2]
+                        current[s1], current[s2] = current[s2], current[s1]
+                    else:  # migrate
+                        s, old_code, new_code = undo[1], undo[2], undo[3]
+                        current[s] = old_code
+                        unused_codes.add(new_code)
+                        unused_codes.discard(old_code)
 
             # --- Track global best -------------------------------------
             if current_cost < best_cost:
                 best = dict(current)
                 best_cost = current_cost
+                best_unused = set(unused_codes)
 
             # --- Cool --------------------------------------------------
             temperature *= self.cooling_rate
@@ -225,7 +255,8 @@ class SimulatedAnnealingOptimizer(GreedyOptimizer):
         self.improvement_ratio = (
             (self.initial_cost - best_cost) / self.initial_cost if self.initial_cost > 0 else 0.0
         )
-
+        # `best_unused` is not returned but kept for future debug hooks.
+        _ = best_unused
         return best
 
     # ------------------------------------------------------------------
