@@ -3,9 +3,15 @@ Greedy Dummy State Insertion Algorithm.
 
 Per transition (from_state, to_state) with Hamming distance > 1, insert
 (HD - 1) intermediate dummy states such that each hop has Hamming
-distance exactly 1. The insertion is greedy (no back-tracking) and
-processes each transition independently: two transitions that could
-share a dummy don't. See BFSOptimizer for the reuse-aware variant.
+distance exactly 1. Insertion is greedy — no back-tracking, no path
+search — the deterministic LSB→MSB bit-flip walk is used every time.
+
+Same-encoding dummies are silently unified when their outputs match
+(a hardware register has one physical state per address; if two
+transitions want a bridge at the same code AND agree on its output,
+they're referring to the same state). When outputs disagree, we
+hard-error and ask the caller to widen bit_width. See BFSOptimizer
+for the variant that ACTIVELY searches for reuse-friendly paths.
 
 Complexity
     Time  O(T · k)  where T = |transitions|, k = bit_width.
@@ -118,10 +124,16 @@ class GreedyOptimizer:
         """
         self.dummy_states = []
         self.dummy_counter = 0
-        # Cache to detect collisions in O(1). Includes real states plus
-        # any dummies we've already inserted in this run — dummies inserted
-        # later can't accidentally reuse a prior dummy's address either.
-        used_encodings = set(states.values())
+        # Real state encodings — a bridge can NEVER route through one of
+        # these; doing so would give a real state's output an
+        # unintended mid-transition appearance. Hard error on collision.
+        real_encodings = set(states.values())
+        # Existing dummies keyed by encoding. If greedy's deterministic
+        # walk lands on a code already used by a prior dummy, reuse it
+        # ONLY when outputs match. There is no way to have two distinct
+        # states at the same hardware address — either they're the same
+        # state (output must match) or the encoding space is exhausted.
+        dummies_by_encoding: dict[str, DummyState] = {}
 
         new_transitions: list[dict] = []
         for trans in transitions:
@@ -143,7 +155,8 @@ class GreedyOptimizer:
                 original_trans=trans,
                 state_outputs=outputs,
                 fsm_type=fsm_type,
-                used_encodings=used_encodings,
+                real_encodings=real_encodings,
+                dummies_by_encoding=dummies_by_encoding,
             )
             new_transitions.extend(expanded)
 
@@ -159,46 +172,68 @@ class GreedyOptimizer:
         original_trans: dict,
         state_outputs: dict[str, str],
         fsm_type: str,
-        used_encodings: set[str],
+        real_encodings: set[str],
+        dummies_by_encoding: dict[str, DummyState],
     ) -> list[dict]:
-        """Expand a single HD>1 transition into a chain of HD=1 transitions."""
-        path = _bit_flip_path(from_code, to_code)  # [from, ..., to]
-        intermediate_codes = path[1:-1]  # exclude endpoints
+        """Expand a single HD>1 transition into a chain of HD=1 transitions.
 
-        # Collision guard — bail early with a clear error instead of
-        # silently corrupting FSM semantics by reusing a real state's code.
-        for code in intermediate_codes:
-            if code in used_encodings:
-                raise AlgorithmException(
-                    f"Cannot insert dummy at encoding '{code}' for transition "
-                    f"{from_state} -> {to_state}: address already used by another "
-                    f"state (real or dummy). The state space at bit_width={self.bit_width} "
-                    f"is exhausted; retry with a wider bit_width."
-                )
+        Two failure modes hard-error via AlgorithmException:
+        1. The deterministic path routes through a real state's encoding.
+        2. The path routes through a prior dummy with an incompatible
+           output (hardware can't have two states at the same address).
+        Both are the "encoding space is exhausted" signal — the caller
+        should widen bit_width.
+
+        Same-output prior dummies are silently reused (they're literally
+        the same physical state).
+        """
+        path = _bit_flip_path(from_code, to_code)  # [from, ..., to]
+        intermediate_codes = path[1:-1]
 
         chain: list[dict] = []
         cursor_state = from_state
         for i, code in enumerate(intermediate_codes, start=1):
-            dummy_id = f"DUMMY_{self.dummy_counter}_{from_state}_to_{to_state}"
-            self.dummy_counter += 1
-            used_encodings.add(code)
-
-            dummy_output = self._dummy_output(
+            is_last = i == len(intermediate_codes)
+            needed_output = self._dummy_output(
                 fsm_type=fsm_type,
                 state_outputs=state_outputs,
                 from_state=from_state,
                 to_state=to_state,
-                is_last_hop_before_dest=(i == len(intermediate_codes)),
+                is_last_hop_before_dest=is_last,
             )
 
-            self.dummy_states.append(
-                DummyState(
+            if code in real_encodings:
+                raise AlgorithmException(
+                    f"Cannot insert dummy at encoding '{code}' for transition "
+                    f"{from_state} -> {to_state}: address already used by a real state. "
+                    f"The state space at bit_width={self.bit_width} is exhausted; "
+                    f"retry with a wider bit_width."
+                )
+
+            existing = dummies_by_encoding.get(code)
+            if existing is not None:
+                if existing.output != needed_output:
+                    raise AlgorithmException(
+                        f"Cannot insert dummy at encoding '{code}' for transition "
+                        f"{from_state} -> {to_state}: an existing dummy at this "
+                        f"encoding has output '{existing.output}' but this transition "
+                        f"needs output '{needed_output}'. Two distinct states at the "
+                        f"same hardware address is impossible; retry with a wider "
+                        f"bit_width."
+                    )
+                # Compatible reuse — same physical state.
+                dummy_id = existing.id
+            else:
+                dummy_id = f"DUMMY_{self.dummy_counter}_{from_state}_to_{to_state}"
+                self.dummy_counter += 1
+                dummy = DummyState(
                     id=dummy_id,
                     encoding=code,
-                    output=dummy_output,
+                    output=needed_output,
                     inserted_for_transition=f"{from_state}->{to_state}",
                 )
-            )
+                self.dummy_states.append(dummy)
+                dummies_by_encoding[code] = dummy
 
             chain.append(
                 {
