@@ -106,12 +106,23 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
     def _random_individual(
         self,
         state_ids: list[str],
-        codes: list[str],
+        code_pool: list[str],
     ) -> dict[str, str]:
-        """Random permutation of `codes` assigned to `state_ids`."""
-        shuffled = list(codes)
-        self._rng.shuffle(shuffled)
-        return dict(zip(state_ids, shuffled, strict=True))
+        """Random injective assignment of `len(state_ids)` codes drawn
+        from `code_pool` to `state_ids`.
+
+        `code_pool` may be larger than `state_ids` — in that case the
+        excess codes are simply unused by this individual. That's how
+        GA explores the full 2^k code space rather than only the
+        initial pool.
+        """
+        if len(code_pool) < len(state_ids):
+            raise ValueError(
+                f"code_pool ({len(code_pool)}) smaller than state count "
+                f"({len(state_ids)}) — impossible to build an injective assignment."
+            )
+        chosen = self._rng.sample(code_pool, len(state_ids))
+        return dict(zip(state_ids, chosen, strict=True))
 
     def _tournament_select(
         self,
@@ -128,12 +139,22 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
         p1: dict[str, str],
         p2: dict[str, str],
         state_ids: list[str],
+        code_pool: list[str],
     ) -> dict[str, str]:
         """
-        Order crossover (OX) over the permutation of encodings:
-        inherit a contiguous slice from p1, then fill the remaining
-        state_ids in p2's encoding order skipping codes already used.
-        Always produces a valid permutation of the same encoding set.
+        Order crossover (OX) adapted for the full-code-alphabet case.
+
+        Since p1 and p2 may use DIFFERENT subsets of `code_pool` (each
+        picks n_states codes out of the full 2^k), classical OX (which
+        assumes the two parents are permutations of the same set) can't
+        run unmodified. Adapted OX:
+          1. Inherit a contiguous slice of p1's codes as-is.
+          2. Fill remaining slots by walking p2's codes in state_ids
+             order, skipping any code the child already uses.
+          3. If p2 doesn't supply enough remaining codes (because p1's
+             slice consumed codes p2 doesn't have), draw from the pool
+             of unused codes to complete the child.
+        Always yields an injective assignment on `state_ids`.
         """
         n = len(state_ids)
         if n <= 2:
@@ -146,21 +167,54 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
             enc = p1[sid]
             child[sid] = enc
             used.add(enc)
-        # Walk p2's encodings (in state_ids order) and fill the gaps.
+        # Walk p2's codes (in state_ids order) and fill the gaps.
         p2_codes_in_order = [p2[sid] for sid in state_ids]
-        fill = iter(c for c in p2_codes_in_order if c not in used)
+        fill = [c for c in p2_codes_in_order if c not in used]
+        fill_idx = 0
+        # Backup pool for the case where p2 didn't have enough novel codes.
+        pool_backup = [c for c in code_pool if c not in used]
+        self._rng.shuffle(pool_backup)
+        backup_idx = 0
         for k in range(n):
             sid = state_ids[k]
-            if sid not in child:
-                child[sid] = next(fill)
+            if sid in child:
+                continue
+            if fill_idx < len(fill):
+                enc = fill[fill_idx]
+                fill_idx += 1
+            else:
+                # p2 ran out — draw an unused code at random.
+                while backup_idx < len(pool_backup) and pool_backup[backup_idx] in used:
+                    backup_idx += 1
+                enc = pool_backup[backup_idx]
+                backup_idx += 1
+            child[sid] = enc
+            used.add(enc)
         return child
 
     def _mutate(
         self,
         individual: dict[str, str],
         state_ids: list[str],
+        code_pool: list[str],
     ) -> dict[str, str]:
-        if self._rng.random() < self.mutation_rate and len(state_ids) >= 2:
+        """Mutate `individual` in place with probability `mutation_rate`.
+
+        Two mutation types are chosen with equal probability:
+          - Swap: exchange codes of two random states.
+          - Migrate: pick a state, move it to an unused code drawn from
+            `code_pool`. Requires at least one unused code.
+        """
+        if self._rng.random() >= self.mutation_rate or len(state_ids) < 2:
+            return individual
+        used = set(individual.values())
+        unused = [c for c in code_pool if c not in used]
+        do_migrate = bool(unused) and self._rng.random() < 0.5
+        if do_migrate:
+            s = state_ids[self._rng.randrange(len(state_ids))]
+            new_code = unused[self._rng.randrange(len(unused))]
+            individual[s] = new_code
+        else:
             i, j = self._rng.sample(range(len(state_ids)), 2)
             s1, s2 = state_ids[i], state_ids[j]
             individual[s1], individual[s2] = individual[s2], individual[s1]
@@ -171,13 +225,19 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
         initial_states: dict[str, str],
         transitions: list[dict],
     ) -> dict[str, str]:
-        state_ids = list(initial_states.keys())
-        codes = list(initial_states.values())
+        from app.core.gray_code import generate_gray_codes
 
-        # Seed population: random permutations + one warm-start with the
-        # caller's initial assignment so we never get worse than start.
+        state_ids = list(initial_states.keys())
+        # Full 2^k code alphabet — GA can pick any subset of size n_states.
+        # This is the crucial extension over the previous implementation,
+        # which only shuffled the initial_states.values() codes.
+        code_pool = generate_gray_codes(self.bit_width)
+
+        # Seed population: random samples from the full pool + one
+        # warm-start with the caller's initial assignment so we never
+        # get worse than start.
         population: list[dict[str, str]] = [
-            self._random_individual(state_ids, codes) for _ in range(self.population_size)
+            self._random_individual(state_ids, code_pool) for _ in range(self.population_size)
         ]
         if self.population_size > 0:
             population[0] = dict(initial_states)
@@ -204,8 +264,8 @@ class GeneticAlgorithmOptimizer(GreedyOptimizer):
             while len(new_pop) < self.population_size:
                 p1 = self._tournament_select(population, fitnesses)
                 p2 = self._tournament_select(population, fitnesses)
-                child = self._crossover(p1, p2, state_ids)
-                child = self._mutate(child, state_ids)
+                child = self._crossover(p1, p2, state_ids, code_pool)
+                child = self._mutate(child, state_ids, code_pool)
                 new_pop.append(child)
             population = new_pop
             fitnesses = [self._compute_cost(ind, transitions) for ind in population]
